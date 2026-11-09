@@ -1,0 +1,14 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Conformance output: machine-specific, regenerate with `make conformance`
+reports/
+cdos-conformance.py
+
+# Build products
+dist/
+build/
+*.tar.gz
