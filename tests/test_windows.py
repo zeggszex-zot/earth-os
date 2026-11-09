@@ -670,3 +670,130 @@ class TestAutoFraming(unittest.TestCase):
         from earth_os.windows import NullWindows
         self.shell.windows.backend = NullWindows("none")
         self.shell.poll_windows()          # must not raise
+
+
+class TestBackToAProgram(unittest.TestCase):
+    """Reported: on Firefox, went to PROGRAMS, pressed BACK — a black screen.
+
+    Under sway every window floats, and focusing one raises it. A press on
+    any other screen focuses the shell and lifts it over the framed program,
+    and nothing put the program back when the main screen returned. The fake
+    below stacks the way sway does: the last window focused is on top.
+    """
+
+    SHELL = "org.earthos.shell"
+
+    class _Sway:
+        name = "fake-sway"
+        available = True
+        can_place = True
+
+        def __init__(self, windows):
+            self.windows = list(windows)
+            self.stack = [w.handle for w in self.windows]   # last is on top
+
+        def list_windows(self):
+            return list(self.windows)
+
+        def status(self):
+            return "fake"
+
+        def focus(self, w):
+            if w.handle in self.stack:
+                self.stack.remove(w.handle)
+            self.stack.append(w.handle)
+            return True
+
+        def place(self, w, x, y, width, height):
+            return True
+
+        def fullscreen(self, w, on=True):
+            return True
+
+        def find_by_app(self, app_ids):
+            for w in self.windows:
+                if w.app in app_ids:
+                    return w
+            return None
+
+        def top(self):
+            return self.stack[-1]
+
+    def setUp(self):
+        config = Config.load(Path(tempfile.mkdtemp()) / "config.toml")
+        config.values["voice"]["enabled"] = False
+        self.shell = Shell(config)
+        for screen_class in ALL_SCREENS:
+            self.shell.register_screen(screen_class(self.shell))
+        self.own = Window(handle="1", title="EARTH OS", app=self.SHELL)
+        self.firefox = Window(handle="7", title="Mozilla Firefox", app="firefox")
+        self.editor = Window(handle="9", title="notes.txt", app="gedit")
+        self.sway = self._Sway([self.own, self.editor, self.firefox])
+        self.shell.windows.backend = self.sway
+        self.shell.windows.refresh()
+        self.shell.frame_rect = (300, 120, 1200, 700)
+
+    def _shell_pressed(self):
+        """What sway does on any press inside the shell."""
+        self.sway.focus(self.own)
+
+    def test_back_from_programs_brings_the_program_back(self):
+        self.shell.focus_program(self.shell.windows.find("firefox"))
+        self.assertEqual(self.sway.top(), "7")
+        self.shell.go("programs")
+        self._shell_pressed()                       # the press on BACK
+        self.shell.go_back()
+        self.assertEqual(self.shell.current, "main")
+        self.assertEqual(self.sway.top(), "7", "firefox is in front again")
+
+    def test_home_and_keys_do_the_same(self):
+        self.shell.focus_program(self.shell.windows.find("firefox"))
+        for leave in ("settings", "engineering", "browser"):
+            self.shell.go(leave)
+            self._shell_pressed()
+            self.shell.go("main")
+            self.assertEqual(self.sway.top(), "7", f"back from {leave}")
+
+    def test_leaving_by_voice_puts_the_shell_in_front(self):
+        self.shell.focus_program(self.shell.windows.find("firefox"))
+        self.shell.go("programs")                   # no press: a key or a word
+        self.assertEqual(self.sway.top(), "1",
+                         "the program does not float over the next screen")
+
+    def test_a_press_that_stays_on_main_keeps_the_program_in_front(self):
+        self.shell.focus_program(self.shell.windows.find("firefox"))
+        main = self.shell.screens["main"]
+        main.ensure_built(self.shell.context(1600, 1000))
+        listen = main.g.get("listen_toggle")
+        self._shell_pressed()
+        with mock.patch.object(self.shell, "toggle_listening"):
+            listen.on_click = self.shell.toggle_listening
+            main.on_release(listen.x + 2 + listen.h / 2, listen.y + listen.h / 2,
+                            listen)
+        self.assertEqual(self.sway.top(), "7")
+
+    def test_if_it_closed_the_last_one_before_it_comes_back(self):
+        self.shell.focus_program(self.shell.windows.find("gedit"))
+        self.shell.focus_program(self.shell.windows.find("firefox"))
+        self.shell.go("programs")
+        self._shell_pressed()
+        self.sway.windows.remove(self.firefox)      # firefox was closed
+        self.shell.go_back()
+        self.assertEqual(self.shell.framed_window.handle, "9")
+        self.assertEqual(self.sway.top(), "9")
+
+    def test_closing_it_while_framed_moves_to_the_last_one(self):
+        self.shell.poll_windows()                   # seed
+        self.shell.focus_program(self.shell.windows.find("gedit"))
+        self.shell.focus_program(self.shell.windows.find("firefox"))
+        self.sway.windows.remove(self.firefox)
+        self.shell.poll_windows()
+        self.assertEqual(self.shell.framed_window.handle, "9")
+
+    def test_with_nothing_running_the_frame_is_let_go(self):
+        self.shell.focus_program(self.shell.windows.find("firefox"))
+        self.shell.go("programs")
+        self.sway.windows = [self.own]
+        self.shell.go_back()
+        self.assertIsNone(self.shell.framed_window,
+                          "no frame left drawn black over nothing")

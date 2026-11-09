@@ -375,6 +375,24 @@ class MainScreen(Screen):
         """Nothing to do: the window poll runs on the frame clock now, for
         every screen rather than only for this one."""
 
+    def on_enter(self) -> None:
+        # However the main screen was reached — BACK, HOME, F1, Escape, a
+        # word — the program in the frame comes back to the front. See
+        # Shell.restore_frame for why it was behind.
+        self.app.restore_frame()
+
+    def on_leave(self) -> None:
+        # The frame is a hole in this screen only; anywhere else the program
+        # would cover that screen's content.
+        self.app.raise_shell()
+
+    def on_release(self, x: float, y: float, pressed) -> None:
+        super().on_release(x, y, pressed)
+        # A press that stayed on this screen still focused the shell, which
+        # lifts it over the framed program; put the program back on top.
+        if self.app.current == self.name:
+            self.app.raise_framed()
+
     def _draw_viewport(self, cr, ctx: RenderContext) -> None:
         """Frame the rectangle a program is living in.
 

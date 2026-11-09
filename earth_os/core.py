@@ -200,6 +200,10 @@ class Shell:
         self.handed_over_to = ""
         #: The window currently living inside the LCARS frame, if any.
         self.framed_window = None
+        #: Handles of programs that have been in the frame, oldest first, so
+        #: the main screen can go back to the last one when the current one
+        #: has gone.
+        self._frame_history: List[str] = []
         #: Content rectangle in screen pixels, published by the GTK layer.
         self.frame_rect: Optional[Tuple[int, int, int, int]] = None
         #: The output rectangle, when a compositor can tell us.
@@ -1133,6 +1137,19 @@ class Shell:
 
         fresh = [w for w in current if w.handle not in self._known_windows]
         self._known_windows = handles
+
+        # The framed program closed. Leaving it as the framed window drew an
+        # empty black frame under its old title; instead the frame goes to
+        # the program before it, now if the frame is on screen, otherwise
+        # when the main screen next comes up.
+        if (self.framed_window is not None
+                and self.framed_window.handle not in handles and not fresh):
+            self.framed_window = None
+            if self.current == "main":
+                self.restore_frame()
+            else:
+                self.redraw()
+
         if not fresh:
             return
         if time.monotonic() < self._capture_quiet_until:
@@ -1201,9 +1218,78 @@ class Shell:
         if ok:
             self.framed_window = window
             self.handed_over_to = ""
+            self._frame_history = [h for h in self._frame_history
+                                   if h != window.handle][-15:]
+            self._frame_history.append(window.handle)
         self.status_message = message
         self.redraw()
         return (ok, message)
+
+    def restore_frame(self) -> bool:
+        """Bring a program back into the frame as the main screen comes up.
+
+        Under sway the shell and the programs are all floating windows, and
+        a floating window is raised whenever it is focused. Any press on
+        another screen focuses the shell, so by the time BACK or HOME lands
+        on the main screen the shell is lying on top of the framed program:
+        the frame showed black, with the program's name still over it.
+
+        So arriving on the main screen puts the program back in front. The
+        one that was framed if it is still running; otherwise the last one
+        that was; otherwise the newest program running at all. With nothing
+        running, the frame is let go and the conversation comes back, rather
+        than a black hole. Returns whether a program is in the frame.
+        """
+        if not (self.frame_mode and self.windows.available):
+            return False
+        if self.viewport() is None:
+            return False
+        running = self.windows.refresh()
+        by_handle = {w.handle: w for w in running}
+        window = None
+        if self.framed_window is not None:
+            window = by_handle.get(self.framed_window.handle)
+        if window is None:
+            for handle in reversed(self._frame_history):
+                if handle in by_handle:
+                    window = by_handle[handle]
+                    break
+        if window is None and running:
+            window = running[-1]
+        if window is None:
+            self.framed_window = None
+            self.redraw()
+            return False
+        ok, _ = self.show_in_frame(window)
+        return ok
+
+    def raise_shell(self) -> None:
+        """Put the shell in front of the framed program, for leaving main.
+
+        Leaving by a press already did this — the press focused the shell —
+        but leaving by voice or a key did not, and the program stayed
+        floating over whichever screen came up.
+        """
+        if self.framed_window is None or not self.windows.available:
+            return
+        backend = self.windows.backend
+        if not hasattr(backend, "find_by_app"):
+            return
+        from .windows import SELF_APP_IDS
+        own = backend.find_by_app(SELF_APP_IDS)
+        if own is not None:
+            backend.focus(own)
+
+    def raise_framed(self) -> None:
+        """Put the framed program back in front of the shell, in place.
+
+        For a press on the main screen that stays on it — LISTEN, the volume
+        spot — which focuses the shell and so lifts it over the program.
+        """
+        window = self.framed_window
+        if window is None or not self.frame_mode or not self.windows.available:
+            return
+        self.windows.backend.focus(window)
 
     def break_out(self, window=None) -> None:
         """Let a program cover the whole screen, out of the frame."""

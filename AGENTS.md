@@ -12,7 +12,7 @@ is, and this file tells you which test does it.
 ## Before you start
 
 ```bash
-/usr/bin/python3.12 -m unittest discover -s tests -q      # 598 tests, all pass
+/usr/bin/python3.12 -m unittest discover -s tests -q      # 605 tests, all pass
 ```
 
 **Use Python 3.12 or newer.** PyGObject's compiled extension is built for
