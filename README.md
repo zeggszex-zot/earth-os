@@ -96,14 +96,20 @@ earth-os --doctor                # if anything misbehaves, start here
 |---|---|
 | **Main** | The computer conversation, the original's button column, live gauges |
 | **Program index** | Launcher built from XDG `.desktop` entries |
-| **Computer core** | File browser, opens through `xdg-open` |
-| **Engineering** | Live system telemetry, per-core load, system identification |
+| **Computer core** | File browser; opens through `gio` or `xdg-open`, and says why when nothing can |
+| **Engineering** | Live system telemetry, per-core load, system identification — beside the main screen's button column |
 | **Parameters** | Palette, language, voice backends, audio, diagnostics |
 | **Red alert** | Pulsing klaxon screen, because of course |
 | **Running programs** | Switch to, fullscreen or close another window |
 | **Communications** | Wireless networks and Bluetooth devices: scan, join, pair, connect, forget (`F9`) |
 | **Claude Code** | A coding agent that drives the shell and changes its interface, behind the test gate |
 | **Auto destruct** | A shutdown timer with a countdown and a two-step arm |
+
+The square at the head of the side column holds four spots for icons. The
+first is **system volume**: it shows the level and opens a slider across the
+band under the title bar (`-` / `+` step five percent). It goes through
+`audio.set_volume`, the same capability as *"computer, louder"*, and when the
+level cannot be read it says why rather than showing a number.
 
 ## The original's files still work
 

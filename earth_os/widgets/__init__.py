@@ -4,12 +4,13 @@ from .base import Element, Group, RenderContext, draw_text, text_size
 from .controls import (
     ArrowButton, BarRun, ComplexButton, Elbow, FlatButton, HalfPillButton,
     Label, LevelIndicator, ListPanel, Meter, PieButton, ScrollPanel,
-    StandardButton, TabStrip, TextButton,
+    Slider, StandardButton, TabStrip, TextButton, Tile, speaker_icon,
 )
 
 __all__ = [
     "Element", "Group", "RenderContext", "draw_text", "text_size",
     "ArrowButton", "BarRun", "ComplexButton", "Elbow", "FlatButton",
     "HalfPillButton", "Label", "LevelIndicator", "ListPanel", "Meter",
-    "PieButton", "ScrollPanel", "StandardButton", "TabStrip", "TextButton",
+    "PieButton", "ScrollPanel", "Slider", "StandardButton", "TabStrip",
+    "TextButton", "Tile", "speaker_icon",
 ]

@@ -786,7 +786,11 @@ class TestScreenshots(unittest.TestCase):
         self.assertIsNotNone(self.shell.screens["engineering"])
         self.shell.go("engineering")
         self.shell.screens["engineering"].ensure_built(self.shell.context(1024, 600))
-        self.assertIsNotNone(self.shell.screens["engineering"].g.get("chrome_screenshot"),
+        # DIAGNOSTICS carries the home column, so its SCREEN SHOT is the
+        # column's entry rather than the chrome's; either one keeps the
+        # promise that every screen has the button.
+        group = self.shell.screens["engineering"].g
+        self.assertIsNotNone(group.get("chrome_screenshot") or group.get("myScreenshot"),
                              "a SCREEN SHOT button on every screen")
 
     def test_a_picture_taken_by_the_session_key_is_announced(self):

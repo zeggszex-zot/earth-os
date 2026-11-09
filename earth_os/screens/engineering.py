@@ -15,6 +15,7 @@ from ..widgets import (
     draw_text,
 )
 from .base import Frame, Screen
+from .main import add_command_column
 
 
 class EngineeringScreen(Screen):
@@ -28,7 +29,11 @@ class EngineeringScreen(Screen):
     def build(self, ctx: RenderContext, f: Frame) -> None:
         u = ctx.u
         mon = self.monitor
-        self.add_chrome(ctx, f, title=ctx.strings["myEngineering"])
+        # The home column stays put: DIAGNOSTICS is a place to glance at,
+        # not a detour, so the way on to anywhere else is the same as from
+        # home. Its own entry is lit and leads back home.
+        self.add_chrome(ctx, f, title=ctx.strings["myEngineering"], back=False)
+        add_command_column(self, ctx, f)
         cx, cy, cw, ch = f.content
 
         self.g.add(TextButton(

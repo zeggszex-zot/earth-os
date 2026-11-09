@@ -173,6 +173,9 @@ class Shell:
         #: in the main screen's transcript and call that feedback.
         self.toast_text = ""
         self.toast_until = 0.0
+        #: The output volume behind the volume spot in the upper-left box.
+        from .volume import SystemVolume
+        self.volume = SystemVolume(self)
         #: The window's size in pixels, published by the GTK layer on every
         #: draw. Used to render the shell itself when the screen cannot be
         #: captured whole.
@@ -991,41 +994,94 @@ class Shell:
     #: anything that needs GTK.
     OPENERS = OPENERS
 
-    def open_path(self, path: str) -> Tuple[bool, str]:
+    #: How long an opener is given to fail before it is believed. Openers that
+    #: find no handler exit within a fraction of a second; one that is still
+    #: running after this has handed the file to a program that is using it.
+    OPEN_GRACE = 2.0
+
+    def open_path(self, path: str,
+                  on_done: Optional[Callable[[bool, str], None]] = None
+                  ) -> Tuple[bool, str]:
         """Open a file or folder with the desktop's handler.
 
         The path is passed as its own argv element, so spaces, quotes and
         every other awkward character survive. Returns ``(ok, message)`` so a
         screen can report the outcome where the user is actually looking.
+
+        An opener *starting* is not the file opening. Each one is watched for
+        :attr:`OPEN_GRACE` seconds, and one that exits with an error ("no
+        application registered for text/plain") passes the file to the next
+        instead of being reported as success. Reporting the launch as the
+        result is how FILES came to say "opening" for files that never opened.
+
+        With *on_done*, every outcome — including the immediate ones, like
+        a missing file — is delivered to *on_done* on the interface thread,
+        and the watching happens off it. The return value then only says
+        whether an attempt was started. Without *on_done*, the call blocks
+        and the return value is the outcome.
         """
+        def finish(ok: bool, message: str) -> Tuple[bool, str]:
+            if on_done is not None:
+                on_done(ok, message)
+            return (ok, message)
+
         target = str(path)
         if self.capabilities is None:
-            return (False, f"no platform adapter: {self.platform_error}")
+            return finish(False, f"no platform adapter: {self.platform_error}")
         if not self.capabilities.invoke("filesystem.exists", path=target).value:
-            return (False, f"no such path: {target}")
+            return finish(False, f"no such path: {target}")
 
-        tried: List[str] = []
-        for opener in self.OPENERS:
-            if shutil.which(opener[0]) is None:
+        openers = [o for o in self.OPENERS if shutil.which(o[0]) is not None]
+        if not openers:
+            return finish(False,
+                          "no opener installed — try: sudo apt install xdg-utils")
+        name = os.path.basename(target) or target
+
+        if on_done is None or self.call_on_main is None:
+            # Tests and headless rendering: there is no loop to come back to.
+            return finish(*self._open_with(openers, target, name))
+
+        post = self.call_on_main
+
+        def worker() -> None:
+            ok, message = self._open_with(openers, target, name)
+            post(lambda: on_done(ok, message))
+
+        threading.Thread(target=worker, daemon=True,
+                         name="cdos-open").start()
+        return (True, f"opening {name}...")
+
+    def _open_with(self, openers: List[List[str]], target: str,
+                   name: str) -> Tuple[bool, str]:
+        """Try each opener in turn until one keeps the file."""
+        problems: List[str] = []
+        for opener in openers:
+            result = self.capabilities.invoke(
+                "process.launch", argv=[*opener, target])
+            if not result.ok:
+                problems.append(f"{opener[0]}: {result.error}")
                 continue
-            tried.append(opener[0])
-            # Fire and forget: the handler is somebody else's program and the
-            # shell has no interest in its error output, so nothing is
-            # captured that would have to be emptied later.
-            if not self.capabilities.invoke(
-                    "process.launch", argv=[*opener, target],
-                    capture_stderr=False).ok:
+            handle = result.value
+            code, detail = handle.wait(timeout=self.OPEN_GRACE)
+            # Still running, or finished: either way stop listening, so a
+            # long-lived program is not left writing into a full pipe.
+            handle.release()
+            if code not in (None, 0):
+                last = detail.splitlines()[-1].strip() if detail else ""
+                if not last.startswith(f"{opener[0]}:"):
+                    last = f"{opener[0]}: {last or f'exit {code}'}"
+                problems.append(last)
                 continue
-            name = os.path.basename(target) or target
             self.status_message = f"opened {name}"
             self.launched.append((time.time(), name))
             del self.launched[:-20]
             self.redraw()
-            return (True, f"opening {name} with {opener[0]}")
+            return (True, f"opened {name} with {opener[0]}")
 
-        if not tried:
-            return (False, "no opener installed — try: sudo apt install xdg-utils")
-        return (False, f"{', '.join(tried)} could not open it")
+        reason = "; ".join(problems)[:240]
+        self.status_message = f"could not open {name}"
+        self.redraw()
+        return (False, f"could not open {name} — {reason}")
 
     def claim_screen(self) -> None:
         """Take the whole output under a tiling compositor.
@@ -1187,7 +1243,8 @@ class Shell:
             hook()
         self.redraw()
 
-    def hand_over_soon(self, hint: str = "", delay: float = 1.2) -> None:
+    def hand_over_soon(self, hint: str = "", delay: float = 1.2,
+                       before: Optional[set] = None) -> None:
         """Step aside once a just-launched program has had time to map.
 
         There is no event for "the window I asked for has appeared", so this
@@ -1196,13 +1253,19 @@ class Shell:
         In frame mode this runs whatever ``step_aside`` says: the setting is
         about the shell getting out of the way, and in frame mode it never
         does — the program is placed inside the chrome instead.
+
+        *before* is the set of window handles to treat as already there. By
+        default it is taken now; a caller that learns of the launch late —
+        an opener that was watched for a couple of seconds first — passes
+        the set from before it started, or the new window is already in it.
         """
         if not self.windows.available:
             return
         if not (self.frame_mode
                 or bool(self.config.get("windows", "step_aside", True))):
             return
-        before = {w.handle for w in self.windows.windows}
+        if before is None:
+            before = {w.handle for w in self.windows.windows}
 
         def worker() -> None:
             import time as _time

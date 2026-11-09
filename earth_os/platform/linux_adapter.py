@@ -798,8 +798,8 @@ class LinuxAudio(Audio):
     """Audio operations on Linux."""
 
     def available(self) -> bool:
-        # Check for pulseaudio or alsa
-        return shutil.which("pactl") is not None or shutil.which("amixer") is not None
+        # PulseAudio, PipeWire or bare ALSA
+        return any(shutil.which(t) for t in ("pactl", "wpctl", "amixer"))
 
     def speak(self, text: str, rate: float = 1.0) -> bool:
         """Synthesize speech using espeak or festival."""
@@ -827,46 +827,86 @@ class LinuxAudio(Audio):
         raise PlatformError(
             "speech recognition is not wired into the platform yet")
 
+    #: Output volume, in the order each is tried. pactl speaks to PulseAudio
+    #: and to PipeWire's pulse shim; wpctl is PipeWire's own tool, there on
+    #: machines that never installed the shim; amixer is bare ALSA.
+    def _volume_tools(self) -> List[str]:
+        return [t for t in ("pactl", "wpctl", "amixer") if shutil.which(t)]
+
     def set_volume(self, level: float) -> bool:
-        """Set volume using pactl or amixer."""
-        level_percent = int(max(0, min(100, level * 100)))
-        try:
-            if shutil.which("pactl"):
-                subprocess.run(
-                    ["pactl", "set-sink-volume", "@DEFAULT_SINK@", f"{level_percent}%"],
-                    check=True, capture_output=True
-                )
+        """Set the output volume, 0.0-1.0.
+
+        Raises rather than returning False: False came back from the
+        capability layer as ``ok`` with a value of False, which every caller
+        read as the volume having changed.
+        """
+        level = max(0.0, min(1.0, float(level)))
+        percent = int(round(level * 100))
+        commands = {
+            "pactl": ["pactl", "set-sink-volume", "@DEFAULT_SINK@", f"{percent}%"],
+            "wpctl": ["wpctl", "set-volume", "@DEFAULT_AUDIO_SINK@", f"{level:.2f}"],
+            "amixer": ["amixer", "-q", "set", "Master", f"{percent}%"],
+        }
+        tools = self._volume_tools()
+        if not tools:
+            raise PlatformError("no volume control: install pulseaudio-utils "
+                                "(pactl), wireplumber (wpctl) or alsa-utils")
+        problems = []
+        for tool in tools:
+            try:
+                subprocess.run(commands[tool], check=True, capture_output=True,
+                               timeout=3)
                 return True
-            elif shutil.which("amixer"):
-                subprocess.run(
-                    ["amixer", "set", "Master", f"{level_percent}%"],
-                    check=True, capture_output=True
-                )
-                return True
-        except subprocess.CalledProcessError:
-            pass
-        return False
+            except subprocess.CalledProcessError as exc:
+                detail = (exc.stderr or b"").decode("utf-8", "replace").strip()
+                problems.append(f"{tool}: {detail.splitlines()[-1] if detail else exc.returncode}")
+            except (OSError, subprocess.TimeoutExpired) as exc:
+                problems.append(f"{tool}: {exc}")
+        raise PlatformError("; ".join(problems))
 
     def get_volume(self) -> float:
-        """Get current volume using pactl or amixer."""
-        try:
-            if shutil.which("pactl"):
+        """The output volume, 0.0-1.0.
+
+        Raises when it cannot be read. This used to return 0.5 on any
+        failure — a plausible number for a reading that was never taken, and
+        the amixer branch could never succeed at all, since amixer brackets
+        its percentages and the parser wanted them bare.
+        """
+        import re
+        commands = {
+            "pactl": ["pactl", "get-sink-volume", "@DEFAULT_SINK@"],
+            "wpctl": ["wpctl", "get-volume", "@DEFAULT_AUDIO_SINK@"],
+            "amixer": ["amixer", "get", "Master"],
+        }
+        tools = self._volume_tools()
+        if not tools:
+            raise PlatformError("no volume control: install pulseaudio-utils "
+                                "(pactl), wireplumber (wpctl) or alsa-utils")
+        problems = []
+        for tool in tools:
+            try:
                 output = subprocess.check_output(
-                    ["pactl", "get-sink-volume", "@DEFAULT_SINK@"],
-                    text=True, stderr=subprocess.DEVNULL
-                )
-                for part in output.split():
-                    if part.endswith("%"):
-                        return int(part[:-1]) / 100.0
-            elif shutil.which("amixer"):
-                output = subprocess.check_output(["amixer", "get", "Master"], text=True,
-                                                 stderr=subprocess.DEVNULL)
-                for part in output.split():
-                    if part.endswith("%"):
-                        return int(part[:-1]) / 100.0
-        except (OSError, subprocess.CalledProcessError, ValueError):
-            pass
-        return 0.5
+                    commands[tool], text=True, stderr=subprocess.PIPE,
+                    timeout=3)
+            except subprocess.CalledProcessError as exc:
+                detail = (exc.stderr or "").strip()
+                problems.append(f"{tool}: {detail.splitlines()[-1] if detail else exc.returncode}")
+                continue
+            except (OSError, subprocess.TimeoutExpired) as exc:
+                problems.append(f"{tool}: {exc}")
+                continue
+            if tool == "wpctl":
+                # "Volume: 0.40" — a fraction, possibly followed by [MUTED].
+                match = re.search(r"Volume:\s*([0-9.]+)", output)
+                if match:
+                    return max(0.0, min(1.0, float(match.group(1))))
+            else:
+                # pactl: "... / 40% / ..."; amixer: "... [40%] ...".
+                match = re.search(r"(\d+)%", output)
+                if match:
+                    return max(0.0, min(1.0, int(match.group(1)) / 100.0))
+            problems.append(f"{tool}: no volume in its output")
+        raise PlatformError("; ".join(problems))
 
     def play_sound(self, path: str) -> bool:
         """Play an audio file."""
@@ -1221,7 +1261,7 @@ class LinuxPlatform(Platform):
         "power": ("systemctl", "shutdown"),
         "session": ("loginctl", "slock", "xlock",
                     "gnome-screensaver-command"),
-        "volume": ("pactl", "amixer"),
+        "volume": ("pactl", "wpctl", "amixer"),
         "speech": ("espeak", "festival"),
         "brightness": ("brightnessctl", "light", "xbacklight"),
         "resolution": ("xrandr",),

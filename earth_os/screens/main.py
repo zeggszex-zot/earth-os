@@ -38,6 +38,45 @@ COLUMN: List[Tuple[str, str, str]] = [
 ]
 
 
+#: Screens that show the home column instead of BACK / HOME / SCREEN SHOT,
+#: keyed by screen name, with the column action that is "you are here".
+HOME_COLUMN_SCREENS = {"main": None, "engineering": "engineering"}
+
+
+def add_command_column(screen: Screen, ctx: RenderContext, f: Frame) -> None:
+    """The home screen's side column, on whichever screen asks for it.
+
+    One function, so a screen that keeps the column keeps *this* column: the
+    same buttons in the same places, not a copy that drifts. The entry for
+    the screen being shown is lit, and pressing it goes home — the column has
+    no HOME of its own, and the way back should be where the eye already is.
+    """
+    u = ctx.u
+    strings = ctx.strings
+    app = screen.app
+    here = HOME_COLUMN_SCREENS.get(screen.name)
+
+    col_x = f.margin + u(0.3)
+    col_w = f.col_w - u(0.6)
+    # Below the square box at the head of the column.
+    top = f.column_top
+    bottom = f.H - f.margin - f.bottom_h - u(0.6)
+    count = len(COLUMN)
+    slot_h = (bottom - top) / count
+    btn_h = min(slot_h * 0.80, u(1.9))
+    for i, (key, action, color) in enumerate(COLUMN):
+        y = top + i * slot_h
+        current = here is not None and action == here
+        screen.g.add(HalfPillButton(
+            key, (col_x, y, col_w, btn_h), side="left",
+            label=strings[key], color="select" if current else color,
+            label_align="right",
+            on_click=((lambda: app.go("main")) if current
+                      else (lambda a=action: app.run_action(a))),
+            tooltip="home" if current else action,
+        ))
+
+
 class MainScreen(Screen):
     name = "main"
     title = "MAIN"
@@ -58,21 +97,8 @@ class MainScreen(Screen):
                         subtitle="", back=False)
 
         # -- left column ------------------------------------------------
-        col_x = f.margin + u(0.3)
-        col_w = f.col_w - u(0.6)
-        top = f.margin + f.top_h + u(1.4)
+        add_command_column(self, ctx, f)
         bottom = f.H - f.margin - f.bottom_h - u(0.6)
-        count = len(COLUMN)
-        slot_h = (bottom - top) / count
-        btn_h = min(slot_h * 0.80, u(1.9))
-        for i, (key, action, color) in enumerate(COLUMN):
-            y = top + i * slot_h
-            self.g.add(HalfPillButton(
-                key, (col_x, y, col_w, btn_h), side="left",
-                label=strings[key], color=color, label_align="right",
-                on_click=(lambda a=action: self.app.run_action(a)),
-                tooltip=action,
-            ))
 
         # -- right rail: gauges, live numbers, then the voice controls ----
         #

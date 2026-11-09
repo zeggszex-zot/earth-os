@@ -29,6 +29,7 @@ from typing import List, Optional, Tuple
 from . import brand
 from .widgets import (
     BarRun, Elbow, Element, FlatButton, HalfPillButton, Label, RenderContext,
+    Tile,
 )
 
 
@@ -51,6 +52,34 @@ class Frame:
         self.top_h = u(3.4) + self.strip_h
         self.bottom_h = u(3.0)
         self.elbow_w = self.col_w + u(3.2)
+
+    @property
+    def box(self) -> Tuple[float, float, float, float]:
+        """The square at the head of the side column: four spots for icons.
+
+        As wide as the column and exactly as tall, whatever that does to the
+        column below. It used to be whatever height the title band left it,
+        which made it a slab rather than a place to put things.
+        """
+        return (self.margin, self.margin, self.col_w, self.col_w)
+
+    @property
+    def spots(self) -> List[Tuple[float, float, float, float]]:
+        """The box's four spots, in reading order.
+
+        Spot 0 carries the frame's swept corner; spot 1 is the foot of the
+        elbow arm that runs on into the title bar.
+        """
+        x, y, side, _ = self.box
+        t = (side - self.gap) / 2
+        far = t + self.gap
+        return [(x, y, t, t), (x + far, y, t, t),
+                (x, y + far, t, t), (x + far, y + far, t, t)]
+
+    @property
+    def column_top(self) -> float:
+        """Where the side column's own controls may start, below the box."""
+        return self.margin + self.col_w + self.gap * 2
 
     @property
     def strip(self) -> Tuple[float, float, float, float]:
@@ -86,12 +115,24 @@ def pieces(ctx: RenderContext, f: Frame, *, title: str = "",
     u = ctx.u
     out: List[Element] = []
 
-    # Top-left elbow with the title running along its arm.
+    # The upper-left box: a square of four spots. Spot 0 takes the frame's
+    # swept corner; spot 1 is the foot of the elbow whose arm becomes the
+    # title bar. Empty spots are plain frame; a screen puts controls on them
+    # (Screen.add_box_controls) because a control needs the application and
+    # the splash is drawn before there is one.
+    spots = f.spots
+    t = spots[0][2]
+    out.append(Tile(
+        "chrome_spot_0", spots[0], radii=(t * 0.72, 0, 0, 0), color="frame",
+    ))
+    sx, sy, _, _ = spots[1]
     out.append(Elbow(
         "chrome_tl",
-        (f.margin, f.margin, f.elbow_w, f.top_h + u(1.2)),
-        corner="tl", bar_w=f.col_w, bar_h=f.bar_h, color="frame",
+        (sx, sy, f.margin + f.elbow_w - sx, t),
+        corner="tl", bar_w=t, bar_h=f.bar_h, color="frame", outer_radius=0,
     ))
+    for i in (2, 3):
+        out.append(Tile(f"chrome_spot_{i}", spots[i], color="frame"))
     # Title bar continuing to the right edge.
     title_x = f.margin + f.elbow_w + f.gap
     out.append(FlatButton(

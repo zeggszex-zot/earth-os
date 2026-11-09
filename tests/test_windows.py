@@ -202,7 +202,8 @@ class TestFileOpening(unittest.TestCase):
         # where the argv has to be inspected.
         def fake_launch(argv, **kwargs):
             seen["argv"] = argv
-            return mock.Mock(pid=1234)
+            # Still running after the grace period: the file is open.
+            return mock.Mock(pid=1234, wait=mock.Mock(return_value=(None, "")))
 
         with mock.patch("earth_os.core.shutil.which", return_value="/usr/bin/xdg-open"), \
              mock.patch.object(type(self.shell.platform.process), "launch",
@@ -211,9 +212,9 @@ class TestFileOpening(unittest.TestCase):
             ok, _ = self.shell.open_path(str(awkward))
 
         self.assertTrue(ok)
-        # The path must arrive as exactly one argv element.
-        self.assertEqual(seen["argv"][-1], str(awkward))
-        self.assertEqual(len(seen["argv"]), 2)
+        # The path must arrive as exactly one argv element, after the
+        # opener's own prefix ("gio open" is two words; the path is one).
+        self.assertEqual(seen["argv"], [*self.shell.OPENERS[0], str(awkward)])
 
     def test_no_opener_installed_says_how_to_fix(self):
         target = Path(tempfile.mkdtemp()) / "f.txt"
@@ -222,6 +223,82 @@ class TestFileOpening(unittest.TestCase):
             ok, message = self.shell.open_path(str(target))
         self.assertFalse(ok)
         self.assertIn("xdg-utils", message)
+
+    def _openers(self, outcomes):
+        """Patch process.launch so each opener ends as *outcomes* says.
+
+        *outcomes* maps an opener's argv[0] to ``(exit code, stderr)``; a
+        code of None is a program still running when the grace ran out.
+        """
+        launched = []
+
+        def fake_launch(argv, **kwargs):
+            launched.append(argv[0])
+            code, detail = outcomes[argv[0]]
+            return mock.Mock(pid=1, wait=mock.Mock(return_value=(code, detail)))
+
+        import contextlib
+
+        @contextlib.contextmanager
+        def patched():
+            with mock.patch("earth_os.core.shutil.which",
+                            side_effect=lambda n: f"/usr/bin/{n}"
+                            if n in outcomes else None), \
+                 mock.patch.object(type(self.shell.platform.process), "launch",
+                                   side_effect=fake_launch):
+                # Bindings are taken when the registry is built, so it is
+                # built inside the patch.
+                self.shell.capabilities = CapabilityRegistry(self.shell.platform)
+                yield
+        return launched, patched()
+
+    def test_an_opener_that_fails_is_not_reported_as_opening(self):
+        """Reported: FILES did not open files.
+
+        The opener was started and its *starting* was reported as the file
+        opening. An opener that exits with an error found nothing to open it
+        with, and the next one gets a turn.
+        """
+        target = Path(tempfile.mkdtemp()) / "notes.txt"
+        target.write_text("x", encoding="utf-8")
+        launched, patched = self._openers({
+            "gio": (2, "gio: Failed to find default application for text/plain"),
+            "xdg-open": (None, ""),
+        })
+        with patched:
+            ok, message = self.shell.open_path(str(target))
+        self.assertEqual(launched, ["gio", "xdg-open"])
+        self.assertTrue(ok)
+        self.assertIn("xdg-open", message)
+
+    def test_when_nothing_can_open_it_the_reason_is_shown(self):
+        target = Path(tempfile.mkdtemp()) / "notes.txt"
+        target.write_text("x", encoding="utf-8")
+        launched, patched = self._openers({
+            "gio": (2, "gio: Failed to find default application for text/plain"),
+            "xdg-open": (3, ""),
+        })
+        with patched:
+            ok, message = self.shell.open_path(str(target))
+        self.assertFalse(ok)
+        self.assertIn("Failed to find default application", message)
+        self.assertIn("xdg-open: exit 3", message)
+
+    def test_the_browser_shows_the_real_outcome(self):
+        """The screen says what happened, not that something was tried."""
+        browser = self.shell.screens["browser"]
+        folder = Path(tempfile.mkdtemp())
+        (folder / "notes.txt").write_text("x", encoding="utf-8")
+        browser.open(folder)
+        browser.ensure_built(self.shell.context(1280, 800))
+        browser.list.selected = 0
+        launched, patched = self._openers({"gio": (4, "no handler")})
+        with patched:
+            browser.activate_selected()
+        # No main loop in a test, so the answer arrives inline; with one it
+        # arrives a moment later on the interface thread.
+        self.assertFalse(browser.message_ok)
+        self.assertIn("could not open notes.txt", browser.message)
 
     def test_browser_reports_on_its_own_screen(self):
         browser = self.shell.screens["browser"]

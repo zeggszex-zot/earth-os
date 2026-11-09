@@ -135,7 +135,7 @@ frame cost flat.
 | `frmRedAlert` | `screens/alert.py` | Same idea, pulse driven by the frame clock. |
 | `LCARSdestruct.exe` | `screens/destruct.py` | Now requires a second confirmation to arm, and can target poweroff/reboot/logoff/nothing. |
 | `LCARSengineering.exe` | `screens/engineering.py` | Reads real `/proc` and `/sys` instead of drawing decorative graphs. |
-| `LCARSexplorer.exe` | `screens/browser.py` | Opens files through `xdg-open`. |
+| `LCARSexplorer.exe` | `screens/browser.py` | Opens files through `gio open`, then `xdg-open`; an opener that exits with an error passes to the next. |
 | `LCARSsettings.exe` | `screens/settings.py` | Tabs for appearance, voice, audio, diagnostics; writes `config.toml`. |
 | Start Menu / `frmManageButtons` | `screens/programs.py` | Walks XDG `.desktop` entries instead of the Windows Start Menu. |
 | `LCARSpic.exe` | not ported | Hands images to the system viewer instead. |

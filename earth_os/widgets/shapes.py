@@ -37,6 +37,34 @@ def block(cr, x: float, y: float, w: float, h: float, radius: float = 0.0) -> No
     cr.close_path()
 
 
+def rounded(cr, x: float, y: float, w: float, h: float, *,
+            tl: float = 0.0, tr: float = 0.0, br: float = 0.0,
+            bl: float = 0.0) -> None:
+    """A rectangle with each corner rounded independently.
+
+    The spots in the upper-left box need this: the outermost one carries the
+    frame's swept corner and the others stay square.
+    """
+    # A lone rounded corner may sweep the whole side; two on one side share.
+    limit = max(min(w, h), 0.0)
+    tl, tr, br, bl = (max(0.0, min(r, limit)) for r in (tl, tr, br, bl))
+    cr.new_sub_path()
+    cr.move_to(x + tl, y)
+    cr.line_to(x + w - tr, y)
+    if tr:
+        cr.arc(x + w - tr, y + tr, tr, -math.pi / 2, 0)
+    cr.line_to(x + w, y + h - br)
+    if br:
+        cr.arc(x + w - br, y + h - br, br, 0, math.pi / 2)
+    cr.line_to(x + bl, y + h)
+    if bl:
+        cr.arc(x + bl, y + h - bl, bl, math.pi / 2, math.pi)
+    cr.line_to(x, y + tl)
+    if tl:
+        cr.arc(x + tl, y + tl, tl, math.pi, 3 * math.pi / 2)
+    cr.close_path()
+
+
 def pill(cr, x: float, y: float, w: float, h: float, ends: Side = "both") -> None:
     """A bar with semicircular ends.
 
@@ -138,6 +166,36 @@ def elbow_hit(px: float, py: float, x: float, y: float, w: float, h: float,
     in_vertical = (px <= x + bar_w) if left else (px >= x + w - bar_w)
     in_horizontal = (py <= y + bar_h) if top else (py >= y + h - bar_h)
     return in_vertical or in_horizontal
+
+
+# --------------------------------------------------------------------------
+# Glyphs
+# --------------------------------------------------------------------------
+
+def speaker(cr, cx: float, cy: float, size: float) -> None:
+    """A loudspeaker body facing right, centred a little left of *cx*.
+
+    Only the body: the sound waves are arcs the caller strokes, because how
+    many there are is the reading.
+    """
+    s = size
+    left = cx - s * 0.46
+    cr.new_sub_path()
+    cr.move_to(left, cy - s * 0.14)
+    cr.line_to(left + s * 0.18, cy - s * 0.14)
+    cr.line_to(left + s * 0.42, cy - s * 0.36)
+    cr.line_to(left + s * 0.42, cy + s * 0.36)
+    cr.line_to(left + s * 0.18, cy + s * 0.14)
+    cr.line_to(left, cy + s * 0.14)
+    cr.close_path()
+
+
+def sound_wave(cr, cx: float, cy: float, size: float, index: int) -> None:
+    """The *index*-th arc (0 nearest) radiating from :func:`speaker`."""
+    origin = cx - size * 0.06
+    radius = size * (0.18 + 0.15 * index)
+    cr.new_sub_path()
+    cr.arc(origin, cy, radius, -math.pi / 4, math.pi / 4)
 
 
 # --------------------------------------------------------------------------

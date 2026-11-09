@@ -144,13 +144,26 @@ class BrowserScreen(Screen):
             return
         # open_path passes the path as its own argv element, so spaces and
         # quotes in a filename survive; launch() would have split them.
-        ok, message = self.app.open_path(str(target))
-        self.message = message
-        self.message_ok = ok
-        self.app.play("ack" if ok else "beep")
-        if ok and self.app.windows.available:
-            # Give the newly opened program the screen.
-            self.app.hand_over_soon(target.name)
+        #
+        # It answers twice: at once that it is trying, and again — here, on
+        # this screen — with what actually happened. The first answer alone
+        # used to be reported as the result, so a file nothing could open
+        # still said "opening" and then simply did not.
+        before = ({w.handle for w in self.app.windows.windows}
+                  if self.app.windows.available else set())
+
+        def done(ok: bool, message: str) -> None:
+            self.message = message
+            self.message_ok = ok
+            self.app.play("ack" if ok else "beep")
+            if ok and self.app.windows.available:
+                # Give the newly opened program the screen.
+                self.app.hand_over_soon(target.name, before=before)
+            self.app.redraw()
+
+        self.message = f"opening {target.name}..."
+        self.message_ok = True
+        self.app.open_path(str(target), on_done=done)
         self.app.redraw()
 
     # ------------------------------------------------------------------

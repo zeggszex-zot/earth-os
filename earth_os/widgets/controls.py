@@ -247,7 +247,8 @@ class Elbow(Element):
     def __init__(self, name="", rect=(0, 0, 0, 0), *, corner: str = "tl",
                  bar_w: float = 0.0, bar_h: float = 0.0,
                  label: str = "", label_color: Optional[str | RGB] = None,
-                 interactive: bool = False, **kw):
+                 interactive: bool = False,
+                 outer_radius: Optional[float] = None, **kw):
         super().__init__(name, rect, **kw)
         self.corner = corner
         self.bar_w = bar_w
@@ -255,12 +256,16 @@ class Elbow(Element):
         self.label = label
         self.label_color = label_color
         self.interactive = interactive
+        #: None for the classic sweep; 0 for a square outer corner, as when
+        #: the elbow is one spot of a grid and its neighbour has the sweep.
+        self.outer_radius = outer_radius
 
     def draw(self, cr, ctx: RenderContext) -> None:
         x, y, w, h = self.rect
         bw = self.bar_w or w * 0.34
         bh = self.bar_h or h * 0.30
-        shapes.elbow(cr, x, y, w, h, bw, bh, self.corner)
+        shapes.elbow(cr, x, y, w, h, bw, bh, self.corner,
+                     outer_radius=self.outer_radius)
         shapes.fill(cr, self.paint_color(ctx))
         if self.label:
             size = bh * 0.55
@@ -280,6 +285,161 @@ class Elbow(Element):
         bw = self.bar_w or w * 0.34
         bh = self.bar_h or h * 0.30
         return shapes.elbow_hit(px, py, x, y, w, h, bw, bh, self.corner)
+
+
+class Tile(_LabelledButton):
+    """A spot in the upper-left box: a block that can carry an icon.
+
+    ``radii`` rounds each corner independently (top-left, top-right,
+    bottom-right, bottom-left), so the outermost spot can carry the frame's
+    sweep. Without ``on_click`` it is chrome — drawn, never hit.
+
+    ``icon`` is called as ``icon(cr, ctx, cx, cy, size, ink)`` to draw the
+    glyph; ``caption`` is a callable for a small live reading under it.
+    """
+
+    def __init__(self, name="", rect=(0, 0, 0, 0), *,
+                 radii: Tuple[float, float, float, float] = (0, 0, 0, 0),
+                 icon: Optional[Callable] = None,
+                 caption: Optional[Callable[[], str]] = None, **kw):
+        kw.setdefault("label_align", "center")
+        super().__init__(name, rect, **kw)
+        self.radii = radii
+        self.icon = icon
+        self.caption = caption
+        self.interactive = self.on_click is not None
+
+    def draw(self, cr, ctx: RenderContext) -> None:
+        x, y, w, h = self.rect
+        tl, tr, br, bl = self.radii
+        shapes.rounded(cr, x, y, w, h, tl=tl, tr=tr, br=br, bl=bl)
+        fill = self.paint_color(ctx)
+        shapes.fill(cr, fill)
+        ink = self._label_color(ctx)
+        text = self.caption() if self.caption else ""
+        text_h = h * 0.17 if text else 0.0
+        if self.icon is not None:
+            size = min(w, h - text_h * 1.4) * 0.80
+            # Nudged toward the open corner: a swept corner takes room from
+            # the top left, and a glyph centred on the box looks pushed into
+            # the curve.
+            nudge = min(max(self.radii[0] / max(w, 1.0), 0.0), 1.0) * w * 0.08
+            self.icon(cr, ctx, x + w / 2 + nudge,
+                      y + (h - text_h * 1.2) / 2 + nudge, size, ink)
+        if text:
+            draw_text(cr, ctx, text, x + w / 2, y + h - h * 0.08, text_h,
+                      ink, align="center", valign="bottom",
+                      max_width=w * 0.9)
+
+
+def speaker_icon(level: Callable[[], Optional[float]]) -> Callable:
+    """A :class:`Tile` icon: a loudspeaker with one to three waves.
+
+    No waves and a cross means silent; a speaker with no waves at all means
+    the level is not known.
+    """
+    def draw(cr, ctx: RenderContext, cx: float, cy: float, size: float,
+             ink: RGB) -> None:
+        value = level()
+        shapes.speaker(cr, cx, cy, size)
+        shapes.fill(cr, ink)
+        cr.save()
+        cr.set_line_width(max(size * 0.075, 1.5))
+        cr.set_line_cap(1)                    # round
+        shapes.set_source(cr, ink)
+        if value is not None and value <= 0.0:
+            ox, d = cx + size * 0.22, size * 0.13
+            cr.move_to(ox - d, cy - d)
+            cr.line_to(ox + d, cy + d)
+            cr.move_to(ox - d, cy + d)
+            cr.line_to(ox + d, cy - d)
+            cr.stroke()
+        elif value is not None:
+            waves = 1 if value < 0.34 else 2 if value < 0.67 else 3
+            for i in range(waves):
+                shapes.sound_wave(cr, cx, cy, size, i)
+                cr.stroke()
+        cr.restore()
+    return draw
+
+
+class Slider(Element):
+    """A horizontal level control, drawn as a run of segments.
+
+    Pressing anywhere on it sets the level there, and dragging follows the
+    pointer. ``on_change(level, final)`` is called with ``final`` False while
+    dragging and True on release, so the owner can apply cheaply on the way
+    and decisively at the end. ``provider`` gives the level to draw (None
+    when unknown).
+    """
+
+    interactive = True
+
+    def __init__(self, name="", rect=(0, 0, 0, 0), *,
+                 provider: Optional[Callable[[], Optional[float]]] = None,
+                 on_change: Optional[Callable[[float, bool], None]] = None,
+                 note: Optional[Callable[[], str]] = None,
+                 segments: int = 32, **kw):
+        kw.setdefault("color", "accent4")
+        super().__init__(name, rect, **kw)
+        self.provider = provider
+        self.on_change = on_change
+        #: Shown across the track while there is no level to draw — why not.
+        self.note = note
+        self.segments = max(int(segments), 2)
+
+    def _track(self) -> Tuple[float, float]:
+        x, _y, w, h = self.rect
+        pad = h * 0.25
+        return (x + pad, max(w - pad * 2, 1.0))
+
+    def level_at(self, px: float) -> float:
+        start, width = self._track()
+        return max(0.0, min(1.0, (px - start) / width))
+
+    def drag(self, px: float, final: bool = False) -> None:
+        if self.on_change is not None and self.enabled:
+            self.on_change(self.level_at(px), final)
+
+    def click(self) -> None:
+        """A press has already set the level; a release only finishes it."""
+        self.flash_until = time.monotonic() + 0.18
+
+    def draw(self, cr, ctx: RenderContext) -> None:
+        x, y, w, h = self.rect
+        value = self.provider() if self.provider else None
+        start, width = self._track()
+        n = self.segments
+        gap = max(width * 0.006, 1.5)
+        seg_w = (width - gap * (n - 1)) / n
+        seg_h = h * 0.56
+        seg_y = y + (h - seg_h) / 2
+        lit = -1 if value is None else round(value * n)
+        base = ctx.color(self.color)
+        for i in range(n):
+            col = base if i < lit else tuple(c * 0.26 for c in base)
+            shapes.block(cr, start + i * (seg_w + gap), seg_y, seg_w, seg_h,
+                         seg_h * 0.18)
+            shapes.fill(cr, col)  # type: ignore[arg-type]
+        if value is not None:
+            # The thumb: a tall bar at the level, so where it is can be read
+            # without counting segments.
+            tx = start + value * width
+            tw = max(h * 0.26, 5.0)
+            halo = max(gap * 1.5, 3.0)
+            # Cut out of the segments rather than laid over them, so the
+            # thumb reads against lit and unlit track alike.
+            # block, not pill: pill rounds the short *vertical* ends of a
+            # horizontal bar, and this bar stands upright.
+            shapes.block(cr, tx - tw / 2 - halo, y - halo * 0.5,
+                         tw + halo * 2, h + halo, (tw + halo * 2) / 2)
+            shapes.fill(cr, ctx.palette.background)
+            shapes.block(cr, tx - tw / 2, y, tw, h, tw / 2)
+            shapes.fill(cr, ctx.color("highlight" if self.pressed else "text"))
+        elif self.note is not None and self.note():
+            draw_text(cr, ctx, self.note().upper(), x + w / 2, y + h / 2,
+                      h * 0.34, ctx.color("alert"), align="center",
+                      valign="middle", max_width=w * 0.94)
 
 
 class BarRun(Element):

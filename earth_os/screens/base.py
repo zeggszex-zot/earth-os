@@ -19,11 +19,15 @@ from .. import brand
 from ..chrome import Frame, clock_label
 from ..chrome import pieces as chrome_pieces
 from ..widgets import (
-    Element, FlatButton, Group, Label, RenderContext, StandardButton,
-    draw_text,
+    Element, FlatButton, Group, HalfPillButton, Label, RenderContext, Slider,
+    StandardButton, Tile, draw_text, speaker_icon,
 )
 
 __all__ = ["Frame", "Screen"]
+
+#: Element names that belong to the volume control, which a press may land on
+#: without closing the slider.
+VOLUME_PARTS = ("volume_",)
 
 
 class Screen:
@@ -38,13 +42,15 @@ class Screen:
         self._built_for: Tuple[float, float] = (0.0, 0.0)
         self._strip_built: Optional[Tuple] = None
         self.frame: Optional[Frame] = None
+        #: The slider a press started on, followed until release.
+        self._dragging: Optional[Slider] = None
 
     # -- lifecycle ---------------------------------------------------------
     def ensure_built(self, ctx: RenderContext) -> None:
         key = (round(ctx.width), round(ctx.height))
         # The programs strip is state, not geometry, and it is on every
         # screen, so every screen rebuilds when the window list changes.
-        signature = self.strip_signature()
+        signature = self.chrome_signature()
         if key != self._built_for or signature != self._strip_built:
             self.g.clear()
             self.frame = Frame(ctx)
@@ -70,6 +76,9 @@ class Screen:
     # -- painting ----------------------------------------------------------
     def draw(self, cr, ctx: RenderContext) -> None:
         self.ensure_built(ctx)
+        reading = self.g.get("volume_read")
+        if reading is not None:
+            reading.label = self.app.volume.label()  # type: ignore[attr-defined]
         for element in self.g:
             if element.visible:
                 element.draw(cr, ctx)
@@ -111,11 +120,27 @@ class Screen:
 
     def on_press(self, x: float, y: float) -> Optional[Element]:
         element = self.hit(x, y)
+        # The volume slider is a popover: a press anywhere else closes it,
+        # and only closes it, so reaching for it and missing cannot also
+        # press whatever was underneath.
+        volume = self._volume()
+        if volume is not None and volume.panel_open and not (
+                element is not None and element.name.startswith(VOLUME_PARTS)):
+            volume.close_panel()
+            return None
+        if isinstance(element, Slider):
+            self._dragging = element
+            element.drag(x, final=False)
         if element:
             element.pressed = True
         return element
 
     def on_release(self, x: float, y: float, pressed: Optional[Element]) -> None:
+        if isinstance(pressed, Slider):
+            pressed.pressed = False
+            pressed.drag(x, final=True)
+            self._dragging = None
+            return
         if pressed:
             pressed.pressed = False
             if pressed.contains(x, y):
@@ -123,6 +148,9 @@ class Screen:
                 pressed.click()
 
     def on_motion(self, x: float, y: float) -> bool:
+        if self._dragging is not None:
+            self._dragging.drag(x, final=False)
+            return True
         changed = False
         for element in self.g.items:
             hovered = element.interactive and element.enabled and element.contains(x, y)
@@ -166,7 +194,16 @@ class Screen:
         #
         # Not in the shared pieces: it needs the application, and the splash
         # is on screen precisely because there is not one yet.
-        self.add_program_strip(ctx, f)
+        #
+        # While the volume slider is open it takes the strip's band, which is
+        # the one place on every screen that is free of content and wide
+        # enough to give a finger a long track.
+        volume = self._volume()
+        if volume is not None and volume.panel_open:
+            self.add_volume_panel(ctx, f)
+        else:
+            self.add_program_strip(ctx, f)
+        self.add_box_controls(ctx, f)
 
         bl_y = f.H - f.margin - f.bottom_h
         if back and self.name != "main":
@@ -195,6 +232,91 @@ class Screen:
                 color="accent5", tooltip="save a picture of the screen (Print)",
                 on_click=lambda: self.app.take_screenshot(),
             ))
+
+    # -- the upper-left box -------------------------------------------------
+    def _volume(self):
+        return getattr(self.app, "volume", None)
+
+    def add_box_controls(self, ctx: RenderContext, f: Frame) -> None:
+        """Put the box's controls on its spots.
+
+        One so far: system volume, on spot 0. The other three stay frame
+        until something earns a place there. Each control is drawn over the
+        chrome spot it replaces, in the same shape, so the box keeps its
+        outline whether a spot is filled or not.
+        """
+        volume = self._volume()
+        if volume is None:
+            return
+        volume.ensure_read()
+        spot = f.spots[0]
+        t = spot[2]
+        self.g.add(Tile(
+            "volume_spot", spot, radii=(t * 0.72, 0, 0, 0),
+            color="accent4" if volume.panel_open else "accent2",
+            icon=speaker_icon(lambda: volume.level),
+            caption=volume.label,
+            tooltip="system volume",
+            on_click=volume.toggle_panel, z=3,
+        ))
+
+    def add_volume_panel(self, ctx: RenderContext, f: Frame) -> None:
+        """The volume slider, across the band under the title bar.
+
+        A cap naming it, a step down, the track, a step up and the reading.
+        Steps are there because a track this long is precise but not
+        fine-grained under a finger; five percent at a time is.
+        """
+        volume = self._volume()
+        u = ctx.u
+        x, y, w, h = f.strip
+        row_h = min(h * 0.82, u(2.2))
+        row_y = y + (h - row_h) / 2
+        gap = u(0.3)
+        cap_w = u(6.6)
+        step_w = u(3.4)
+        read_w = u(5.2)
+        z = 6
+
+        self.g.add(HalfPillButton(
+            "volume_cap", (x, row_y, cap_w, row_h), side="left",
+            label="VOLUME", label_align="right", color="accent4",
+            enabled=False, z=z,
+        ))
+        cursor = x + cap_w + gap
+        self.g.add(StandardButton(
+            "volume_down", (cursor, row_y, step_w, row_h), label="-",
+            label_align="center", color="accent2", z=z,
+            tooltip="quieter", on_click=lambda: volume.nudge(-1),
+        ))
+        cursor += step_w + gap
+        track_w = w - (cursor - x) - gap * 2 - step_w - read_w
+        self.g.add(Slider(
+            "volume_slider", (cursor, row_y, track_w, row_h),
+            provider=lambda: volume.level, color="accent2", z=z,
+            on_change=lambda level, final: volume.set(level),
+            # Why it cannot be read, on the track itself, rather than a
+            # silent track that does nothing.
+            note=lambda: volume.error,
+        ))
+        cursor += track_w + gap
+        self.g.add(StandardButton(
+            "volume_up", (cursor, row_y, step_w, row_h), label="+",
+            label_align="center", color="accent2", z=z,
+            tooltip="louder", on_click=lambda: volume.nudge(1),
+        ))
+        cursor += step_w + gap
+        self.g.add(HalfPillButton(
+            "volume_read", (cursor, row_y, x + w - cursor, row_h),
+            side="right", label=volume.label(), label_align="center",
+            color="accent4", enabled=False, z=z,
+        ))
+
+    def chrome_signature(self) -> Tuple:
+        """Everything the chrome is built from that is state, not geometry."""
+        volume = self._volume()
+        return (self.strip_signature(),
+                bool(volume is not None and volume.panel_open))
 
     # -- the running-programs strip ---------------------------------------
     #: accent4 is deliberately absent: it is what marks the framed program,
