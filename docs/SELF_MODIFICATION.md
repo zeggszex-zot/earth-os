@@ -199,7 +199,7 @@ system that drifts.
 
 ### TinyLlama cannot do rungs 2 or 3
 
-1.1B parameters. It cannot hold the boundary rule, the ratchet and 559 tests
+1.1B parameters. It cannot hold the boundary rule, the ratchet and 574 tests
 well enough to write code that respects invariants it has no way to perceive.
 It will produce changes that look plausible and quietly violate the
 architecture — the exact failure this codebase is built to catch.
@@ -226,7 +226,7 @@ context, not weights:
 
 * `AGENTS.md` — the constitution
 * `docs/CDOS_DISTRIBUTION.md` — the boundary contract
-* 559 tests — the invariants, executable
+* 574 tests — the invariants, executable
 * `tools/conformance.py` — the portability proof, with an exit code
 
 That is a better brief than a fine-tune, it updates the moment the code does,
@@ -246,7 +246,7 @@ CDOS already has the immune system:
 
 | Asset | What it catches |
 |---|---|
-| 559 tests | behaviour regressions |
+| 574 tests | behaviour regressions |
 | closed catalogue | a model inventing machine power |
 | boundary ratchet | mechanism leaking above the line |
 | corpus drift-guard | a capability nobody can ask for |

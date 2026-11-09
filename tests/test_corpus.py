@@ -31,7 +31,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent))   # sibling test modules
 
 from earth_os.capability_corpus import (                      # noqa: E402
-    ADJUSTMENTS, CapabilityCorpus, PERCENT_TARGETS, PHRASEBOOK, READINGS,
+    ADJUSTMENTS, ANALYSES, ANALYSIS_PHRASES, CapabilityCorpus,
+    PERCENT_TARGETS, PHRASEBOOK, READINGS,
 )
 from earth_os.config import Config                            # noqa: E402
 from earth_os.core import Shell                               # noqa: E402
@@ -530,3 +531,154 @@ class TestOneRealityPerReading(unittest.TestCase):
         self.assertEqual(monitor.distro(), "CDOS Robot Edition")
         self.assertEqual(monitor.swap(), (0.0, 0, 0))
         self.assertGreater(monitor.cpu(), 0.0)
+
+
+class TestWhatIsUsingTheMemory(unittest.TestCase):
+    """"What is using the most RAM?" — asked, and not answered, in 1.0.0.
+
+    The voice heard the bare word "memory" in it and replied with the total
+    in use, which answers a different question. The terminal ran it as a
+    shell command called ``what``. Both now sort the process list the
+    machine was already reading — no new capability, nothing below the
+    boundary, and the same answer in both places.
+    """
+
+    def setUp(self):
+        reset_platform()
+        self.corpus = CapabilityCorpus(CapabilityRegistry(get_platform()))
+
+    # -- the tables cannot give an analysis any power ------------------
+    def test_analyses_only_read(self):
+        for name, analysis in ANALYSES.items():
+            self.assertEqual(name, analysis.name)
+            for capability in analysis.reads:
+                spec = CATALOGUE.get(capability)
+                self.assertIsNotNone(spec, f"{name} reads {capability}")
+                self.assertFalse(spec.effectful, f"{name} would change the machine")
+                self.assertEqual(spec.params, (), f"{name} needs an argument")
+                self.assertIn(capability, READINGS, name)
+
+    def test_every_analysis_can_be_asked_for_more_than_one_way(self):
+        self.assertEqual(set(ANALYSIS_PHRASES), set(ANALYSES))
+        for name, phrases in ANALYSIS_PHRASES.items():
+            self.assertGreater(len(phrases), 1, name)
+
+    def test_no_analysis_phrase_is_also_a_capability_phrase(self):
+        """Exact duplicates would resolve by accident of ordering."""
+        spoken = {p for phrases in PHRASEBOOK.values() for p in phrases}
+        seen = set()
+        for phrases in ANALYSIS_PHRASES.values():
+            for phrase in phrases:
+                self.assertNotIn(phrase, spoken, phrase)
+                self.assertNotIn(phrase, seen, phrase)
+                seen.add(phrase)
+
+    # -- resolution ------------------------------------------------------
+    def test_the_question_is_not_mistaken_for_the_total(self):
+        for phrase in ("What is using the most RAM?",
+                       "what's using the most memory",
+                       "what is eating my ram",
+                       "which programs use the most memory",
+                       "memory hogs"):
+            intent = self.corpus.resolve(phrase)
+            self.assertIsNotNone(intent, phrase)
+            self.assertEqual(intent.analysis, "top_memory", phrase)
+
+    def test_why_questions_get_the_report(self):
+        for phrase in ("why is my memory so high",
+                       "why is my ram usage so high at idle",
+                       "where is my memory going",
+                       "memory report"):
+            intent = self.corpus.resolve(phrase)
+            self.assertEqual(intent.analysis, "memory_report", phrase)
+
+    def test_the_plain_total_still_answers_the_plain_question(self):
+        for phrase in ("how much memory", "memory usage", "memory"):
+            intent = self.corpus.resolve(phrase)
+            self.assertEqual(intent.capability, "hardware.memory", phrase)
+            self.assertEqual(intent.analysis, "", phrase)
+
+    # -- grouping is by program, as a person would name it --------------
+    @staticmethod
+    def _proc(pid, name, command, mib):
+        from earth_os.platform.api import ProcessInfo
+        return ProcessInfo(pid=pid, name=name, command=command, state="S",
+                           cpu_percent=0.0, memory_bytes=mib * 1024 * 1024)
+
+    def test_a_browser_is_one_row_however_many_processes(self):
+        from earth_os.capability_corpus import rank_memory
+        ranking = rank_memory([
+            self._proc(1, "firefox", "/usr/lib/firefox/firefox", 300),
+            self._proc(2, "Isolated Web Co",
+                       "/usr/lib/firefox/firefox -contentproc 7 tab", 200),
+            self._proc(3, "Web Content",
+                       "/usr/lib/firefox/firefox -contentproc 8 tab", 100),
+            self._proc(4, "ollama", "/usr/local/bin/ollama serve", 400),
+        ])
+        self.assertEqual(ranking.rows[0], ("firefox", 600 * 1024 * 1024, 3))
+        self.assertEqual(ranking.rows[1][0], "ollama")
+
+    def test_interpreted_programs_are_named_by_what_they_run(self):
+        from earth_os.capability_corpus import rank_memory
+        ranking = rank_memory([
+            self._proc(1, "python3", "/usr/bin/python3 -m earth_os", 90),
+            self._proc(2, "python3", "/opt/venv/bin/python3.11 "
+                                     "/opt/venv/bin/open-webui serve", 500),
+            self._proc(3, "node", "node /srv/app/server.js --port 3000", 50),
+        ])
+        names = [row[0] for row in ranking.rows]
+        self.assertEqual(names, ["open-webui", "earth_os", "server"])
+
+    def test_no_memory_figures_means_no_answer_not_a_guess(self):
+        """The robot's process list carries no memory figures."""
+        from earth_os.capability_corpus import rank_memory
+        self.assertIsNone(rank_memory([self._proc(1, "arm", "arm", 0)]))
+        ok, text = self.corpus.explain(
+            "top_memory", {"process.list": [self._proc(1, "arm", "arm", 0)]})
+        self.assertFalse(ok)
+        self.assertIn("cannot say", text)
+
+    def test_the_answer_names_the_biggest_program(self):
+        ok, text = self.corpus.explain("top_memory", {"process.list": [
+            self._proc(1, "small", "/bin/small", 10),
+            self._proc(2, "big", "/bin/big", 900),
+        ]})
+        self.assertTrue(ok)
+        self.assertTrue(text.startswith("big is using the most memory"), text)
+
+    def test_the_report_gives_the_totals_first(self):
+        gib = 1024 ** 3
+        ok, text = self.corpus.explain("memory_report", {
+            "hardware.memory": (8 * gib, 6 * gib),
+            "hardware.swap": (2 * gib, 2 * gib),
+            "process.list": [self._proc(1, "big", "/bin/big", 900)],
+        })
+        self.assertTrue(ok)
+        self.assertIn("2.0 GB of 8.0 GB in use", text)
+        self.assertIn("Nothing in swap", text)
+        self.assertIn("big", text)
+
+    # -- the shell ---------------------------------------------------------
+    def test_the_shell_answers_from_live_readings(self):
+        shell = Shell(Config())
+        shell.sound.enabled = False
+        shell.handle_utterance("what is using the most memory")
+        reply = next(str(e["text"]) for e in shell.conversation
+                     if e["role"] == "computer")
+        self.assertIn("using the most memory", reply)
+        self.assertNotIn(" free.", reply)
+
+    def test_an_analysis_that_would_touch_the_machine_is_refused(self):
+        """Checked when it runs, not trusted from the table."""
+        from earth_os.capability_corpus import Analysis
+        shell = Shell(Config())
+        shell.sound.enabled = False
+        fired = []
+        shell.capabilities.invoke = lambda c, **k: (
+            fired.append(c) or CapabilityResult(ok=True, capability=c))
+        bad = Analysis("bad", ("process.list", "system.shutdown"), "no")
+        with unittest.mock.patch.dict(ANALYSES, {"bad": bad}):
+            ok, text = shell.answer_analysis("bad")
+        self.assertFalse(ok)
+        self.assertEqual(fired, [], "nothing may run once one read is refused")
+        self.assertIn("may not read system.shutdown", text)

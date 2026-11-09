@@ -12,7 +12,7 @@ is, and this file tells you which test does it.
 ## Before you start
 
 ```bash
-/usr/bin/python3.12 -m unittest discover -s tests -q      # 559 tests, all pass
+/usr/bin/python3.12 -m unittest discover -s tests -q      # 574 tests, all pass
 ```
 
 **Use Python 3.12 or newer.** PyGObject's compiled extension is built for
@@ -75,6 +75,17 @@ is a thing the machine does that nobody wanted.
 
 **Do not add capabilities to be thorough.** 68 is not a score. Each one is a
 promise the distribution has to keep on every machine it ships to.
+
+### Analyses are a question about readings, not new power
+
+`ANALYSES` in `earth_os/capability_corpus.py` answers questions like *"what
+is using the most memory?"* by sorting and grouping readings the machine
+already takes (`process.list`, `hardware.memory`, `hardware.swap`). That is
+meaning, so it lives above the boundary, and it adds no capability. An
+analysis may only read: every read must be in `READINGS`, parameterless and
+not effectful, checked both in `tests/test_corpus.py` and again by
+`Shell.answer_analysis` at the moment it runs. The terminal asks the shell
+for the same answer rather than keeping its own.
 
 ### Compositions are a new name, not new power
 

@@ -480,6 +480,8 @@ class TerminalScreen(Screen):
             return
 
         command = line
+        if self.translate_enabled and self._answer_question(line):
+            return
         if self.translate_enabled:
             translated = self.translator.translate(line)
             if translated and translated != line:
@@ -514,6 +516,27 @@ class TerminalScreen(Screen):
             return
 
         self._spawn(command)
+
+    def _answer_question(self, line: str) -> bool:
+        """Questions about the machine get the shell's answer, not a command.
+
+        *"What is using the most RAM?"* used to fall through the translator
+        and run as a shell command called ``what``. The voice already knows
+        how to answer it from the process list, so the terminal asks the
+        same place rather than growing a second, drifting answer of its own.
+        Something typed as a real command is never intercepted.
+        """
+        ask = getattr(self.app, "answer_question_as_text", None)
+        if ask is None or self.translator._looks_like_a_command(line):
+            return False
+        answer = ask(line)
+        if answer is None:
+            return False
+        ok, text = answer
+        self.emit("translate", "  answered from live system readings")
+        for row in text.splitlines():
+            self.emit("output" if ok else "error", row)
+        return True
 
     def _chdir(self, target: str) -> None:
         target = target.strip() or "~"

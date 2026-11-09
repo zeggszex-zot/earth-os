@@ -212,6 +212,156 @@ PERCENT_TARGETS: Dict[str, Tuple[str, str]] = {
 
 _PERCENT = re.compile(r"(\d{1,3})\s*(?:%|per ?cent)")
 
+
+@dataclass(frozen=True)
+class Analysis:
+    """A question answered by looking at readings, not by taking a new one.
+
+    *"What is using the most memory?"* names no capability.  ``process.list``
+    already reports how much memory every program holds; the question asks
+    for that reading sorted, grouped and put into words.  Sorting is meaning,
+    not mechanism, so it happens up here, exactly as the arithmetic in
+    :class:`Adjustment` does — and the machine gains no new power by it.
+
+    Three rules keep that true, and ``tests/test_corpus.py`` checks each:
+
+    1. every read names a capability in the catalogue;
+    2. every read is a parameterless **reading** — never effectful — so an
+       analysis can look at the machine but never touch it;
+    3. the shell runs one through ``Shell.run_analysis``, which re-checks
+       rule 2 at the moment of running rather than trusting this table.
+    """
+
+    name: str
+    reads: Tuple[str, ...]
+    summary: str
+
+
+#: Questions that are answered by reading, then thinking.
+ANALYSES: Dict[str, Analysis] = {
+    "top_memory": Analysis(
+        "top_memory", ("process.list",),
+        "which programs are holding the most memory"),
+    "memory_report": Analysis(
+        "memory_report", ("hardware.memory", "hardware.swap", "process.list"),
+        "where the memory is going, and to whom"),
+}
+
+#: How a person asks each analysis.  Matched before the phrasebook, because
+#: every one of these contains a shorter phrasebook entry — "memory" alone
+#: is ``hardware.memory`` — and answering "1.6 GB in use" to "what is using
+#: the most memory" is answering a different question.
+ANALYSIS_PHRASES: Dict[str, Tuple[str, ...]] = {
+    "top_memory": (
+        "using the most memory", "using the most ram",
+        "uses the most memory", "uses the most ram",
+        "use the most memory", "use the most ram",
+        "using my memory", "using my ram",
+        "using all my memory", "using all my ram",
+        "using all the memory", "using all the ram",
+        "eating my memory", "eating my ram",
+        "eating all my memory", "eating all my ram",
+        "taking up my memory", "taking up my ram",
+        "taking up all my memory", "taking up all my ram",
+        "memory hog", "memory hogs", "ram hog", "ram hogs",
+        "top memory users", "biggest memory users",
+        "top memory", "top ram",
+    ),
+    "memory_report": (
+        "memory report", "ram report", "memory breakdown", "ram breakdown",
+        "where is my memory going", "where is my ram going",
+        "where did my memory go", "where did my ram go",
+        "memory so high", "ram so high",
+        "memory usage so high", "ram usage so high",
+        "memory usage high", "ram usage high",
+        "high memory usage", "high ram usage",
+        "using so much memory", "using so much ram",
+        "why is memory high", "why is ram high",
+        "why is my memory high", "why is my ram high",
+        "idle memory", "idle ram", "memory at idle", "ram at idle",
+    ),
+}
+
+#: Programs that run *other* programs.  Grouping by the first word of the
+#: command line would put every Python program on the machine into one row
+#: called "python3", so for these the script or module being run is the name.
+_INTERPRETER = re.compile(
+    r"(?:python|pypy)\d*(?:\.\d+)?|node(?:js)?|bun|deno|java|perl|ruby|php"
+    r"|bash|sh|dash|zsh|env|uv|uvx")
+
+
+def _program(process: object) -> str:
+    """The program a process belongs to, in words a person would recognise.
+
+    A browser is a dozen processes with names like "Isolated Web Co"; the
+    command that started each of them still says which browser it was.
+    """
+    words = str(getattr(process, "command", "") or "").split()
+    fallback = str(getattr(process, "name", "") or "").strip()
+    if not words:
+        return fallback or "unknown"
+    head = words[0].rsplit("/", 1)[-1] or fallback
+    if not _INTERPRETER.fullmatch(head):
+        return head or fallback or "unknown"
+    rest = iter(words[1:])
+    for word in rest:
+        if word == "-m":
+            module = next(rest, "")
+            return module.split(".", 1)[0] or head
+        if word == "-c":
+            return head
+        if word.startswith("-") or "=" in word:
+            continue
+        script = word.rsplit("/", 1)[-1]
+        return re.sub(r"\.(?:py|js|mjs|cjs|pl|rb|php|sh|jar)$", "", script) or head
+    return head
+
+
+@dataclass
+class MemoryRanking:
+    """Programs ordered by the memory their processes hold together.
+
+    Figures are resident memory summed over each program's processes.
+    Libraries shared between processes are counted in each of them, so a
+    program made of many processes reads somewhat higher than it costs —
+    which is why a reply says "about".
+    """
+
+    rows: list                     # [(program, bytes, process_count)]
+    measured: int                  # processes with a memory figure
+
+    def top(self, count: int) -> list:
+        return self.rows[:count]
+
+
+def rank_memory(processes: object) -> Optional[MemoryRanking]:
+    """Group a ``process.list`` reading by program, biggest first.
+
+    None when there is nothing to rank — a machine whose process list carries
+    no memory figures has not said which program is biggest, and naming one
+    anyway would be inventing a reading.
+    """
+    if not isinstance(processes, (list, tuple)):
+        return None
+    totals: Dict[str, list] = {}
+    measured = 0
+    for process in processes:
+        try:
+            size = int(getattr(process, "memory_bytes", 0) or 0)
+        except (TypeError, ValueError):
+            continue
+        if size <= 0:
+            continue
+        measured += 1
+        row = totals.setdefault(_program(process), [0, 0])
+        row[0] += size
+        row[1] += 1
+    if not totals:
+        return None
+    rows = sorted(((name, size, count) for name, (size, count) in totals.items()),
+                  key=lambda row: (-row[1], row[0]))
+    return MemoryRanking(rows=rows, measured=measured)
+
 #: Capabilities that answer a question rather than do a thing.
 #:
 #: The distinction matters at the moment of replying.  An action that returns
@@ -268,6 +418,9 @@ class CapabilityIntent:
     arguments: Dict[str, object] = field(default_factory=dict)
     phrase: str = ""
     explanation: str = ""
+    #: Set when this is a question about readings rather than one reading:
+    #: the name of an entry in :data:`ANALYSES`, run by ``Shell.run_analysis``.
+    analysis: str = ""
 
     @property
     def effectful(self) -> bool:
@@ -292,6 +445,11 @@ class CapabilityCorpus:
             key=lambda pair: len(pair[0]), reverse=True)
         self._adjustments = sorted(ADJUSTMENTS.items(),
                                    key=lambda pair: len(pair[0]), reverse=True)
+        self._analyses = sorted(
+            ((phrase, name)
+             for name, phrases in ANALYSIS_PHRASES.items()
+             for phrase in phrases),
+            key=lambda pair: len(pair[0]), reverse=True)
 
     # ------------------------------------------------------------------
     def resolve(self, text: str) -> Optional[CapabilityIntent]:
@@ -301,7 +459,18 @@ class CapabilityCorpus:
             return None
         return (self._as_adjustment(cleaned)
                 or self._as_percentage(cleaned)
+                or self._as_analysis(cleaned)
                 or self._as_phrase(cleaned))
+
+    def resolve_analysis(self, text: str) -> Optional[CapabilityIntent]:
+        """Only the analysis reading of *text*, or None.
+
+        For the terminal, which must not have its English turned into
+        capabilities wholesale — it has its own translator for that — but
+        should give the same answer as the voice to the same question.
+        """
+        cleaned = normalise(text)
+        return self._as_analysis(cleaned) if cleaned else None
 
     # ------------------------------------------------------------------
     def _as_adjustment(self, cleaned: str) -> Optional[CapabilityIntent]:
@@ -346,6 +515,16 @@ class CapabilityCorpus:
                 return CapabilityIntent(
                     capability=capability, arguments={argument: level},
                     phrase=match.group(0), explanation=f"to {level:.0%}")
+        return None
+
+    def _as_analysis(self, cleaned: str) -> Optional[CapabilityIntent]:
+        """"What is using the most memory" — a question about a reading."""
+        for phrase, name in self._analyses:
+            if self._mentions(cleaned, phrase):
+                analysis = ANALYSES[name]
+                return CapabilityIntent(
+                    capability=analysis.reads[-1], phrase=phrase,
+                    explanation=analysis.summary, analysis=name)
         return None
 
     def _as_phrase(self, cleaned: str) -> Optional[CapabilityIntent]:
@@ -487,6 +666,77 @@ class CapabilityCorpus:
             return f"{len(value)} items."
         text = str(value).strip()
         return f"{text}." if text and not text.endswith(".") else (text or "Done.")
+
+    def explain(self, analysis: str, values: Dict[str, object],
+                table: bool = False) -> Tuple[bool, str]:
+        """Answer an analysis from its readings.
+
+        Returns ``(ok, text)``.  ``ok`` is False when the readings came back
+        but do not answer the question — a process list with no memory
+        figures in it — and the text then says so rather than guessing.
+        ``table`` lays the ranking out in columns, for the terminal; without
+        it the answer is a sentence that can be spoken.
+        """
+        ranking = rank_memory(values.get("process.list"))
+        if ranking is None:
+            return False, ("This machine is not reporting how much memory "
+                           "each program holds, so I cannot say which is "
+                           "using the most.")
+
+        lines = []
+        if analysis == "memory_report":
+            memory = values.get("hardware.memory")
+            if isinstance(memory, (tuple, list)) and len(memory) == 2 \
+                    and int(memory[0] or 0) > 0:
+                total, available = int(memory[0]), int(memory[1])
+                used = max(total - available, 0)
+                lines.append(f"{_bytes(used)} of {_bytes(total)} in use "
+                             f"({used / total:.0%}), {_bytes(available)} "
+                             f"available.")
+            swap = values.get("hardware.swap")
+            if isinstance(swap, (tuple, list)) and len(swap) == 2:
+                swap_total, swap_free = int(swap[0] or 0), int(swap[1] or 0)
+                swapped = max(swap_total - swap_free, 0)
+                if not swap_total:
+                    lines.append("No swap configured.")
+                elif swapped:
+                    lines.append(f"{_bytes(swapped)} pushed out to swap.")
+                else:
+                    lines.append("Nothing in swap.")
+
+        if table:
+            count = 12
+            lines.append("")
+            lines.append(f"{'MEMORY':>10}  {'PROCS':>5}  PROGRAM")
+            for name, size, procs in ranking.top(count):
+                lines.append(f"{_bytes(size):>10}  {procs:>5}  {name}")
+            others = ranking.rows[count:]
+            if others:
+                rest = sum(row[1] for row in others)
+                lines.append(f"{_bytes(rest):>10}  {sum(r[2] for r in others):>5}"
+                             f"  ({len(others)} other programs)")
+            lines.append("")
+            lines.append("Each program's processes are added together. Shared "
+                         "libraries count once per process, so programs with "
+                         "many processes read a little high.")
+            return True, "\n".join(lines).strip("\n")
+
+        top = ranking.top(5)
+        first, size, procs = top[0]
+        spread = f" across {procs} processes" if procs > 1 else ""
+        if analysis == "memory_report":
+            lines.append(f"Biggest is {first}, about {_bytes(size)}{spread}.")
+        else:
+            lines.append(f"{first} is using the most memory, about "
+                         f"{_bytes(size)}{spread}.")
+        if len(top) > 1:
+            lines.append("Then " + ", ".join(
+                f"{name} {_bytes(held)}" for name, held, _n in top[1:]) + ".")
+        if analysis == "memory_report":
+            together = sum(row[1] for row in top)
+            lines.append(f"Those {len(top)} hold about {_bytes(together)} "
+                         f"between them.")
+        return True, " ".join(lines)
 
     def describe(self, limit: int = 3) -> str:
         """The corpus as text: what this machine can be asked, and how."""

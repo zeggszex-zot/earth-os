@@ -1432,6 +1432,9 @@ class Shell:
             return True
 
         self.play("ack")
+        if intent.analysis:
+            self.run_analysis(intent.analysis)
+            return True
         if intent.capability == "display.screenshot":
             # The shell's own folder, and its fallback when the screen cannot
             # be captured whole; the bare capability has neither.
@@ -1439,6 +1442,56 @@ class Shell:
             return True
         self.run_capability(intent.capability, **intent.arguments)
         return True
+
+    def answer_analysis(self, name: str, table: bool = False) -> Tuple[bool, str]:
+        """Take an analysis's readings and put the answer into words.
+
+        Every read is checked here, at the moment of running, rather than
+        trusted from the table: it must be in the catalogue, take no
+        argument, and **not be effectful**. An analysis looks at the machine;
+        if one ever named something that changes it, this refuses before
+        anything is invoked. That is what lets these run without the
+        confirmation strip — and why there is no other way to run one.
+        """
+        from .capability_corpus import ANALYSES, READINGS
+        analysis = ANALYSES.get(name)
+        if analysis is None:
+            return False, f"no such analysis: {name}"
+        if self.capabilities is None:
+            return False, f"no platform adapter: {self.platform_error}"
+        for capability in analysis.reads:
+            spec = self.capabilities.spec(capability)
+            if spec is None or spec.effectful or spec.params \
+                    or capability not in READINGS:
+                return False, f"{name} may not read {capability}"
+        values: Dict[str, object] = {}
+        for capability in analysis.reads:
+            result = self.capabilities.invoke(capability)
+            if not result.ok:
+                return False, f"{capability}: {result.error}"
+            values[capability] = result.value
+        return self.capability_corpus.explain(name, values, table=table)
+
+    def run_analysis(self, name: str) -> bool:
+        """Answer an analysis out loud. See :meth:`answer_analysis`."""
+        ok, text = self.answer_analysis(name)
+        self.status_message = f"{name} ok" if ok else text
+        self.say(text if ok else f"Unable to comply. {text}")
+        self.redraw()
+        return ok
+
+    def answer_question_as_text(self, text: str) -> Optional[Tuple[bool, str]]:
+        """The terminal's way to ask the same question the voice can.
+
+        None when *text* is not an analysis question at all, so the terminal
+        goes on to its own translator. Only analyses are answered here: the
+        terminal's English otherwise means shell commands, and taking that
+        over wholesale would change what every existing phrase does there.
+        """
+        intent = self.capability_corpus.resolve_analysis(text)
+        if intent is None:
+            return None
+        return self.answer_analysis(intent.analysis, table=True)
 
     def run_capability(self, capability: str, /, **kwargs) -> bool:
         """Invoke a named capability as a deliberate intent.

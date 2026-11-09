@@ -283,6 +283,23 @@ class TestTerminalScreen(unittest.TestCase):
         settle(self.term)
         self.assertNotIn("translated", text_of(self.term))
 
+    def test_a_question_about_memory_is_answered_not_run(self):
+        """1.0.0 ran "What is using the most RAM?" as a command called what."""
+        self.term.submit("What is using the most RAM?")
+        self.assertFalse(self.term.busy, "nothing should have been spawned")
+        settle(self.term)
+        body = text_of(self.term)
+        self.assertIn("answered from live system readings", body)
+        self.assertIn("PROGRAM", body)
+        self.assertNotIn("command not found", body)
+
+    def test_a_real_command_about_memory_is_left_alone(self):
+        self.term.submit("ps -eo rss,comm --sort=-rss")
+        settle(self.term)
+        body = text_of(self.term)
+        self.assertNotIn("answered from live system readings", body)
+        self.assertIn("RSS", body)
+
     def test_scrollback_is_bounded(self):
         self.term.submit("seq 1 6000")
         settle(self.term, timeout=30)
