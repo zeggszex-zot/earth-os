@@ -17,6 +17,11 @@ touchscreen.
   lifted.
 - **The CDOS engine inside** — the deterministic capability layer and phrase
   table that decide what the computer can be asked to do.
+- **Earth Mind (2.0)** — one coordinated intelligence over CDOS (knowledge),
+  the Companion (conversation), the system (real readings) and game worlds
+  (characters with their own memories), all sharing one model. Type plain
+  English in the terminal. It talks, reads and proposes; it never acts on its
+  own. See [docs/EARTH_MIND.md](docs/EARTH_MIND.md).
 
 ## Origins
 
@@ -195,6 +200,18 @@ earth_os/
     base.py        scene graph, text, hit testing
     controls.py    the LCARS control set
   screens/         one module per screen
+  mind/            Earth Mind: the one coordination layer (docs/EARTH_MIND.md)
+    mind.py        EarthMind.handle(text, interface) → Response
+    router.py      six kinds of request, decided with no model
+    models.py      one model client per model, shared by every voice
+    memory.py      one SQLite store, namespaced, a principal on every access
+    personas.py    personalities as data; a game character may only converse
+    characters.py  a character's turn, on the Companion's own machinery
+    system.py      readings through the capability layer; operations are proposals
+    game/          worlds, events, relationships, per-character memory
+    redact.py      keeping secrets out of a model's context
+  companion/       the Companion Engine: conversation (docs/COMPANION.md)
+  world_model.py   what the person let the computer remember (docs/WORLD_MODEL.md)
   agent/           Claude Code, built in (docs/CLAUDE_CODE.md)
     policy.py      what it may never touch, what runs unasked (human-only)
     gate.py        the suite decides what is kept (human-only)
@@ -241,6 +258,18 @@ nothing else is touched. Full detail in [docs/INSTALL.md](docs/INSTALL.md).
 
 ## Documentation
 
+- **[docs/EARTH_MIND.md](docs/EARTH_MIND.md)** — Earth OS 2.0's architecture:
+  the component map, the router, model management, memory, personalities,
+  game intelligence, security, configuration and measurements
+- **[docs/RELEASE_2_0.md](docs/RELEASE_2_0.md)** — what 2.0 implements, phase
+  by phase, and what remains planned
+- **[docs/TESTING.md](docs/TESTING.md)** — what was tested, the results, and
+  what was not
+- **[docs/ROLLBACK.md](docs/ROLLBACK.md)** — switching Earth Mind off, and
+  going back to 1.0
+- **[docs/COMPANION.md](docs/COMPANION.md)**, **[docs/COMPUTER.md](docs/COMPUTER.md)**,
+  **[docs/WORLD_MODEL.md](docs/WORLD_MODEL.md)** — the subsystems Earth Mind
+  coordinates; `cdos-computer/README.md` for CDOS Computer itself
 - **[docs/INSTALL.md](docs/INSTALL.md)** — per-distro packages, the AI stack,
   making it the session, keyboard shortcuts, troubleshooting
 - **[docs/PORTING.md](docs/PORTING.md)** — what was in the 2010 archive, why a

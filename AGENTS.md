@@ -12,7 +12,7 @@ is, and this file tells you which test does it.
 ## Before you start
 
 ```bash
-/usr/bin/python3.12 -m unittest discover -s tests -q      # 605 tests, all pass
+/usr/bin/python3.12 -m unittest discover -s tests -q      # 892 tests, all pass (5 skip without cdos binaries or sway)
 ```
 
 **Use Python 3.12 or newer.** PyGObject's compiled extension is built for
@@ -277,10 +277,38 @@ tests are the arbiter** — but only under these rules:
 
 ---
 
+## 8. Earth Mind coordinates; it does not act
+
+`earth_os/mind/` (docs/EARTH_MIND.md) is the one layer that holds CDOS, the
+Companion, the system and game worlds together. Four rules, all checked:
+
+1. **Nothing under `earth_os/mind/` may import what can change the machine**
+   — no platform adapter, `subprocess`, agent, shell or compositions.
+   `tests/test_mind.py` reads the imports. An operation leaves Earth Mind
+   only as a `Proposal`, and `Shell.carry_out` takes it down the same gated
+   path a spoken command takes. Do not give Earth Mind a registry.
+2. **`earth_os/mind/game/` and `characters.py` may import only
+   `earth_os.mind`, `earth_os.companion` and a short list of the standard
+   library** (`tests/test_mind_game.py`). A game character holds `converse`
+   and nothing else; a definition asking for more is refused, not trimmed.
+3. **Memory is reached through a view, never the store.** `MemoryStore._insert`
+   and `_select` are behind `MemoryView`, which checks `allowed()` on every
+   call. A refusal raises; it never returns an empty list. If you need a new
+   namespace, add it to `check_namespace` and `allowed` together, with tests
+   for who is refused.
+4. **A model's words are words.** Nothing parses a reply for commands, and a
+   figure in an explanation that the readings do not contain discards the
+   explanation. Do not add a tool-calling loop here; a capability is asked
+   for by the person, in words the corpus knows.
+
+The Companion Engine (`earth_os/companion/`) is ported, not owned: change it
+only additively, and keep `tests/test_companion.py` passing unedited.
+
 ## Architecture documents
 
 | File | What it is |
 |---|---|
+| `docs/EARTH_MIND.md` | Earth OS 2.0: the coordination layer, its component map and its interfaces. |
 | `docs/CDOS_DISTRIBUTION.md` | The contract. What may exist above and below the boundary. |
 | `docs/PLATFORM_AUDIT.md` | Four defects found after the platform layer shipped, and why the tests missed them. |
 | `docs/PLATFORM_ABSTRACTION.md` | The capability API. |

@@ -116,6 +116,45 @@ because the compositor takes `Print` before any program sees it.
 None of this is required. Without it the LCARS interface is fully usable by
 hand; you just drive it with the pointer instead of your voice.
 
+### Earth Mind (2.0)
+
+Earth Mind is part of the shell and is installed with it: `./install.sh`
+copies `earth_os/` (which holds `mind/` and `companion/`) and, beside it,
+`cdos-computer/` — the deterministic half, run inside the shell's own process.
+There is nothing further to install for it to work, and it adds no package
+dependency: its memory is SQLite and its model client is `urllib`, both in
+Python's standard library.
+
+What each further piece buys:
+
+| With | You get |
+|---|---|
+| nothing else | System questions from live readings, sums and policy from CDOS, the terminal's English, "remember that…", game characters answering from their written lines and memories |
+| **Ollama and a model** | Open conversation with the Companion; findings explained in plain words; characters that converse |
+| **a CDOS corpus** in `cdos-computer/data/` | Facts answered from the corpus, with what they rest on |
+| **the `cdos-api` service** (`cdos-computer/tools/install_services.sh`) | The same computer in its own sandboxed process, shared with other programs, with the Governor deciding who may ask |
+
+```sh
+curl -fsSL https://ollama.com/install.sh | sh
+ollama pull llama3.2:3b                 # about 2 GB; the model [companion] names by default
+earth-os --doctor                       # the rows to read: computer, companion, earth mind
+```
+
+On a machine with little memory, `[companion] model = "llama3.2:1b"`; to give
+game characters a smaller model than the Companion,
+`[mind] game_model = "ollama:llama3.2:1b"`. A model on another machine is
+`[mind] model = "ollama:llama3.2:3b@http://192.168.1.20:11434"`.
+
+Then open the terminal screen and type *"what is using the most RAM?"*,
+*"I had a long day"* or *"talk to the shopkeeper"*. The header line shows who
+answered. [EARTH_MIND.md](EARTH_MIND.md) has the whole of it;
+[ROLLBACK.md](ROLLBACK.md) has the way back.
+
+**Upgrading from 1.0:** install over it (`./install.sh --user` or
+`sudo ./install.sh`). Your configuration is kept and gains no required
+setting. Do not run 1.0's `install.sh --user --uninstall` first: it deletes
+`~/.local/share/earth-os`, which is also where learned meanings are kept.
+
 ### Speech recognition — whisper.cpp
 
 ```sh

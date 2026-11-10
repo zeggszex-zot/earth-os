@@ -2,7 +2,7 @@ PREFIX ?= /usr
 PYTHON ?= python3
 
 .PHONY: help run windowed test shots lint install uninstall models clean \
-        splash bootcheck conformance bundle
+        splash bootcheck conformance bundle acceptance bench
 
 help:
 	@echo "EARTH OS shell"
@@ -10,6 +10,8 @@ help:
 	@echo "  make run        run fullscreen on the current display"
 	@echo "  make windowed   run in a window (development)"
 	@echo "  make test       run the test suite"
+	@echo "  make acceptance the thirteen Earth OS 2.0 acceptance tests"
+	@echo "  make bench      measure Earth Mind on this machine"
 	@echo "  make shots      render every screen to /tmp/cdos-shots"
 	@echo "  make splash     render the boot frame to /tmp/cdos-splash.png"
 	@echo "  make bootcheck  measure the boot: one window, frame up first"
@@ -25,6 +27,14 @@ windowed:
 
 test:
 	$(PYTHON) -m unittest discover -s tests -v
+
+# The specification's thirteen tests, one each (docs/TESTING.md).
+acceptance:
+	$(PYTHON) -m unittest -v tests.test_acceptance
+
+# Earth Mind's own cost on this machine, and the model's if one is running.
+bench:
+	$(PYTHON) tools/mind_bench.py
 
 # Measure this machine against the capability contract. Needs no GTK and no
 # third-party packages, so it runs on a bare Debian or Kali box that has

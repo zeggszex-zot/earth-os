@@ -77,8 +77,14 @@ if [ "$UNINSTALL" = 1 ]; then
     rm -f "$WAYLAND_SESSIONS/earth-os.desktop"
     rm -f "$APPLICATIONS/earth-os.desktop"
     rm -f "$DESTDIR$PREFIX/lib/systemd/user/earth-os.service"
-    rm -rf "$SHARE/earth-os"
+    # Only what this installer put there. With --user, $SHARE/earth-os is also
+    # the data directory: Earth Mind's memory, what you asked it to remember,
+    # everything it has learned. Removing the program must not remove those.
+    rm -rf "$SHARE/earth-os/source"
+    rm -f "$SHARE/earth-os/sway.conf"
+    rmdir "$SHARE/earth-os" 2>/dev/null || true
     echo "earth-os removed."
+    [ -d "$SHARE/earth-os" ] && echo "Your data was left in $SHARE/earth-os (delete it yourself if you want it gone)."
     exit 0
 fi
 

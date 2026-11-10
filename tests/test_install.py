@@ -85,6 +85,56 @@ class TestAReinstallTakesEffect(unittest.TestCase):
         self.assertIn("WORKSPACE CODE", self.run_launcher().stdout)
         self.assertTrue(self.workspace.exists())
 
+    def test_the_installed_tree_carries_earth_mind_and_its_computer(self):
+        """Earth OS 2.0: the mind and the embedded CDOS Computer run from the install alone.
+
+        The embedded computer is looked for beside ``earth_os``; an installer
+        that copied only ``earth_os`` shipped a mind with no knowledge half,
+        and nothing said so until someone asked it a sum.
+        """
+        lib = self.home / ".local" / "lib" / "earth-os"
+        self.assertTrue((lib / "earth_os" / "mind" / "worlds" / "harbour.json").is_file())
+        self.assertTrue((lib / "earth_os" / "mind" / "personalities" / "companion.json").is_file())
+        self.assertTrue((lib / "cdos-computer" / "computer" / "core.py").is_file())
+        self.assertFalse((lib / "cdos-computer" / "tests").exists(), "the computer's test suite was installed")
+        self.assertTrue((self.home / ".local/share/earth-os/source/cdos-computer/computer/core.py").is_file(),
+                        "a workspace made from this install would have no computer")
+        script = (
+            "import sys; sys.path.insert(0, sys.argv[1])\n"
+            "from earth_os.config import Config\n"
+            "from earth_os.core import Shell\n"
+            "import earth_os\n"
+            "config = Config.load(); config.values['voice']['enabled'] = False\n"
+            "config.values['companion']['host'] = 'http://127.0.0.1:9'\n"
+            "config.values['companion']['timeout'] = 2\n"
+            "mind = Shell(config).earth_mind()\n"
+            "print(earth_os.__version__, earth_os.__file__)\n"
+            "print(mind.link.status())\n"
+            "print(mind.handle('what is 12 times 9', 'api').text)\n"
+            "print(mind.handle('talk to the shopkeeper', 'api').text)\n"
+            "mind.close()\n")
+        done = subprocess.run([sys.executable, "-W", "ignore", "-c", script, str(lib)], env=self.env,
+                              cwd=str(self.home), capture_output=True, text=True, timeout=120)
+        self.assertEqual(done.returncode, 0, done.stderr)
+        self.assertIn(str(lib / "earth_os"), done.stdout, "the checkout answered, not the install")
+        self.assertIn(f"embedded {lib / 'cdos-computer'}", done.stdout)
+        self.assertIn("108", done.stdout)
+        self.assertIn("Come in out of the fog.", done.stdout)
+
+    def test_uninstall_removes_the_code_and_leaves_what_was_remembered(self):
+        data = self.home / ".local" / "share" / "earth-os"
+        (data / "mind").mkdir(parents=True, exist_ok=True)
+        (data / "mind" / "memory.db").write_bytes(b"kept")
+        done = subprocess.run(["sh", str(ROOT / "install.sh"), "--user", "--uninstall"],
+                              env=self.env, capture_output=True, text=True, timeout=120)
+        self.assertEqual(done.returncode, 0, done.stderr + done.stdout)
+        self.assertFalse((self.home / ".local" / "lib" / "earth-os").exists())
+        self.assertFalse(self.launcher.exists())
+        self.assertFalse((data / "source").exists())
+        self.assertEqual((data / "mind" / "memory.db").read_bytes(), b"kept",
+                         "uninstalling the program deleted the person's memories")
+        self.assertIn("Your data was left in", done.stdout)
+
 
 if __name__ == "__main__":
     unittest.main()
