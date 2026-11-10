@@ -1,0 +1,28 @@
+{"kind": "milestone", "question": "What is the food of a blue whale?", "gold": ["krill"], "expect": "answered"}
+{"kind": "milestone", "question": "What does a blue whale eat?", "gold": ["krill"], "expect": "answered"}
+{"kind": "milestone", "question": "What is a blue whale's diet?", "gold": ["krill"], "expect": "answered"}
+{"kind": "lexicon", "question": "an owl's food", "gold": ["mice"], "expect": "answered"}
+{"kind": "lexicon", "question": "food for blue whales", "gold": ["krill"], "expect": "answered"}
+{"kind": "lexicon", "question": "what kind of food do owls eat", "gold": ["mice"], "expect": "answered"}
+{"kind": "lexicon", "question": "what is the environment of a marine mammal", "gold": ["ocean"], "expect": "answered"}
+{"kind": "lexicon", "question": "environment of whales", "gold": ["ocean"], "expect": "answered"}
+{"kind": "lexicon", "question": "the tongue of france", "gold": ["french"], "expect": "answered"}
+{"kind": "lexicon", "question": "what tongue is spoken in france", "gold": ["french"], "expect": "answered"}
+{"kind": "lexicon", "question": "the tallness of the eiffel tower", "gold": ["330"], "expect": "answered"}
+{"kind": "lexicon", "question": "what is the seat of government of germany", "gold": ["berlin"], "expect": "answered"}
+{"kind": "lexicon", "question": "nourishment of an owl", "gold": ["mice"], "expect": "answered"}
+{"kind": "lexicon_no", "question": "food of france", "gold": [], "expect": "unsupported"}
+{"kind": "lexicon_no", "question": "what is the environment of france", "gold": [], "expect": "unsupported"}
+{"kind": "lexicon_no", "question": "what is the selection of an owl", "gold": [], "expect": "unsupported"}
+{"kind": "lexicon_no", "question": "money of spain", "gold": [], "expect": "unsupported"}
+{"kind": "lexicon_no", "question": "what is the tongue of a whale", "gold": [], "expect": "unsupported"}
+{"kind": "direction", "question": "what eats krill", "gold": ["blue whale"], "expect": "answered"}
+{"kind": "direction", "question": "who eats mice", "gold": ["owl"], "expect": "answered"}
+{"kind": "direction", "question": "moons orbiting earth", "gold": ["moon"], "expect": "answered"}
+{"kind": "direction", "question": "which things orbit titan", "gold": [], "expect": "unsupported"}
+{"kind": "direction", "question": "titan orbits what", "gold": ["saturn"], "expect": "answered"}
+{"kind": "direction", "question": "what is saturn orbited by", "gold": ["titan"], "expect": "answered"}
+{"kind": "direction", "question": "what borders spain", "gold": ["france"], "expect": "answered"}
+{"kind": "direction", "question": "countries bordering germany", "gold": ["france"], "expect": "answered"}
+{"kind": "direction", "question": "what does ganymede orbit", "gold": ["jupiter"], "expect": "answered"}
+{"kind": "direction", "question": "things that orbit ganymede", "gold": [], "expect": "unsupported"}

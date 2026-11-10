@@ -1,0 +1,15 @@
+[Unit]
+Description=CDOS Computer (Knowledge, Logic, Analysis)
+After=sound.target network.target computer-llm.service
+Wants=computer-llm.service
+
+[Service]
+User=@USER@
+WorkingDirectory=@HERE@
+ExecStart=@HERE@/.venv/bin/python3 -m computer
+Restart=on-failure
+RestartSec=3
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target

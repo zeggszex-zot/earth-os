@@ -1,0 +1,22 @@
+{
+ "format": "cdos-robot-safety/1",
+ "version": "1.0.0",
+ "robot_radius_m": 0.15,
+ "limits": {
+  "speed.max":            {"value": 0.5,  "unit": "m/s",   "why": "the simulated base's rated top speed, forwards or backwards"},
+  "yaw_rate.max":         {"value": 1.5,  "unit": "rad/s", "why": "the fastest turn the base is rated for"},
+  "accel.max":            {"value": 0.5,  "unit": "m/s^2", "why": "the change from the measured speed, over the command's duration"},
+  "duration.max":         {"value": 1.0,  "unit": "s",     "why": "a motion runs at most this long before it is checked again"},
+  "workspace":            {"value": [-4.4, 4.4, -4.4, 4.4], "unit": "m", "why": "the area the robot may be in: x min, x max, y min, y max (its whole body); inside the 9 m room with 0.1 m to spare"},
+  "clearance.min":        {"value": 0.1,  "unit": "m",     "why": "the smallest predicted gap between the robot's edge and an obstacle's"},
+  "motor_temp.max":       {"value": 70.0, "unit": "degC",  "why": "no motion while the motor is hotter than this"},
+  "battery.min":          {"value": 10.5, "unit": "V",     "why": "no motion below this voltage (a 3S pack near empty)"},
+  "state.max_age":        {"value": 0.5,  "unit": "s",     "why": "every required reading must have arrived this recently"},
+  "state.min_confidence": {"value": 0.6,  "unit": "",      "why": "the lowest confidence a required reading may have"}
+ },
+ "always": {
+  "action.valid":   "the motion is a well-formed robot.action with finite numbers",
+  "e_stop":         "while the emergency stop is set, nothing but STOP",
+  "state.complete": "every required quantity has a reading: an unknown is never taken as safe"
+ }
+}

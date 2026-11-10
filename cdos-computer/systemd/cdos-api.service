@@ -1,0 +1,40 @@
+[Unit]
+Description=CDOS core: reasoning, corpus, neural core, plugins and robot controller, behind the local API
+Documentation=file://@PREFIX@/current/docs/PLATFORM_0_2.md
+After=local-fs.target
+
+[Service]
+Type=simple
+User=@USER@
+Group=@USER@
+WorkingDirectory=@PREFIX@/current
+ExecStart=@PYTHON@ -m computer.services.api --config @CONFIG@/config.toml
+Environment=PYTHONUNBUFFERED=1
+Restart=on-failure
+RestartSec=3
+# Persistent state (corpus, model registry, logs, journals) lives in @STATE@, created and owned for the service.
+StateDirectory=cdos
+StateDirectoryMode=0750
+RuntimeDirectory=cdos
+RuntimeDirectoryMode=0750
+ConfigurationDirectory=cdos-computer
+# The API is a Unix socket: no network address family, no IP traffic, no devices.
+RestrictAddressFamilies=AF_UNIX
+IPAddressDeny=any
+PrivateDevices=yes
+NoNewPrivileges=yes
+ProtectSystem=strict
+ReadWritePaths=@STATE@
+ProtectHome=yes
+PrivateTmp=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictNamespaces=yes
+LockPersonality=yes
+CapabilityBoundingSet=
+SystemCallArchitectures=native
+UMask=0027
+
+[Install]
+WantedBy=multi-user.target

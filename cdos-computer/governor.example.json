@@ -1,0 +1,24 @@
+{
+ "format": "cdos-governor-policy/1",
+ "comment": "Who may do what (computer/governor.py).  Names are login names or uid:N.  Keep this file root-owned.",
+ "roles": {
+  "operator": [
+   "root"
+  ],
+  "robot": [
+   "cdos"
+  ],
+  "service": [
+   "cdos"
+  ],
+  "teacher": []
+ },
+ "default": [
+  "read",
+  "ask"
+ ],
+ "unverified": [
+  "read",
+  "ask"
+ ]
+}

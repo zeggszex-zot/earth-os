@@ -1,0 +1,27 @@
+{"kind": "chain", "question": "What's the population of the capital of France?", "gold": ["2,100,000"], "expect": "answered"}
+{"kind": "chain", "question": "how many people live in the capital of germany", "gold": ["3,800,000"], "expect": "answered"}
+{"kind": "chain", "question": "what is france's capital's population", "gold": ["2,100,000"], "expect": "answered"}
+{"kind": "chain", "question": "how big is the moon of earth", "gold": ["1737"], "expect": "answered"}
+{"kind": "compare", "question": "Which is bigger, Jupiter or Saturn?", "gold": ["Jupiter"], "expect": "answered"}
+{"kind": "compare", "question": "is saturn heavier than jupiter", "gold": ["Jupiter"], "expect": "answered"}
+{"kind": "compare", "question": "which is older, the eiffel tower or the brandenburg gate", "gold": ["Brandenburg Gate"], "expect": "answered"}
+{"kind": "compare", "question": "does jupiter have more moons than saturn", "gold": ["Jupiter"], "expect": "answered"}
+{"kind": "compare", "question": "which is taller, the brandenburg gate or the eiffel tower", "gold": ["Eiffel Tower"], "expect": "answered"}
+{"kind": "reverse", "question": "what orbits the sun", "gold": ["Earth", "Jupiter", "Saturn"], "expect": "answered"}
+{"kind": "reverse", "question": "which countries border france", "gold": ["Germany"], "expect": "answered"}
+{"kind": "reverse", "question": "what is located in paris", "gold": ["Eiffel Tower"], "expect": "answered"}
+{"kind": "test_yes", "question": "Is a whale a mammal?", "gold": ["yes"], "expect": "answered"}
+{"kind": "test_yes", "question": "are whales animals", "gold": ["yes"], "expect": "answered"}
+{"kind": "test_yes", "question": "is the eiffel tower in france", "gold": ["yes"], "expect": "answered"}
+{"kind": "test_yes", "question": "do owls have feathers", "gold": ["yes"], "expect": "answered"}
+{"kind": "test_yes", "question": "does a whale have lungs", "gold": ["yes"], "expect": "answered"}
+{"kind": "test_no", "question": "is a shark a mammal", "gold": [], "expect": "unsupported"}
+{"kind": "explain", "question": "How do whales breathe?", "gold": ["Lungs"], "expect": "answered"}
+{"kind": "explain", "question": "how do owls breathe", "gold": ["Lungs"], "expect": "answered"}
+{"kind": "count", "question": "how many moons does jupiter have", "gold": ["95"], "expect": "answered"}
+{"kind": "count", "question": "how many moons does saturn have", "gold": ["2"], "expect": "answered"}
+{"kind": "hop", "question": "what currency did france use in 1990", "gold": ["Franc"], "expect": "answered"}
+{"kind": "hop", "question": "which language is spoken in france", "gold": ["French"], "expect": "answered"}
+{"kind": "hop", "question": "what does a blue whale eat", "gold": ["krill"], "expect": "answered"}
+{"kind": "missing", "question": "what is the capital of jupiter", "gold": [], "expect": "unsupported"}
+{"kind": "missing", "question": "what is the population of the capital of spain", "gold": [], "expect": "unsupported"}

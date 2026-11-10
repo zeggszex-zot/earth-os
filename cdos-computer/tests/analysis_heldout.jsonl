@@ -1,0 +1,34 @@
+{"id": "runtime_basic", "turns": [{"q": "How long can a 50 Wh battery run a 5 W device?", "expect": "answered", "gold": ["8.5 hours", "85%"]}, {"q": "And at half the load?", "expect": "answered", "gold": ["17 hours"]}, {"q": "What about with a 100 Wh battery?", "expect": "answered", "gold": ["34 hours"]}, {"q": "Assume no conversion losses.", "expect": "answered", "gold": ["40 hours"]}]}
+{"id": "runtime_mah_volts", "turns": [{"q": "Computer, estimate how long a 10000 mAh battery at 3.7 volts can power a 2.5 watt load.", "expect": "answered", "gold": ["12.6 hours"]}]}
+{"id": "runtime_mah_needs_voltage", "turns": [{"q": "How long will a 10000 mAh power bank run a 2 W load?", "expect": "clarify", "gold": ["voltage"]}, {"q": "3.7 volts", "expect": "answered", "gold": ["15.7 hours"]}]}
+{"id": "runtime_all_missing", "turns": [{"q": "Calculate the runtime.", "expect": "clarify", "gold": ["battery"]}, {"q": "50 watt-hours", "expect": "clarify", "gold": ["power"]}, {"q": "5 watts", "expect": "answered", "gold": ["8.5 hours"]}]}
+{"id": "runtime_corpus_device", "turns": [{"q": "Computer, estimate how long the battery can run the Raspberry Pi Zero 2 W.", "expect": "clarify", "gold": ["battery"]}, {"q": "It's a 20 watt-hour battery.", "expect": "answered", "gold": ["6.8 hours"]}]}
+{"id": "runtime_corpus_both", "turns": [{"q": "How long can the owl battery run a Raspberry Pi 5?", "expect": "answered", "gold": ["2.6 hours"]}, {"q": "How did you work that out?", "expect": "answered", "gold": ["37 watt-hours", "12 watts", "85%"]}]}
+{"id": "runtime_current_load", "turns": [{"q": "How long will a 12 V 20 Ah battery run a 1.2 A load?", "expect": "answered", "gold": ["14.2 hours"]}]}
+{"id": "runtime_minutes", "turns": [{"q": "How long can a 5 Wh battery run a 20 W motor?", "expect": "answered", "gold": ["13 minutes"]}]}
+{"id": "runtime_days", "turns": [{"q": "How long can a 1 kWh battery run a 5 watt sensor?", "expect": "answered", "gold": ["170 hours"]}]}
+{"id": "daily_energy_brief", "turns": [{"q": "Computer, estimate daily energy consumption.", "expect": "clarify", "gold": ["power"]}, {"q": "30 watts", "expect": "clarify", "gold": ["hours"]}, {"q": "24 hours a day", "expect": "answered", "gold": ["720 watt-hours"]}]}
+{"id": "daily_energy_followups", "turns": [{"q": "How much energy does a 30 W device use per day if it runs 24 hours a day?", "expect": "answered", "gold": ["720 watt-hours"]}, {"q": "How about at half the load?", "expect": "answered", "gold": ["360 watt-hours"]}, {"q": "And if it only runs 8 hours a day?", "expect": "answered", "gold": ["120 watt-hours"]}]}
+{"id": "daily_energy_kwh", "turns": [{"q": "What is the daily energy use of a 2 kW heater running 3 hours a day?", "expect": "answered", "gold": ["6 kilowatt-hours"]}]}
+{"id": "energy_over_time", "turns": [{"q": "How much energy does a 60 watt bulb use in 5 hours?", "expect": "answered", "gold": ["300 watt-hours"]}]}
+{"id": "power_from_v_i", "turns": [{"q": "What is the power of a 5 V, 2 A supply?", "expect": "answered", "gold": ["10 watts"]}]}
+{"id": "runtime_stated_efficiency", "turns": [{"q": "How long can a 100 Wh battery run a 10 W load at 90% efficiency?", "expect": "answered", "gold": ["9 hours", "90%"]}]}
+{"id": "runtime_number_words", "turns": [{"q": "how long can a fifty watt hour battery run a five watt load", "expect": "answered", "gold": ["8.5 hours"]}]}
+{"id": "runtime_entity_unit_trap", "turns": [{"q": "How long can a 20 Wh battery run a Raspberry Pi Zero 2 W?", "expect": "answered", "gold": ["6.8 hours"], "not": ["8.5"]}]}
+{"id": "runtime_hypothetical", "turns": [{"q": "How long can a 50 Wh battery run a 5 W device?", "expect": "answered", "gold": ["8.5 hours"]}, {"q": "What happens if the load triples?", "expect": "answered", "gold": ["2.8 hours"]}, {"q": "What if the load is 4 watts?", "expect": "answered", "gold": ["10.6 hours"]}]}
+{"id": "runtime_ambiguous_corpus", "turns": [{"q": "How long can a 50 Wh battery run a Raspberry Pi 4?", "expect": "clarify", "gold": ["3 watts", "6.4 watts"]}, {"q": "under load", "expect": "answered", "gold": ["6.6 hours"]}]}
+{"id": "runtime_no_context", "turns": [{"q": "How long will the battery last?", "expect": "clarify", "gold": ["battery"]}]}
+{"id": "clarify_abandoned", "turns": [{"q": "Calculate the runtime.", "expect": "clarify", "gold": ["battery"]}, {"q": "What is the capital of France?", "expect": "passthrough", "gold": ["Paris"]}]}
+{"id": "calc_ratio", "turns": [{"q": "How many times heavier is Jupiter than Saturn?", "expect": "answered", "gold": ["3.34 times"]}]}
+{"id": "calc_sum", "turns": [{"q": "What is the combined population of France and Germany?", "expect": "answered", "gold": ["152,000,000"]}]}
+{"id": "calc_diff", "turns": [{"q": "What is the difference in height between the Eiffel Tower and the Brandenburg Gate?", "expect": "answered", "gold": ["304 metres"]}]}
+{"id": "calc_ratio_size", "turns": [{"q": "How many times bigger is the Sun than the Earth?", "expect": "answered", "gold": ["109 times"]}]}
+{"id": "calc_sum_three", "turns": [{"q": "What is the total population of France, Germany and Spain?", "expect": "answered", "gold": ["200,000,000"]}]}
+{"id": "calc_how_much_taller", "turns": [{"q": "How much taller is the Eiffel Tower than the Brandenburg Gate?", "expect": "answered", "gold": ["304 metres"]}]}
+{"id": "calc_density_missing_area", "turns": [{"q": "What is the population density of France?", "expect": "unsupported"}]}
+{"id": "calc_temporal_gap", "turns": [{"q": "What was the combined population of France and Germany in 2015?", "expect": "unsupported"}]}
+{"id": "calc_missing_value", "turns": [{"q": "What is the combined population of France and Madrid?", "expect": "unsupported"}]}
+{"id": "calc_no_shared_measure", "turns": [{"q": "How many times heavier is Jupiter than the Eiffel Tower?", "expect": "unsupported"}]}
+{"id": "passthrough_existing", "turns": [{"q": "What is 15% of 80?", "expect": "passthrough", "gold": ["12"]}, {"q": "What's the population of the capital of France?", "expect": "passthrough", "gold": ["2,100,000"]}, {"q": "what about germany", "expect": "passthrough", "gold": ["3,800,000"]}, {"q": "which is bigger, Jupiter or Saturn", "expect": "passthrough", "gold": ["Jupiter is bigger"]}]}
+{"id": "status_temperature", "turns": [{"q": "Computer, what is the processor temperature?", "expect": "status", "gold": ["processor temperature"]}]}
+{"id": "status_report", "turns": [{"q": "system status", "expect": "status", "gold": ["corpus"]}]}
