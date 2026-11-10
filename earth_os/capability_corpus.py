@@ -32,7 +32,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import Dict, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from .platform.capabilities import CATALOGUE
 
@@ -235,6 +235,11 @@ class Analysis:
     name: str
     reads: Tuple[str, ...]
     summary: str
+    #: True for a diagnosis: an answer made of several findings, which Earth
+    #: Mind may ask the Companion to explain (docs/EARTH_MIND.md). It changes
+    #: nothing about what the analysis may do — it still only reads — and the
+    #: findings are fixed here, before any model sees the question.
+    explained: bool = False
 
 
 #: Questions that are answered by reading, then thinking.
@@ -245,6 +250,11 @@ ANALYSES: Dict[str, Analysis] = {
     "memory_report": Analysis(
         "memory_report", ("hardware.memory", "hardware.swap", "process.list"),
         "where the memory is going, and to whom"),
+    "performance_report": Analysis(
+        "performance_report",
+        ("hardware.cpu_load", "hardware.load_average", "hardware.cpu_count",
+         "hardware.memory", "hardware.swap", "hardware.disk", "process.list"),
+        "what, if anything, is slowing this machine down", explained=True),
 }
 
 #: How a person asks each analysis.  Matched before the phrasebook, because
@@ -279,6 +289,23 @@ ANALYSIS_PHRASES: Dict[str, Tuple[str, ...]] = {
         "why is memory high", "why is ram high",
         "why is my memory high", "why is my ram high",
         "idle memory", "idle ram", "memory at idle", "ram at idle",
+    ),
+    # "Why is my computer running slowly?" Every phrase here is about the
+    # machine being slow; "slow" alone is not one, because a slow day is not
+    # a diagnosis.
+    "performance_report": (
+        "running slowly", "running slow", "running so slowly", "running so slow",
+        "running very slowly", "running very slow",
+        "computer is slow", "computer so slow", "computer is so slow",
+        "computer slow", "computer feels slow",
+        "machine is slow", "machine so slow", "system is slow", "system so slow",
+        "laptop is slow", "pc is slow", "everything is slow", "everything so slow",
+        "slowing down my computer", "slowing my computer", "slowing the computer",
+        "slowing this computer", "slowing it down", "slowing things down",
+        "what is slowing", "why is it slow", "why so slow",
+        "sluggish", "lagging", "laggy",
+        "performance report", "performance check", "performance problem",
+        "slowdown report",
     ),
 }
 
@@ -361,6 +388,39 @@ def rank_memory(processes: object) -> Optional[MemoryRanking]:
     rows = sorted(((name, size, count) for name, (size, count) in totals.items()),
                   key=lambda row: (-row[1], row[0]))
     return MemoryRanking(rows=rows, measured=measured)
+
+def rank_processor(processes: object) -> Optional[Tuple[str, float]]:
+    """The program using the most processor time, and how much, or None.
+
+    The figure is the process list's own percentage, summed over a program's
+    processes, so it is "percent of one core". None when the list carries no
+    processor figures: naming a busiest program then would be inventing one.
+    """
+    if not isinstance(processes, (list, tuple)):
+        return None
+    totals: Dict[str, float] = {}
+    for process in processes:
+        try:
+            share = float(getattr(process, "cpu_percent", 0.0) or 0.0)
+        except (TypeError, ValueError):
+            continue
+        if share <= 0:
+            continue
+        name = _program(process)
+        totals[name] = totals.get(name, 0.0) + share
+    if not totals:
+        return None
+    name = min(totals, key=lambda n: (-totals[n], n))
+    return name, totals[name]
+
+
+def _listed(items: list) -> str:
+    """["a", "b", "c"] → "a, b and c"."""
+    items = [str(i) for i in items]
+    if len(items) <= 1:
+        return "".join(items)
+    return ", ".join(items[:-1]) + " and " + items[-1]
+
 
 #: Capabilities that answer a question rather than do a thing.
 #:
@@ -677,6 +737,9 @@ class CapabilityCorpus:
         ``table`` lays the ranking out in columns, for the terminal; without
         it the answer is a sentence that can be spoken.
         """
+        if analysis == "performance_report":
+            return self._explain_performance(values, table)
+
         ranking = rank_memory(values.get("process.list"))
         if ranking is None:
             return False, ("This machine is not reporting how much memory "
@@ -737,6 +800,115 @@ class CapabilityCorpus:
             lines.append(f"Those {len(top)} hold about {_bytes(together)} "
                          f"between them.")
         return True, " ".join(lines)
+
+    def _explain_performance(self, values: Dict[str, object],
+                             table: bool = False) -> Tuple[bool, str]:
+        """"Why is my computer running slowly?" — from readings, as findings.
+
+        The verdict comes first and every finding after it is one sentence
+        with the figure it rests on, so the answer can be said as it stands
+        and, when a model is asked to explain it, checked figure by figure.
+        A reading that did not come back is left out rather than assumed
+        normal, and if none came back the answer is that nothing could be
+        measured.
+        """
+        findings: List[str] = []
+        causes: List[str] = []
+        measured: List[str] = []
+
+        cores = values.get("hardware.cpu_count")
+        cores = int(cores) if isinstance(cores, (int, float)) and cores else 0
+        load = values.get("hardware.cpu_load")
+        average = values.get("hardware.load_average")
+        one = None
+        if isinstance(average, (tuple, list)) and average:
+            try:
+                one = float(average[0])
+            except (TypeError, ValueError):
+                one = None
+        if isinstance(load, (int, float)):
+            measured.append("processor")
+            sentence = f"The processor is at {float(load):.0%}"
+            if one is not None and cores:
+                sentence += (f", with a load average of {one:.2f} across "
+                             f"{cores} core{'s' if cores != 1 else ''}")
+            findings.append(sentence + ".")
+            per_core = one / cores if one is not None and cores else 0.0
+            if float(load) >= 0.85 or per_core >= 1.5:
+                causes.append("the processor is saturated")
+            elif float(load) >= 0.60 or per_core >= 1.0:
+                causes.append("the processor is busy")
+
+        processes = values.get("process.list")
+        busiest = rank_processor(processes)
+        if busiest is not None and busiest[1] >= 25.0:
+            findings.append(f"{busiest[0]} is using the most processor time, "
+                            f"about {busiest[1]:.0f} percent of one core.")
+
+        memory = values.get("hardware.memory")
+        fraction = None
+        if isinstance(memory, (tuple, list)) and len(memory) == 2 \
+                and int(memory[0] or 0) > 0:
+            measured.append("memory")
+            total, available = int(memory[0]), int(memory[1])
+            used = max(total - available, 0)
+            fraction = used / total
+            findings.append(f"Memory is {fraction:.0%} full: {_bytes(used)} of "
+                            f"{_bytes(total)} in use, {_bytes(available)} available.")
+            if fraction >= 0.90:
+                causes.append("memory is nearly full")
+            elif fraction >= 0.80:
+                causes.append("memory is under pressure")
+        ranking = rank_memory(processes)
+        if ranking is not None and ranking.rows:
+            name, size, _procs = ranking.rows[0]
+            findings.append(f"{name} holds the most memory, about {_bytes(size)}.")
+
+        swap = values.get("hardware.swap")
+        if isinstance(swap, (tuple, list)) and len(swap) == 2:
+            measured.append("swap")
+            swap_total, swap_free = int(swap[0] or 0), int(swap[1] or 0)
+            swapped = max(swap_total - swap_free, 0)
+            if swap_total and swapped >= 256 * 1024 * 1024 \
+                    and swapped / swap_total >= 0.25:
+                findings.append(f"{_bytes(swapped)} has been pushed out to swap, "
+                                f"and reading it back is slow.")
+                causes.append("the machine is swapping")
+            elif not swap_total and fraction is not None and fraction >= 0.90:
+                findings.append("No swap is configured, so there is nowhere "
+                                "for the overflow to go.")
+
+        disk = values.get("hardware.disk")
+        if isinstance(disk, (tuple, list)) and len(disk) == 2 \
+                and int(disk[0] or 0) > 0:
+            measured.append("storage")
+            disk_total, disk_free = int(disk[0]), int(disk[1])
+            full = max(disk_total - disk_free, 0) / disk_total
+            findings.append(f"Storage is {full:.0%} full, {_bytes(disk_free)} free.")
+            if full >= 0.95:
+                causes.append("storage is nearly full")
+
+        if not measured:
+            return False, ("This machine is not reporting its processor, memory "
+                           "or storage readings, so I cannot say what is "
+                           "slowing it down.")
+        if causes:
+            verdict = "Likely cause: " + _listed(causes) + "."
+        else:
+            verdict = ("Nothing I can measure explains a slowdown: "
+                       + _listed(measured) + " all read normal."
+                       if len(measured) > 1 else
+                       f"Nothing I can measure explains a slowdown: {measured[0]} reads normal.")
+        lines = [verdict] + findings
+        if not table:
+            return True, " ".join(lines)
+
+        if ranking is not None and ranking.rows:
+            lines.append("")
+            lines.append(f"{'MEMORY':>10}  {'PROCS':>5}  PROGRAM")
+            for name, size, procs in ranking.top(6):
+                lines.append(f"{_bytes(size):>10}  {procs:>5}  {name}")
+        return True, "\n".join(lines)
 
     def describe(self, limit: int = 3) -> str:
         """The corpus as text: what this machine can be asked, and how."""

@@ -36,6 +36,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 from .backends import Reasoner
+from .computer_link import Answer, ComputerLink
 
 # `PROPOSAL  READ MEMORY` / `REFUSED  AMBIGUOUS`
 _HEAD = re.compile(r"^(PROPOSAL|REFUSED)\s+(.*)$")
@@ -344,33 +345,61 @@ NARRATION_RULES = (
 class CdosReasoner(Reasoner):
     """Routes an utterance through CDOS first, and a model only for wording.
 
+    Two halves of CDOS are asked, in order, before any model:
+
+    1. ``cdos-bridge`` — the machine's state, through a fixed READ-only table;
+    2. CDOS Computer (:mod:`.computer_link`) — facts from the corpus, sums from
+       the calculator, plans checked against evidence, and its policy on
+       health, money and safety.
+
     ``inner`` is an optional second reasoner (Ollama or cloud) used for two
     narrow jobs: turning CDOS's narration facts into a spoken sentence, and
-    answering questions the deterministic table did not match.  With no inner
-    reasoner the shell still works, answering from CDOS's own output.
+    proposing a command when neither half of CDOS recognised the request.
+    With no inner reasoner the shell still works, answering from CDOS's own
+    output.
+
+    A model never answers a factual question in the computer's place unless
+    ``free_answers`` is on, and then its words are labelled as unchecked.
     """
 
     name = "cdos"
 
     def __init__(self, bridge: CdosBridge, inner: Optional[Reasoner] = None,
-                 narrate: bool = True, use_godcore: bool = True):
+                 narrate: bool = True, use_godcore: bool = True,
+                 computer: Optional[ComputerLink] = None,
+                 free_answers: bool = False):
         self.bridge = bridge
         self.inner = inner
         self.narrate = narrate
         self.use_godcore = use_godcore
+        self.computer = computer
+        self.free_answers = free_answers
+        #: CDOS Computer's last reply, envelope and all, for the screen to show
+        #: where an answer came from.
+        self.last_answer: Optional[Answer] = None
         #: Set when the last utterance needs the user to choose or confirm.
         self.pending: Optional[Proposal] = None
         #: The last proposal CDOS *accepted*, for the semantic layer to learn
         #: from. Only ever set after the validator passed, so nothing can be
         #: learned that the fixed table would have refused.
         self.last_command: Optional[Proposal] = None
+        #: The World Model briefing the shell passed with this utterance, if
+        #: any. Readings still come from CDOS itself; this is only the shape
+        #: of the world (what is installed, what the person asked to keep).
+        self.world_context: str = ""
 
     @property
     def available(self) -> bool:
-        return self.bridge.available
+        return self.bridge.available or self.computer_available
+
+    @property
+    def computer_available(self) -> bool:
+        return self.computer is not None and self.computer.available
 
     def status(self) -> str:
         detail = self.bridge.status()
+        if self.computer is not None:
+            detail += f" · computer {self.computer.status()}"
         if self.inner is not None:
             detail += f" · wording via {self.inner.name}"
         return detail
@@ -385,6 +414,9 @@ class CdosReasoner(Reasoner):
         """
         self.pending = None
         self.last_command = None
+        self.last_answer = None
+        if not self.bridge.available:
+            return (self.ask_computer(utterance), None)
         proposal = self.bridge.listen(utterance)
 
         if proposal.verdict == "AMBIGUOUS":
@@ -402,8 +434,31 @@ class CdosReasoner(Reasoner):
                         f"Confirm to proceed.", proposal)
             return (self.execute(proposal), None)
 
-        # Nothing in the fixed table matched. Now, and only now, a model.
-        return (self.ask_model(utterance), None)
+        # Nothing in the fixed table matched. The computer next; a model only
+        # if the computer could not answer either.
+        return (self.ask_computer(utterance), None)
+
+    def ask_computer(self, utterance: str) -> str:
+        """Ask CDOS Computer, and let a model near the request only if it could not answer.
+
+        A final answer — from the corpus, the calculator, or the computer's own
+        policy on health, money and safety — is returned exactly as given. It
+        is not reworded: the computer has already checked its own words, and a
+        model that rephrased them could change what they claim.
+        """
+        if not self.computer_available:
+            return self.ask_model(utterance)
+        answer = self.computer.ask(utterance)
+        if not answer.reached:
+            # The link failed. A model may still try, as it did before the
+            # computer existed; with none, the failure is the answer.
+            if self.inner is not None and self.inner.available:
+                return self.ask_model(utterance)
+            return f"Knowledge core unreachable. {answer.error}".strip()
+        self.last_answer = answer
+        if answer.final:
+            return answer.text
+        return self.ask_model(utterance, fallback=answer)
 
     def execute(self, proposal: Proposal) -> str:
         """Run an accepted command and say what came of it."""
@@ -479,13 +534,25 @@ class CdosReasoner(Reasoner):
         return self.execute(checked)
 
     # ------------------------------------------------------------------
-    def ask_model(self, prompt: str) -> str:
+    def ask_model(self, prompt: str, fallback: Optional[Answer] = None) -> str:
         """Let a model try, constrained by CDOS's closed vocabulary.
 
         Anything it emits goes back through ``cdos-bridge propose``, so its
         authority is exactly that of a person at the keyboard with no hands.
+
+        *fallback* is CDOS Computer's own reply when it could not answer (NOT
+        FOUND, UNSUPPORTED, no corpus). Then the model may still propose a
+        command, but a free-text answer is discarded in favour of the
+        computer's honest refusal — unless ``free_answers`` is on, in which
+        case it is spoken labelled as unchecked.
         """
-        if self.inner is None or not self.inner.available:
+        model_ready = self.inner is not None and self.inner.available
+        if fallback is not None and (not model_ready or
+                                     (not self.bridge.available and not self.free_answers)):
+            # Nothing a model says could be used: no validator for a command,
+            # and no licence for a fact.
+            return fallback.text
+        if not model_ready:
             return ("I did not recognise that as something I can check. "
                     "Try naming one thing: memory, storage, network, "
                     "temperature.")
@@ -497,6 +564,8 @@ class CdosReasoner(Reasoner):
             if godcore:
                 context_parts.append(godcore)
         context_parts.append(self.bridge.system())
+        if self.world_context:
+            context_parts.append(self.world_context)
 
         system = (
             "You are the voice of EARTH OS, an onboard computer running CDOS. "
@@ -529,11 +598,17 @@ class CdosReasoner(Reasoner):
                     return (f"{checked.command} would change the machine. "
                             f"Confirm to proceed.")
                 return self.execute(checked)
+        if fallback is not None:
+            if not self.free_answers:
+                return fallback.text
+            return f"Not in the corpus. Unverified model answer: {answer}"
         return answer
 
     # ------------------------------------------------------------------
     def ask(self, prompt: str, system: str, context: str,
             history: List[Dict[str, str]]) -> str:
         """Reasoner interface, so CDOS can be dropped in as ``llm = "cdos"``."""
+        marker = context.find("world_model:") if context else -1
+        self.world_context = context[marker:] if marker >= 0 else ""
         reply, _pending = self.handle(prompt)
         return reply

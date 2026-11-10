@@ -100,6 +100,7 @@ class VoiceEngine:
                 host=str(block.get("host", "http://127.0.0.1:11434")),
                 model=str(block.get("model", "llama3.2")),
                 timeout=float(block.get("timeout", 60)),
+                num_ctx=int(block.get("num_ctx", 8192)),
             )
         if name == "cloud":
             block = cfg.section("cloud")
@@ -123,10 +124,17 @@ class VoiceEngine:
             inner = self._build_reasoner(wording) if wording != "none" else None
             if inner is not None and not inner.available:
                 inner = None          # CDOS alone still answers, just flatly
+            # The other half of CDOS: facts, sums and the Governor
+            # (cdos-computer/, docs/COMPUTER.md). Constructing it is cheap;
+            # nothing is imported or connected until the first question.
+            from .computer_link import ComputerLink
+            computer = ComputerLink.from_config(cfg)
             return CdosReasoner(
                 bridge, inner=inner,
                 narrate=bool(block.get("narrate", True)),
                 use_godcore=bool(block.get("godcore", True)),
+                computer=computer if computer.mode != "off" else None,
+                free_answers=bool(cfg.get("computer", "free_answers", False)),
             )
         return NullReasoner()
 
@@ -169,6 +177,15 @@ class VoiceEngine:
         except Exception:
             pass
 
+    @property
+    def computer(self):
+        """The CDOS Computer link, when CDOS is the backend and it is enabled."""
+        return getattr(self.reasoner, "computer", None)
+
+    def computer_status(self) -> str:
+        link = self.computer
+        return link.status() if link is not None else "not linked (llm is not cdos, or off)"
+
     # ------------------------------------------------------------------
     @property
     def available(self) -> bool:
@@ -188,6 +205,7 @@ class VoiceEngine:
             ("SPEECH TO TEXT", f"{self.stt.name}: {self.stt.status()}"),
             ("TEXT TO SPEECH", f"{self.tts.name}: {self.tts.status()}"),
             ("REASONING", f"{self.reasoner.name}: {self.reasoner.status()}"),
+            ("COMPUTER", self.computer_status()),
             ("WAKE WORD", ", ".join(self.shell.dispatcher.vocabulary.wake_words)),
             ("MODE", "continuous" if self.continuous else "wake word"),
             ("LAST ERROR", self.last_error or "none"),

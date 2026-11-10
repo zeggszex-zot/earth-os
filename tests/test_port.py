@@ -196,7 +196,16 @@ class TestShell(unittest.TestCase):
         self.assertIn("computer", roles)
 
     def test_unknown_utterance_is_refused_not_crashed(self):
+        # Tier 4 is Earth Mind now, which answers on a worker thread like
+        # every other reasoner call; what this protects — an answer, not a
+        # crash — is unchanged, so wait for it. (The same change CDOS LCARS
+        # made to this test when its tier 4 became the companion.)
+        import time
         self.shell.handle_utterance("what is the airspeed velocity of a swallow")
+        deadline = time.monotonic() + 20
+        while time.monotonic() < deadline and (
+                self.shell.thinking or self.shell.conversation[-1]["role"] != "computer"):
+            time.sleep(0.02)
         last = self.shell.conversation[-1]
         self.assertEqual(last["role"], "computer")
         self.assertTrue(last["text"])

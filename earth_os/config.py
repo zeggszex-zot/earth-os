@@ -59,7 +59,10 @@ DEFAULTS: Dict[str, Any] = {
         "input_device": "default",
         "stt": "whisper",
         "tts": "piper",
-        "llm": "ollama",
+        # The same as the file written on first run says. This said "ollama"
+        # while that file said "cdos", so the very first launch — the one
+        # before the file exists — ran a different brain from every later one.
+        "llm": "cdos",
         "acknowledge": True,
     },
     "semantics": {
@@ -99,6 +102,7 @@ DEFAULTS: Dict[str, Any] = {
         "host": "http://127.0.0.1:11434",
         "model": "llama3.2",
         "timeout": 60,
+        "num_ctx": 8192,
     },
     "cloud": {
         "provider": "anthropic",
@@ -121,6 +125,87 @@ DEFAULTS: Dict[str, Any] = {
         "godcore": True,
         # Fold shell occasions into GODCORE so its pulse advances with use.
         "godcore_events": True,
+    },
+    "computer": {
+        # CDOS Computer (cdos-computer/): the corpus, the navigator, the
+        # calculator and the Governor, asked after cdos-bridge and before any
+        # model. See docs/COMPUTER.md.
+        "enabled": True,
+        # auto     = the cdos-api service's socket if it exists, else the
+        #            computer's code run in this process
+        # socket   = the service only
+        # embedded = in this process only
+        "mode": "auto",
+        "socket": "/run/cdos/api.sock",
+        "port": 0,                     # instead of a socket: 127.0.0.1 only
+        "timeout": 10,
+        # Where the computer's code is, for embedded mode. Blank = beside this
+        # checkout, then /opt/cdos-computer/current.
+        "source": "",
+        # The computer's own config.toml, for embedded mode. Blank = its
+        # defaults, with its log kept in this shell's data directory.
+        "config": "",
+        # False: when the corpus has no answer, the computer's NOT FOUND is
+        # what is said, and a model may only propose a command. True: a
+        # model's free answer is spoken instead, labelled as unverified.
+        "free_answers": False,
+    },
+    "companion": {
+        # The Companion Engine (docs/COMPANION.md): conversation, with CDOS
+        # underneath it. Commands still go to the command path first.
+        "enabled": True,
+        # ollama = its own small-model client (one call per turn)
+        # reasoner = the shell's [voice] llm reasoner, through its ask()
+        "backend": "ollama",
+        "model": "llama3.2:3b",       # Llama 3.2 3B Instruct, Q4_K_M
+        "host": "",                   # blank = [ollama] host
+        "timeout": 60,
+        "num_ctx": 4096,              # fixed: changing it reloads the model
+        "keep_alive": "10m",
+        # Take plainly conversational sentences away from a command that
+        # only recognised a word of them ("going home after work").
+        "guard": True,
+        # File what you say about yourself ("I love astronomy") as a pending
+        # note; it reaches no prompt until you say "keep note N".
+        "observe": True,
+        # worded = a model words the computer's fact, checked against the
+        # evidence; verbatim = the computer's sentence, no model at all.
+        "casual_facts": "worded",
+        "idle_minutes": 30,
+    },
+    "mind": {
+        # Earth Mind (docs/EARTH_MIND.md): the one coordination layer over
+        # CDOS, the Companion, the system and game worlds. False puts the
+        # shell back to the Companion Engine on its own.
+        "enabled": True,
+        # Which OS personality the terminal and the voice talk to. Others are
+        # JSON files in ~/.config/earth-os/personalities/.
+        "persona": "companion",
+        # The model every voice shares, as provider:model[@host] — for
+        # example "ollama:llama3.2:3b". Blank = the [companion] model, so a
+        # machine configured before Earth Mind needs no new setting.
+        "model": "",
+        # A different (usually smaller) model for game characters. Blank =
+        # the same one, loaded once.
+        "game_model": "",
+        # Where memories are kept. Blank = mind/memory.db in the data
+        # directory; ":memory:" keeps nothing between runs.
+        "memory": "",
+        # Let the Companion put verified system findings into plain words.
+        # False: a diagnosis is said as the findings themselves.
+        "explain": True,
+        # The terminal sends plain English through Earth Mind. False: it is
+        # the translator and the shell only, as in 1.0.
+        "terminal": True,
+        # The game world "talk to <name>" looks in first. Blank = none.
+        "world": "harbour",
+    },
+    "world": {
+        # The World Model (docs/WORLD_MODEL.md): what this computer knows
+        # about itself, and what the person has let it remember.
+        "enabled": True,
+        "observe": True,              # notes others suggest are always pending
+        "briefing": True,             # give a reasoner the world's shape
     },
     "persona": {
         "system_prompt": (
@@ -214,6 +299,26 @@ wording = "ollama"                  # ollama | cloud | none
 narrate = true
 godcore = true
 
+# CDOS Computer: facts from the corpus, sums from the calculator, and the
+# Governor. Asked after cdos-bridge and before any model. A model never
+# answers a factual question in its place unless free_answers = true.
+[computer]
+enabled      = true
+mode         = "auto"               # auto | socket | embedded | off
+socket       = "/run/cdos/api.sock" # the cdos-api service
+source       = ""                   # embedded: blank = beside this checkout
+free_answers = false
+
+# The Companion Engine: conversation with a persistent identity. Facts come
+# from CDOS Computer, style from GODCORE, memories from the World Model (only
+# what you kept). It talks; it never acts. See docs/COMPANION.md.
+[companion]
+enabled      = true
+model        = "llama3.2:3b"        # ollama pull llama3.2:3b
+guard        = true                 # talk is not taken for a command
+observe      = true                 # what you say about yourself → a pending note
+casual_facts = "worded"             # worded (checked) | verbatim
+
 [semantics]
 # The learned layer. CDOS resolves what it knows; the model explains what it
 # does not; the explanation is then written down and CDOS knows it too.
@@ -222,6 +327,27 @@ learn     = true                    # false = use what is learned, add nothing
 seed      = true                    # install the starter aliases on first run
 execute_threshold = 0.75            # confidence needed to act without asking
 seed_confidence   = 0.55            # where a newly learned reading starts
+
+# Earth Mind: one coordination layer over CDOS (knowledge), the Companion
+# (conversation), the system (real readings; operations wait for a press) and
+# game worlds. See docs/EARTH_MIND.md.
+[mind]
+enabled    = true
+persona    = "companion"            # companion | technician | one of your own
+model      = ""                     # provider:model[@host]; blank = the [companion] model
+game_model = ""                     # blank = the same model, loaded once
+explain    = true                   # the Companion explains verified system findings
+terminal   = true                   # plain English in the terminal goes through Earth Mind
+world      = "harbour"              # the demonstration game world; "" for none
+
+[world]
+# The World Model: what this computer knows about itself and about you.
+# Nothing about you is kept unless you said "remember that…" or answered
+# "keep note N". Everything lives in world.json in the data directory;
+# "forget everything about me", or deleting that file, removes all of it.
+enabled  = true
+observe  = true                     # let apps suggest notes (always pending)
+briefing = true                     # give the model the world's shape
 
 [whisper]
 binary  = "whisper-cli"
@@ -235,6 +361,7 @@ voice  = "~/.local/share/earth-os/voices/en_US-amy-medium.onnx"
 [ollama]
 host  = "http://127.0.0.1:11434"
 model = "llama3.2"
+num_ctx = 8192                      # context window requested from Ollama
 
 [cloud]
 provider    = "anthropic"

@@ -485,10 +485,21 @@ class OllamaReasoner(Reasoner):
     name = "ollama"
 
     def __init__(self, host: str = "http://127.0.0.1:11434",
-                 model: str = "llama3.2", timeout: float = 60.0):
+                 model: str = "llama3.2", timeout: float = 60.0,
+                 num_ctx: int = 8192):
         self.host = host.rstrip("/")
         self.model = model
         self.timeout = float(timeout)
+        #: Context window to request. Ollama's own default is small enough
+        #: that a long prompt — the game composer's library listing — is
+        #: silently truncated, and the model never sees the start of it.
+        self.num_ctx = int(num_ctx)
+        #: "json" asks Ollama to constrain output to a JSON value. Off by
+        #: default: conversation is prose. The composer evaluation measures
+        #: whether turning it on for the composer is worth it.
+        self.format = ""
+        #: Token counts and timing from the last call, for measurement.
+        self.last_usage: Dict[str, float] = {}
 
     @property
     def available(self) -> bool:
@@ -508,12 +519,20 @@ class OllamaReasoner(Reasoner):
         messages = [{"role": "system", "content": f"{system}\n\nCurrent system state:\n{context}"}]
         messages.extend(history)
         messages.append({"role": "user", "content": prompt})
-        result = _post_json(f"{self.host}/api/chat", {
+        payload = {
             "model": self.model,
             "messages": messages,
             "stream": False,
-            "options": {"temperature": 0.4},
-        }, self.timeout)
+            "options": {"temperature": 0.4, "num_ctx": self.num_ctx},
+        }
+        if self.format:
+            payload["format"] = self.format
+        result = _post_json(f"{self.host}/api/chat", payload, self.timeout)
+        self.last_usage = {
+            "prompt_tokens": result.get("prompt_eval_count", 0),
+            "output_tokens": result.get("eval_count", 0),
+            "seconds": result.get("total_duration", 0) / 1e9,
+        }
         return str(result.get("message", {}).get("content", "")).strip()
 
 
@@ -561,6 +580,9 @@ class CloudReasoner(Reasoner):
                 "x-api-key": self.api_key,
                 "anthropic-version": "2023-06-01",
             })
+            usage = result.get("usage") or {}
+            self.last_usage = {"prompt_tokens": usage.get("input_tokens", 0),
+                               "output_tokens": usage.get("output_tokens", 0)}
             blocks = result.get("content") or []
             return "".join(b.get("text", "") for b in blocks
                            if isinstance(b, dict)).strip()
@@ -572,5 +594,8 @@ class CloudReasoner(Reasoner):
         result = _post_json(url, {
             "model": self.model, "messages": messages, "max_tokens": 1024,
         }, self.timeout, {"Authorization": f"Bearer {self.api_key}"})
+        usage = result.get("usage") or {}
+        self.last_usage = {"prompt_tokens": usage.get("prompt_tokens", 0),
+                           "output_tokens": usage.get("completion_tokens", 0)}
         choices = result.get("choices") or [{}]
         return str(choices[0].get("message", {}).get("content", "")).strip()

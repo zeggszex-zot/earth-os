@@ -87,6 +87,33 @@ class Shell:
             except Exception as exc:                # never stop the shell
                 self.composition_error = f"{type(exc).__name__}: {exc}"
 
+        #: What the person has let this computer remember, and the installed
+        #: applications described as data. The World Model itself is never
+        #: stored: :meth:`world_model` assembles it from these and the
+        #: catalogue each time, so it cannot drift from what is really here.
+        #: See docs/WORLD_MODEL.md.
+        self.ledger = None
+        self.apps = None
+        self.world_error = ""
+        if bool(self.config.get("world", "enabled", True)):
+            from .world_model import ApplicationIndex, UserLedger
+            try:
+                self.ledger = UserLedger.load(
+                    observe=bool(self.config.get("world", "observe", True)))
+                self.apps = ApplicationIndex.load()
+            except Exception as exc:                # never stop the shell
+                self.world_error = f"{type(exc).__name__}: {exc}"
+
+        #: Earth Mind (docs/EARTH_MIND.md): the one coordination layer that
+        #: CDOS, the Companion, the system and game worlds are subsystems of.
+        #: Built on first use, so nothing about it is paid for during boot.
+        self._mind = None
+        self._mind_built = False
+        self.mind_error = ""
+        #: The Companion Engine on its own, for ``[mind] enabled = false``.
+        self._companion = None
+        self._companion_built = False
+
         self.palette = self._load_palette()
         self.strings = self._load_strings()
         self.monitor = sysinfo.SystemMonitor()
@@ -456,6 +483,24 @@ class Shell:
 
         self.user_said(text)
 
+        # A conversation with a game character is in progress on this
+        # interface: what is said next is said to them. Checked before any
+        # command layer, or the vocabulary's bare "home" would walk off with
+        # "I am going home" halfway through a conversation in a shop.
+        if self.talking_to_a_character("voice"):
+            self.converse(text)
+            return
+
+        # "Remember that I prefer cooperative games." Anchored at the start of
+        # the sentence, so it cannot fire inside some other request.
+        if self.ledger is not None:
+            from .world_model import parse_request
+            world = parse_request(text)
+            if world is not None:
+                self.user_said(text)
+                self.say(self.handle_world_request(world))
+                return
+
         # Most specific wins.
         #
         # The vocabulary matches by containment, so its bare "home" fires
@@ -476,6 +521,17 @@ class Shell:
         # say the whole of it.
         match = (self.compositions.resolve(text)
                  if self.compositions is not None else None)
+        # The conversation guard. "I was thinking about going home after
+        # work" contains the vocabulary's "home"; it is still talk. A sentence
+        # that is plainly conversational, and that the command layers
+        # recognised less than 60% of, goes to Earth Mind. The guard can
+        # only take a sentence *away* from a command, never cause one.
+        if self._companion_claims(text, max(
+                spoken, len(intent.phrase) if intent else 0,
+                len(match.phrase) if match else 0)):
+            self.converse(text)
+            return
+
         if match is not None and len(match.phrase) > spoken \
                 and len(match.phrase) >= len(intent.phrase if intent else ""):
             self.run_composition(match.composition)
@@ -516,12 +572,266 @@ class Shell:
         if self.run_capability_intent(text):
             return
 
-        # Tier 4: nothing known matched. Ask the model, and learn from it.
+        # Tier 4: nothing known matched. Earth Mind takes it: knowledge goes
+        # to CDOS, talk to the Companion, a character's name to its world.
+        # A request it recognises as a task comes back to the model path below.
+        # With ``[companion] enabled = false`` there is nobody to talk to, and
+        # this is the model path exactly as it was.
+        if self.companion_enabled():
+            self.converse(text)
+            return
+        self._fallback_to_model(text)
+
+    def _fallback_to_model(self, text: str) -> None:
+        """The tier 4 of before Earth Mind: ask the reasoner, and learn from it."""
         if self.voice is not None and self.voice.can_reason:
             self.ask_model(text, learn_from=text)
         else:
             self.say(str(self.config.get("persona", "unknown",
                                          "Unable to comply.")))
+
+    # ------------------------------------------------------------------
+    # Earth Mind (docs/EARTH_MIND.md)
+    # ------------------------------------------------------------------
+    def mind_enabled(self) -> bool:
+        return bool(self.config.get("mind", "enabled", True))
+
+    def companion_enabled(self) -> bool:
+        return bool(self.config.get("companion", "enabled", True))
+
+    def _conversation_link(self):
+        """CDOS Computer for conversation: the voice's link, else one of our own."""
+        link = self.voice.computer if self.voice is not None else None
+        if link is None:
+            from .voice.computer_link import ComputerLink
+            link = ComputerLink.from_config(self.config)
+            if link.mode == "off":
+                link = None
+        return link
+
+    def _wording_model(self):
+        """The shell's own reasoner, unwrapped: what ``backend = "reasoner"`` speaks through."""
+        reasoner = getattr(self.voice, "reasoner", None) if self.voice is not None else None
+        return getattr(reasoner, "inner", None) or reasoner
+
+    def earth_mind(self):
+        """Earth Mind, built once on first use. None if disabled or it cannot be built.
+
+        Building it calls no model, loads no corpus and takes no reading, and
+        it never happens during boot. A failure to build is recorded in
+        :attr:`mind_error` and leaves the shell exactly as it was before
+        Earth Mind existed: commands, the terminal and the model path all
+        still work.
+        """
+        if not self.mind_enabled():
+            return None
+        if self._mind_built:
+            return self._mind
+        self._mind_built = True
+        try:
+            from .mind import build_mind
+            self._mind = build_mind(
+                self.config, shell=self, link=self._conversation_link(),
+                ledger=self.ledger, reasoner=self._wording_model(),
+                godcore=lambda: self.cdos_snapshot)
+        except Exception as exc:                  # never stop the shell
+            self.mind_error = f"{type(exc).__name__}: {exc}"
+            self.status_message = f"earth mind unavailable: {self.mind_error}"
+            self._mind = None
+        return self._mind
+
+    def companion_engine(self):
+        """The Companion Engine the voice talks to. None if disabled or unbuildable.
+
+        With Earth Mind on, this is its default personality's engine — the
+        same object the terminal reaches — so there is one conversation, not
+        one per interface. With ``[mind] enabled = false`` it is the Companion
+        Engine on its own, as in CDOS.
+        """
+        if not self.companion_enabled():
+            return None
+        mind = self.earth_mind()
+        if mind is not None:
+            return mind.companion(mind.persona("voice").id)
+        if self._companion_built:
+            return self._companion
+        self._companion_built = True
+        try:
+            from .companion import build_engine
+            self._companion = build_engine(
+                self.config, link=self._conversation_link(), ledger=self.ledger,
+                godcore=lambda: self.cdos_snapshot, reasoner=self._wording_model())
+        except Exception as exc:                  # never stop the shell
+            self.status_message = f"companion unavailable: {type(exc).__name__}: {exc}"
+            self._companion = None
+        return self._companion
+
+    def talking_to_a_character(self, interface: str) -> bool:
+        """Is a game character being talked to on *interface*? Never builds anything."""
+        mind = self._mind
+        if mind is None:
+            return False
+        try:
+            return mind.games.active(interface) is not None
+        except Exception:
+            return False
+
+    def _companion_claims(self, text: str, recognised: int) -> bool:
+        if not self.companion_enabled() or not bool(self.config.get("companion", "guard", True)):
+            return False
+        if not recognised:
+            return False                     # nothing to take it from; tier 4 will have it
+        from .companion import is_conversational
+        whole = len(normalise(text)) or 1
+        return recognised < 0.6 * whole and is_conversational(text)
+
+    def converse(self, text: str) -> None:
+        """One turn through Earth Mind, on a worker thread like every other reasoner call."""
+        mind = self.earth_mind()
+        engine = None if mind is not None else self.companion_engine()
+        if mind is None and engine is None:
+            self._fallback_to_model(text)
+            return
+        self.thinking = True
+        self.redraw()
+        # GODCORE is read from the cache; this only keeps the cache warm, and
+        # is throttled and off the frame clock like every other refresh.
+        try:
+            self.refresh_cdos()
+        except Exception:
+            pass
+
+        def worker() -> None:
+            try:
+                if mind is not None:
+                    response = mind.handle(text, interface="voice")
+                else:
+                    response = engine.respond(text)
+            except Exception as exc:
+                self.thinking = False
+                self.say(f"Conversation subsystem error. {type(exc).__name__}: {exc}")
+                return
+            self.thinking = False
+            if mind is not None:
+                self.apply_mind_response(response, text)
+                return
+            if response.handoff:
+                self._fallback_to_model(text)
+                return
+            self.status_message = response.note()
+            self.say(response.text or "…")
+
+        threading.Thread(target=worker, daemon=True, name="earth-mind").start()
+
+    def apply_mind_response(self, response, text: str) -> None:
+        """Say what Earth Mind answered, or do what it asked for — through the gate.
+
+        Earth Mind cannot act. When its answer is a request for a system
+        operation, the request is carried out *here*, by the same paths a
+        spoken command takes: an effectful capability stops at the choice
+        strip for a press, and a program is started only if it is one this
+        machine has installed.
+        """
+        if response.handoff:
+            self._fallback_to_model(text)
+            return
+        if response.proposal is not None:
+            ok, message = self.carry_out(response.proposal)
+            if message:
+                self.say(message)
+            return
+        self.status_message = response.note()
+        self.say(response.text or "…")
+
+    def carry_out(self, proposal) -> Tuple[bool, str]:
+        """A proposal from Earth Mind, taken down the shell's gated path.
+
+        Returns ``(understood, message)``. *message* is something to say when
+        the gated path has not already said it; an effectful capability
+        returns with the choice strip up and nothing run.
+        """
+        if proposal.kind == "program":
+            return self.open_program(proposal.target)
+        if proposal.kind == "capability":
+            if self.run_capability_intent(proposal.text):
+                return True, ""
+            return False, f"Unable to comply. {proposal.summary or proposal.target} is not available."
+        return False, f"Unable to comply. Unknown kind of request: {proposal.kind}."
+
+    # -- what Earth Mind's system subsystem asks of the shell ------------------
+    def answer_reading(self, capability: str) -> Tuple[bool, str]:
+        """Take one reading and put it into words. Readings only.
+
+        The same check :meth:`answer_analysis` makes, at the moment of
+        running: in the catalogue, parameterless, **not effectful**, and
+        listed as a reading. Anything else is refused before it is invoked, so
+        this cannot be talked into changing the machine.
+        """
+        from .capability_corpus import READINGS
+        if self.capabilities is None:
+            return False, f"no platform adapter: {self.platform_error}"
+        spec = self.capabilities.spec(capability)
+        if spec is None or spec.effectful or spec.params or capability not in READINGS:
+            return False, f"{capability} is not a reading"
+        result = self.capabilities.invoke(capability)
+        if not result.ok:
+            return False, f"{spec.summary}: {result.error}"
+        said = self.capability_corpus.say_result(capability, result.value)
+        return True, f"{spec.summary[:1].upper()}{spec.summary[1:]}: {said}"
+
+    def _program_index(self) -> list:
+        now = time.monotonic()
+        cached = getattr(self, "_programs_cache", None)
+        if cached is not None and now - cached[0] < 30.0:
+            return cached[1]
+        from .screens.programs import discover_programs
+        try:
+            programs = discover_programs(self.config.programs())
+        except Exception:
+            programs = []
+        self._programs_cache = (now, programs)
+        return programs
+
+    def find_program(self, name: str) -> Optional[Tuple[str, str]]:
+        """An installed application called *name*: ``(its name, its own command)``, or None.
+
+        Looked up among the applications this machine has — the same index
+        the PROGRAM INDEX screen shows — and never built from what was typed.
+        "Open Firefox" can start Firefox; it cannot start a command line.
+        """
+        import re
+        wanted = " ".join(re.sub(r"[^a-z0-9+. -]", " ", (name or "").lower()).split())
+        if not wanted:
+            return None
+        programs = self._program_index()
+
+        def binary(program) -> str:
+            try:
+                first = shlex.split(program.command)[0]
+            except (ValueError, IndexError):
+                return ""
+            return Path(first).name.lower()
+
+        tiers = (
+            [p for p in programs if p.name.lower() == wanted],
+            [p for p in programs if binary(p) == wanted],
+            [p for p in programs if wanted in p.name.lower().split()],
+            [p for p in programs if p.name.lower().startswith(wanted + " ")],
+        )
+        for tier in tiers:
+            if tier:
+                return tier[0].name, tier[0].command
+        return None
+
+    def open_program(self, name: str) -> Tuple[bool, str]:
+        """Start the installed application called *name*. Returns ``(started, message)``."""
+        found = self.find_program(name)
+        if found is None:
+            return False, f"No installed program called {name}."
+        label, command = found
+        if self.launch(command, name=label):
+            return True, f"Opening {label}."
+        return False, f"Unable to comply. {self.status_message or label + ' did not start'}."
 
     def agent_request(self, text: str) -> str:
         """The request in an utterance addressed to Claude by name, or ""."""
@@ -644,11 +954,14 @@ class Shell:
 
         def worker() -> None:
             try:
-                answer = self.voice.reason(prompt, self.telemetry_summary())
+                answer = self.voice.reason(prompt, self.reasoning_context())
             except Exception as exc:                      # backend failure
                 answer = f"Reasoning subsystem error. {exc}"
             finally:
                 self.thinking = False
+            note = self._computer_note()
+            if note:
+                self.status_message = note
             self.say(answer or "No response.")
             if learn_from:
                 try:
@@ -690,15 +1003,78 @@ class Shell:
             return None
         return getattr(self.voice.reasoner, "bridge", None)
 
+    def _computer_note(self) -> str:
+        """Where the last answer came from, when CDOS Computer gave it.
+
+        "computer · knowledge · ESTABLISHED · 2 facts". The words are the
+        computer's; this says what stands behind them, so a person can tell a
+        fact from the corpus from a calculation from the random sampler.
+        """
+        if self.voice is None:
+            return ""
+        answer = getattr(self.voice.reasoner, "last_answer", None)
+        if answer is None or not getattr(answer, "reached", False):
+            return ""
+        parts = ["computer", answer.faculty or "-"]
+        if answer.certainty:
+            parts.append(answer.certainty)
+        facts = len(answer.evidence)
+        if facts:
+            parts.append(f"{facts} fact{'s' if facts != 1 else ''}")
+        if not answer.final:
+            parts.append("not answered")
+        return " · ".join(parts)
+
+    def _learn_from_answer(self, utterance: str) -> None:
+        """Turn whatever the backend just resolved into a stored relationship.
+
+        The CDOS backend records the command it settled on; that command is
+        the canonical meaning, and it has already been through CDOS's own
+        validator, so nothing enters the store that the fixed table would
+        have refused.
+        """
+        if self.voice is None or self.semantics is None:
+            return
+        reasoner = self.voice.reasoner
+        canonical = ""
+        effectful = False
+
+        last = getattr(reasoner, "last_command", None)
+        if last:
+            canonical = getattr(last, "target", "") or getattr(last, "command", "")
+            effectful = bool(getattr(last, "needs_human", False))
+        if not canonical:
+            return
+        self.learn_from_exchange(utterance, canonical, effectful=effectful)
+
+    # ------------------------------------------------------------------
+    # CDOS snapshot (GODCORE and the semantic system reading)
+    # ------------------------------------------------------------------
+    def cdos_bridge(self):
+        """The CDOS bridge, when CDOS is the reasoning backend."""
+        if self.voice is None:
+            return None
+        return getattr(self.voice.reasoner, "bridge", None)
+
+    def computer_link(self):
+        """The CDOS Computer link, when CDOS is the backend and it is enabled."""
+        if self.voice is None:
+            return None
+        return getattr(self.voice.reasoner, "computer", None)
+
     def refresh_cdos(self, interval: float = 6.0) -> None:
         """Refresh the cached CDOS readings on a worker thread.
 
-        Every reading costs a subprocess, so this is throttled and never runs
-        on the frame clock. Screens read :attr:`cdos_snapshot`, which is only
-        ever replaced wholesale — a half-updated dict would flicker.
+        Every reading costs a subprocess or a request to CDOS Computer, so this
+        is throttled and never runs on the frame clock. Screens read
+        :attr:`cdos_snapshot`, which is only ever replaced wholesale — a
+        half-updated dict would flicker.
         """
         bridge = self.cdos_bridge()
-        if bridge is None or not bridge.available:
+        bridge_live = bridge is not None and bridge.available
+        link = self.computer_link()
+        link_live = link is not None and link.available
+        if not bridge_live and not link_live:
             return
         now = time.monotonic()
         if now < self._cdos_next or self._cdos_busy:
@@ -709,12 +1085,22 @@ class Shell:
         def worker() -> None:
             snapshot: Dict[str, object] = {}
             try:
-                snapshot["godcore"] = bridge.godcore()
-                snapshot["weather"] = bridge.godcore_weather()
-                snapshot["system"] = bridge.system_rows()
-                snapshot["signals"] = bridge.signals()
-            except Exception as exc:
-                snapshot = {"error": f"{type(exc).__name__}: {exc}"}
+                if bridge_live:
+                    try:
+                        snapshot["godcore"] = bridge.godcore()
+                        snapshot["weather"] = bridge.godcore_weather()
+                        snapshot["system"] = bridge.system_rows()
+                        snapshot["signals"] = bridge.signals()
+                    except Exception as exc:
+                        snapshot = {"error": f"{type(exc).__name__}: {exc}"}
+                if link_live:
+                    # Kept apart from "error": one half of CDOS failing must
+                    # not blank the other half's panel.
+                    try:
+                        snapshot["computer"] = link.health()
+                    except Exception as exc:
+                        why = getattr(exc, "why", "") or f"{type(exc).__name__}: {exc}"
+                        snapshot["computer_error"] = why
             finally:
                 self._cdos_busy = False
             self.cdos_snapshot = snapshot
@@ -1625,6 +2011,9 @@ class Shell:
 
         self.play("ack")
         if intent.analysis:
+            if self._explained_by_mind(intent.analysis):
+                self.converse(text)
+                return True
             self.run_analysis(intent.analysis)
             return True
         if intent.capability == "display.screenshot":
@@ -1634,6 +2023,19 @@ class Shell:
             return True
         self.run_capability(intent.capability, **intent.arguments)
         return True
+
+    def _explained_by_mind(self, analysis: str) -> bool:
+        """Is *analysis* a diagnosis Earth Mind should have the Companion explain?
+
+        The readings are taken the same way either way
+        (:meth:`answer_analysis`); the difference is only whether the findings
+        are then put into plain words.
+        """
+        from .capability_corpus import ANALYSES
+        entry = ANALYSES.get(analysis)
+        return bool(entry is not None and entry.explained and self.mind_enabled()
+                    and self.config.get("mind", "explain", True)
+                    and self.earth_mind() is not None)
 
     def answer_analysis(self, name: str, table: bool = False) -> Tuple[bool, str]:
         """Take an analysis's readings and put the answer into words.
@@ -2064,3 +2466,107 @@ class Shell:
                  f"step{'' if count == 1 else 's'}.{mark}")
         self.redraw()
         return True
+
+    # ------------------------------------------------------------------
+    # World Model (docs/WORLD_MODEL.md)
+    # ------------------------------------------------------------------
+    def world_model(self):
+        """The machine's picture of itself and its person, assembled now."""
+        from .world_model import WorldModel
+        return WorldModel(
+            name=str(self.config.get("shell", "computer_name", "CDOS")),
+            registry=self.capabilities, compositions=self.compositions,
+            ledger=self.ledger, apps=self.apps,
+            programs=self.config.programs())
+
+    def reasoning_context(self) -> str:
+        """What any reasoner is given: the live readings, then the world.
+
+        The same block whichever model is answering, which is what makes the
+        model replaceable — the context belongs to CDOS, not to the backend.
+        """
+        parts = [self.telemetry_summary()]
+        if self.ledger is not None and \
+                bool(self.config.get("world", "briefing", True)):
+            try:
+                parts.append(self.world_model().briefing())
+            except Exception:
+                pass                  # the world is context, never a blocker
+        return "\n\n".join(parts)
+
+    def handle_world_request(self, request) -> str:
+        """Answer a remember / forget / recall sentence. Returns the reply."""
+        ledger = self.ledger
+        if ledger is None:
+            return "Memory is switched off."
+        verb, arg = request.verb, request.argument
+
+        if verb == "remember":
+            from .world_model import WorldModelError, guess_kind
+            subject = ""
+            if self.apps is not None:
+                app = self.apps.find(arg)
+                subject = app.name if app else ""
+            try:
+                ledger.remember(arg, kind=guess_kind(arg), subject=subject)
+            except WorldModelError as exc:
+                return f"Unable to comply. {exc}."
+            ledger.save()
+            return "Noted. Say forget that, and it is gone."
+
+        if verb == "forget":
+            gone = ledger.forget_matching(arg)
+            if not gone:
+                return f"I have nothing remembered about {arg}."
+            ledger.save()
+            return f"Forgotten. {len(gone)} note{'s' if len(gone) != 1 else ''} removed."
+
+        if verb == "forget_all":
+            count = ledger.forget_all()
+            ledger.save()
+            return f"Forgotten. {count} note{'s' if count != 1 else ''} removed. I know nothing about you."
+
+        if verb == "recall":
+            kept = ledger.remembered()
+            if not kept:
+                return "You have not asked me to remember anything."
+            return "You asked me to remember: " + "; ".join(e.text for e in kept[-8:]) + "."
+
+        if verb == "noticed":
+            pending = ledger.pending()
+            if not pending:
+                return "Nothing noticed that you have not already answered."
+            items = "; ".join(f"note {i + 1}, {e.text}" for i, e in enumerate(pending[:8]))
+            return f"{items}. Say keep note, or discard note, and the number."
+
+        if verb in ("keep", "discard"):
+            pending = ledger.pending()
+            index = int(arg) - 1 if arg.isdigit() else -1
+            if not 0 <= index < len(pending):
+                return f"There is no note {arg}."
+            entry = pending[index]
+            if verb == "keep":
+                ledger.confirm(entry.id)
+            else:
+                ledger.forget(entry.id)
+            ledger.save()
+            return "Kept." if verb == "keep" else "Discarded."
+
+        if verb == "self":
+            world = self.world_model()
+            snap = world.snapshot()
+            caps = snap["self"]["capabilities"]
+            usable = sum(1 for c in caps if c["supported"] is not False)
+            apps = snap["applications"]
+            games = [a["title"] for a in apps if a["kind"] == "game"]
+            reply = (f"I am {world.name}. I can do {usable} of the {len(caps)} "
+                     f"things in my catalogue")
+            if snap["self"]["compositions"]:
+                reply += f", and know {len(snap['self']['compositions'])} compositions"
+            reply += "."
+            if apps:
+                reply += f" {len(apps)} applications are installed"
+                reply += f", including {', '.join(games[:4])}." if games else "."
+            return reply
+
+        return "Unable to comply."
