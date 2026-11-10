@@ -249,7 +249,10 @@ class GameEnvironment:
         person = self._require(character)
         player = self.definition.player_name
         said = " ".join(str(text or "").split()).rstrip(".!")
-        said = re.sub(r"\b(?:this|that) character\b|\b(?:him|her|them)\b(?=\s|$)", person.name, said, flags=re.I)
+        said = re.sub(r"\b(?:this|that) character\b|\b(?:him|them)\b", person.name, said, flags=re.I)
+        # "helped her" is the character; "carry her stock" is not.
+        said = re.sub(r"\bher\b(?=\s*(?:$|[.,;!?]|(?:and|but|when|with|to|at|in|on|out|up|today|yesterday)\b))",
+                      person.name, said, flags=re.I)
         said = re.sub(r"^i\b", player[:1].upper() + player[1:], said, flags=re.I)
         said = re.sub(r"\bi\b", player, said, flags=re.I)
         said = re.sub(r"\b(?:my|mine)\b", f"{player}'s", said, flags=re.I)
@@ -273,12 +276,29 @@ class GameEnvironment:
             raise WorldError(f"nobody called {character!r} in {self.definition.name}")
         return person
 
-    def _scene(self, person: Personality, speaker_id: str) -> Scene:
+    def _scene(self, person: Personality, speaker_id: str, text: str = "") -> Scene:
         met = self.view.find(self.ns_world, "met", f"{person.id}>{speaker_id}")
         return Scene(world_name=self.definition.name, speaker=self._name(speaker_id),
                      speaker_id=speaker_id, day=self.day,
                      regard=self.relationship(person.id, speaker_id).words,
-                     last_met=int(met.data.get("day", 0)) if met is not None else None)
+                     last_met=int(met.data.get("day", 0)) if met is not None else None,
+                     facts=tuple(self._regard_for_those_named(person, speaker_id, text)))
+
+    def _regard_for_those_named(self, person: Personality, speaker_id: str, text: str) -> List[str]:
+        """How *person* regards anyone *text* mentions by name: its own view of them, only.
+
+        Asked about the smuggler, the shopkeeper should know what she thinks
+        of him. What he thinks of her is his, and is not looked up here.
+        """
+        said = " " + " ".join(re.sub(r"[^a-z0-9 ]", " ", (text or "").lower()).split()) + " "
+        out: List[str] = []
+        for other in self.characters():
+            if other.id in (person.id, speaker_id):
+                continue
+            names = {other.id.replace("-", " ").replace("_", " "), other.name.lower(), *other.aliases}
+            if any(f" {name} " in said for name in names if name):
+                out.append(f"How you regard {other.name}: {self.relationship(person.id, other.id).words}.")
+        return out[:3]
 
     def greet(self, character: str, speaker: str = "") -> str:
         """What *character* says as *speaker* walks up. Written lines only; nothing is recorded."""
@@ -297,7 +317,7 @@ class GameEnvironment:
         """*speaker* (the player, unless named) says *text* to *character*."""
         person = self._require(character)
         speaker_id = (speaker or self.definition.player_id).strip().lower()
-        scene = self._scene(person, speaker_id)
+        scene = self._scene(person, speaker_id, text)
         reply = self.voice.turn(person, text, scene)
         if reply.source not in ("notice", "fixed"):
             self.view.put(self.ns_world, "met", f"{person.id}>{speaker_id}",

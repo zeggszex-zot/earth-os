@@ -77,5 +77,6 @@ def build_mind(config, shell=None, link=None, ledger=None, reasoner=None,
             "idle_minutes": float(companion.get("idle_minutes", 30)),
         },
         explain=bool(block.get("explain", True)),
+        keep_conversations=bool(block.get("keep_conversations", False)),
         world_dirs=[BUILTIN_WORLDS, data_dir() / "mind" / "worlds"],
         default_world=str(block.get("world", "harbour") or ""))

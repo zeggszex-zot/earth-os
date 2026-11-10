@@ -60,10 +60,13 @@ from .game import BUILTIN_WORLDS, GameHost
 from .memory import MIND, SYSTEM as SYSTEM_MEMORY, MemoryStore
 from .models import DEFAULT_ENVIRONMENT, ModelManager
 from .personas import OS, Personality, PersonalityRegistry
+from .redact import redact
 from .router import Route, Router
 from .system import ANALYSIS, DIAGNOSIS, SystemSubsystem
 
 DEFAULT_PERSONA = "companion"
+#: Kept exchanges put back into working memory when a conversation resumes.
+RESUME_TURNS = 6
 
 
 class EarthMind:
@@ -76,7 +79,7 @@ class EarthMind:
                  persona: str = DEFAULT_PERSONA, name: str = "EARTH OS", user: str = "",
                  companion_options: Optional[Dict[str, object]] = None, explain: bool = True,
                  world_dirs: Optional[List[Path]] = None, default_world: str = "",
-                 clock=time.monotonic):
+                 keep_conversations: bool = False, clock=time.monotonic):
         self.models = models or ModelManager()
         self.memory = store or MemoryStore(ledger=ledger)
         self.link = link                       # CDOS Computer
@@ -91,6 +94,9 @@ class EarthMind:
         self.name, self.user = name or "EARTH OS", user
         self.companion_options = dict(companion_options or {})
         self.explain = bool(explain)
+        #: Conversation memory across restarts. Off unless the person turns it
+        #: on: by default nothing said to this computer outlives the session.
+        self.keep_conversations = bool(keep_conversations)
         self.clock = clock
         self.default_persona = persona if self.personalities.get(persona) else DEFAULT_PERSONA
         self.router = Router(system=system, games=self.games, personalities=self.personalities,
@@ -151,8 +157,51 @@ class EarthMind:
                 free_answers=bool(opts.get("free_answers", False)),
                 idle_minutes=float(opts.get("idle_minutes", 30)),
                 style=person.style_lines)
+            self._resume_conversation(person, engine)
             self._companions[person.id] = engine
             return engine
+
+    # -- conversation memory ([mind] keep_conversations) -------------------------------
+    def _resume_conversation(self, person: Personality, engine: CompanionEngine) -> None:
+        """Put the last few kept exchanges back into a new engine's working memory.
+
+        Read through the personality's own view, so one personality can never
+        be handed another's conversation.
+        """
+        if not self.keep_conversations:
+            return
+        try:
+            kept = self.memory.view(person.principal()).recent(person.namespace, limit=RESUME_TURNS,
+                                                               kinds=("turn",))
+        except Exception:
+            return                                # memory is a record, never a blocker
+        session = engine.sessions.current()
+        for record in kept:
+            session.add("user", record.text, str(record.data.get("mode", "")))
+            session.add("assistant", str(record.data.get("reply", "")), str(record.data.get("mode", "")))
+
+    def _keep_turn(self, person: Personality, text: str, reply) -> None:
+        """One exchange, kept in ``conversation/<personality>`` — only when switched on.
+
+        Never a sensitive turn, and "start over" clears what was kept: the
+        Companion's own rules, carried across restarts. Secrets are redacted
+        before anything is written.
+        """
+        if not self.keep_conversations:
+            return
+        try:
+            view = self.memory.view(person.principal())
+            if reply.kind == "reset":
+                view.clear(person.namespace)
+                return
+            if reply.kind in ("sensitive", "mode", "task") or reply.source == "notice" or not reply.text:
+                return
+            said, _ = redact(text)
+            answered, _ = redact(reply.text)
+            view.add(person.namespace, said, kind="turn", importance=0.3,
+                     data={"reply": answered[:2000], "mode": reply.mode})
+        except Exception:
+            pass
 
     # ------------------------------------------------------------------
     # One request
@@ -177,6 +226,17 @@ class EarthMind:
         self.handled += 1
         return response
 
+    async def ahandle(self, text: str, interface: str = "terminal",
+                      route: Optional[Route] = None) -> Response:
+        """:meth:`handle` for an event loop: the turn runs on a worker thread.
+
+        A turn may wait on a model or on CDOS, so it must not sit on a loop any
+        more than on a frame clock. Many may be awaited at once; calls to one
+        model still queue, one generation at a time (:mod:`.models`).
+        """
+        import asyncio
+        return await asyncio.get_running_loop().run_in_executor(None, self.handle, text, interface, route)
+
     def _dispatch(self, text: str, interface: str, route: Route) -> Response:
         if not text:
             return Response("", source="fixed", ok=False)
@@ -200,6 +260,7 @@ class EarthMind:
         if reply.handoff:
             return Response("", route=env.SYSTEM_ACTION, subsystems=(env.SYSTEM,), source="handoff",
                             handoff=True, persona=person.name)
+        self._keep_turn(person, text, reply)
         took_part: List[str] = []
         if reply.queries:
             took_part.append(env.CDOS)

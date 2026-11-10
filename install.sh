@@ -164,6 +164,19 @@ install -d "$LIB" "$BIN"
 # Remove any previous copy first, or a reinstall nests earth_os inside itself.
 rm -rf "$LIB/earth_os"
 cp -r "$SELF_DIR/earth_os" "$LIB/"
+# CDOS Computer, the deterministic half of Earth Mind, runs inside the shell's
+# own process when no cdos-api service is installed. It is looked for beside
+# earth_os (earth_os/voice/computer_link.py: find_source), so it goes there.
+# Only what runs is copied: the code, its plugins and, if this checkout has
+# one, the corpus. Without a corpus it still does sums, time and policy, and
+# says "corpus unavailable" for facts rather than guessing.
+rm -rf "$LIB/cdos-computer"
+if [ -d "$SELF_DIR/cdos-computer/computer" ]; then
+    install -d "$LIB/cdos-computer"
+    for part in computer plugins data config.example.toml governor.example.json README.md; do
+        [ -e "$SELF_DIR/cdos-computer/$part" ] && cp -r "$SELF_DIR/cdos-computer/$part" "$LIB/cdos-computer/"
+    done
+fi
 find "$LIB" -name '__pycache__' -type d -exec rm -rf {} + 2>/dev/null || true
 
 # A stamp for this build, from the code itself: the same source always gets the
@@ -282,7 +295,7 @@ install -m 0644 "$SELF_DIR/session/sway.conf" "$SHARE/earth-os/sway.conf"
 # unverified.
 rm -rf "$SHARE/earth-os/source"
 install -d "$SHARE/earth-os/source"
-for part in earth_os tests tools docs session AGENTS.md CLAUDE.md README.md \
+for part in earth_os cdos-computer tests tools docs session AGENTS.md CLAUDE.md README.md \
             Makefile pyproject.toml install.sh .gitignore; do
     [ -e "$SELF_DIR/$part" ] && cp -r "$SELF_DIR/$part" "$SHARE/earth-os/source/"
 done

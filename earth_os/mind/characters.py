@@ -59,6 +59,17 @@ CHARACTER_RULES = (
 MAX_ACTIVE_SESSIONS = 32
 HEARD_CHARS = 300
 
+#: A character's prompt, in characters, per mode. Larger than the companion's
+#: (``companion.context.BUDGET``) because a character must carry its world and
+#: its own memories in the prompt, where the companion looks facts up.
+CHARACTER_BUDGET = {"CASUAL": 2800, "REFLECTIVE": 3800, "DEEP": 5200}
+#: What a character knows and what it remembers are never trimmed away by the
+#: budget — a character that forgets what happened to it is the one failure a
+#: game cannot work around — so each is capped here instead, most relevant first.
+FACTS_CHARS = 800
+MEMORY_CHARS = 600
+MEMORY_LABEL = "YOUR MEMORIES (things that happened to you)"
+
 
 @dataclass
 class Scene:
@@ -180,12 +191,17 @@ class CharacterVoice:
         if model is None or not model.available:
             reply.text, reply.source = self._scripted(me, text, memories, facts), "scripted"
         else:
+            # The world and the character's own memories go in together, as
+            # the part of the prompt the budget never trims; its manner and
+            # the recent turns are what give way when space is short.
+            known = "\n".join(f"- {f}" for f in facts) + f"\n\n{MEMORY_LABEL}:\n" + (
+                "\n".join(f"- {m}" for m in memories) if memories else "- (none yet)")
             built = ctx.build(
-                text, intent, mode, me, me.name, scene.speaker, memories, held.session,
-                facts_block="\n".join(f"- {f}" for f in facts),
+                text, intent, mode, me, me.name, scene.speaker, [], held.session,
+                facts_block=known,
                 rules=CHARACTER_RULES,
                 facts_label=f"WORLD ({scene.world_name or me.world}; what you know to be true)",
-                memory_label="YOUR MEMORIES (things that happened to you)")
+                budget=CHARACTER_BUDGET.get(mode, CHARACTER_BUDGET["CASUAL"]))
             reply.prompt_chars = built.chars
             try:
                 out = model.chat(built.messages, mode)
@@ -220,35 +236,53 @@ class CharacterVoice:
                 ago = scene.day - day
                 when = " (today)" if ago <= 0 else f" ({ago} day{'s' if ago != 1 else ''} ago)"
             line = record.text + when
-            if line not in out:
+            if line not in out and sum(len(m) + 3 for m in out) + len(line) <= MEMORY_CHARS:
                 out.append(line)
         return out
 
     def _facts(self, held: CharacterSession, text: str, scene: Scene) -> List[str]:
+        """What the character knows to be true, within :data:`FACTS_CHARS`.
+
+        Who it is and the moment it is in always go in. What it knows of its
+        world is chosen to fit: what bears on what was just said first, then
+        in the order it was written.
+        """
         me = held.personality
-        facts: List[str] = []
+        head: List[str] = []
         if me.background:
-            facts.append(f"About you: {me.background}")
+            head.append(f"About you: {me.background}")
         if me.goals:
-            facts.append("What you want: " + "; ".join(me.goals) + ".")
-        facts.extend(me.knowledge[:8])
+            head.append("What you want: " + "; ".join(me.goals) + ".")
+        tail: List[str] = []
+        if scene.day:
+            tail.append(f"It is day {scene.day}.")
+        if scene.regard:
+            tail.append(f"How you regard {scene.speaker}: {scene.regard}.")
+        if scene.last_met is not None and scene.day > scene.last_met:
+            gap = scene.day - scene.last_met
+            tail.append(f"You last spoke with {scene.speaker} {gap} day{'s' if gap != 1 else ''} ago.")
+        elif scene.last_met is None:
+            tail.append(f"You have not spoken with {scene.speaker} before.")
+        tail.extend(scene.facts)
+
         try:
             shared = held.view.recall(world_namespace(me.world), text, limit=4, kinds=("fact",), always=2)
         except Exception:
             shared = []
-        facts.extend(r.text for r in shared)
-        if scene.day:
-            facts.append(f"It is day {scene.day}.")
-        if scene.regard:
-            facts.append(f"How you regard {scene.speaker}: {scene.regard}.")
-        if scene.last_met is not None and scene.day > scene.last_met:
-            gap = scene.day - scene.last_met
-            facts.append(f"You last spoke with {scene.speaker} {gap} day{'s' if gap != 1 else ''} ago.")
-        elif scene.last_met is None:
-            facts.append(f"You have not spoken with {scene.speaker} before.")
-        facts.extend(scene.facts)
+        pool: List[str] = []
+        for fact in list(me.knowledge) + [r.text for r in shared]:
+            if fact and fact not in pool:
+                pool.append(fact)
+        said = words(text)
+        ranked = sorted(range(len(pool)), key=lambda i: (-len(said & words(pool[i])), i))
+        room = FACTS_CHARS - sum(len(f) + 3 for f in head + tail)
+        chosen = set()
+        for i in ranked:
+            if len(pool[i]) + 3 <= room:
+                chosen.add(i)
+                room -= len(pool[i]) + 3
         seen, out = set(), []
-        for fact in facts:
+        for fact in head + [pool[i] for i in sorted(chosen)] + tail:
             if fact and fact not in seen:
                 seen.add(fact)
                 out.append(fact)

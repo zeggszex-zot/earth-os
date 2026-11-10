@@ -60,16 +60,19 @@ class Built:
 def build(text: str, intent, mode: str, persona, name: str, user: str,
           memories: List[str], session, facts_block: str = "",
           not_found: bool = False, rules: Optional[str] = None,
-          facts_label: str = "", memory_label: str = "") -> Built:
+          facts_label: str = "", memory_label: str = "",
+          budget: Optional[int] = None) -> Built:
     """One turn's messages.
 
-    *rules*, *facts_label* and *memory_label* are for the other voices Earth
-    Mind hosts (docs/EARTH_MIND.md): a game character has its own rules and
-    its facts are its world's, not the corpus's. Left unset, this is the
-    companion's own prompt, unchanged. The budget, the order and the trimming
-    are the same for every voice, which is the point of sharing the builder.
+    *rules*, *facts_label*, *memory_label* and *budget* are for the other
+    voices Earth Mind hosts (docs/EARTH_MIND.md): a game character has its own
+    rules, its facts are its world's rather than the corpus's, and it carries
+    its own memories where the companion carries the corpus's facts. Left
+    unset, this is the companion's own prompt, unchanged. The order and the
+    trimming are the same for every voice, which is the point of sharing the
+    builder.
     """
-    budget = BUDGET.get(mode, BUDGET[CASUAL])
+    budget = int(budget) if budget else BUDGET.get(mode, BUDGET[CASUAL])
     system: List[str] = [(rules or RULES).format(name=name or "CDOS", user=user or "you"),
                          MODE_LINES[mode]]
     if intent.kind in KIND_LINES and rules is None:

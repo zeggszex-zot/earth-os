@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "earth-os"
-version = "1.0.0"
-description = "EARTH OS: a green-phosphor desktop shell for Linux, with a pluggable AI voice subsystem"
+version = "2.0.0"
+description = "EARTH OS: a green-phosphor desktop shell for Linux with Earth Mind, one coordinated intelligence over CDOS, the Companion, the system and game worlds"
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "GPL-3.0-or-later" }
@@ -37,6 +37,11 @@ packages = [
     "earth_os.widgets",
     "earth_os.screens",
     "earth_os.voice",
+    "earth_os.agent",
+    "earth_os.platform",
+    "earth_os.companion",
+    "earth_os.mind",
+    "earth_os.mind.game",
 ]
 
 [tool.setuptools.package-data]
@@ -48,4 +53,6 @@ earth_os = [
     "assets/palettes/*.lxcp",
     "assets/lang/*.lng",
     "assets/sounds/*.wav",
+    "mind/personalities/*.json",
+    "mind/worlds/*.json",
 ]

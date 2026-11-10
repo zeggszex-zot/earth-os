@@ -13,7 +13,7 @@ do it.
 NAME = "EARTH OS"
 
 #: The version shown in the title cap: major.minor of ``earth_os.__version__``.
-VERSION = "1.0"
+VERSION = "2.0"
 
 #: Window titles this shell answers to. Window backends that report no
 #: application id are matched on title instead. "CDOS" is deliberately not

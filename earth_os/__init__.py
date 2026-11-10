@@ -5,5 +5,5 @@ Windows shell, and keeping its data formats, control vocabulary and command
 set, with the CDOS engine and a pluggable AI voice subsystem behind it.
 """
 
-__version__ = "1.0.0"
+__version__ = "2.0.0"
 __all__ = ["__version__"]

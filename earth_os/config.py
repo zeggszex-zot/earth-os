@@ -199,6 +199,10 @@ DEFAULTS: Dict[str, Any] = {
         "terminal": True,
         # The game world "talk to <name>" looks in first. Blank = none.
         "world": "harbour",
+        # Keep what was said with each personality between runs, in
+        # conversation/<personality> of the memory store. Off by default:
+        # nothing said to this computer outlives the session unless asked.
+        "keep_conversations": False,
     },
     "world": {
         # The World Model (docs/WORLD_MODEL.md): what this computer knows
@@ -333,12 +337,14 @@ seed_confidence   = 0.55            # where a newly learned reading starts
 # game worlds. See docs/EARTH_MIND.md.
 [mind]
 enabled    = true
-persona    = "companion"            # companion | technician | one of your own
+persona    = "companion"            # companion | technician | robot | one of your own
 model      = ""                     # provider:model[@host]; blank = the [companion] model
 game_model = ""                     # blank = the same model, loaded once
 explain    = true                   # the Companion explains verified system findings
 terminal   = true                   # plain English in the terminal goes through Earth Mind
 world      = "harbour"              # the demonstration game world; "" for none
+memory     = ""                     # blank = mind/memory.db in the data directory; ":memory:" keeps nothing
+keep_conversations = false          # true: what was said with each personality survives a restart
 
 [world]
 # The World Model: what this computer knows about itself and about you.

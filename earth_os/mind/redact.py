@@ -87,6 +87,10 @@ def redact(text: str) -> Tuple[str, int]:
     def long_string(match: "re.Match[str]") -> str:
         nonlocal found
         token = match.group(0)
+        # A file path is long and mixed too, and a process list is full of
+        # them. Its parts are short; a key's are not.
+        if "/" in token and max(len(part) for part in token.split("/")) < 24:
+            return token
         # Long, mixed and dense: a key, not a word or a path component.
         if _entropy(token) >= 3.6 and re.search(r"\d", token) and re.search(r"[A-Za-z]", token):
             found += 1
