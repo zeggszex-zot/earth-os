@@ -21,18 +21,39 @@ Two things shape the implementation:
 There is no pseudo-terminal here, so full-screen console programs (nano, vim,
 top, less) cannot run inside this panel. Rather than hanging forever on one,
 the screen recognises them and says where they will work instead.
+
+Earth Mind (docs/EARTH_MIND.md) sits behind the same input line. A line is
+tried in this order, and the first that claims it has it:
+
+1. ``!command`` — the shell, exactly as typed, nothing consulted.
+2. a real command (an option flag, a pipe, a redirect) — the shell.
+3. something Earth Mind knows better than a command would: a question the
+   machine answers from live readings, an installed program's name, a game
+   character's name — or anything at all while a character is being talked to.
+4. English the translator knows — the command it stands for, shown first.
+5. a line that starts with a program on this machine, or a built-in — the shell.
+6. anything else that reads as a sentence — Earth Mind: knowledge to CDOS,
+   talk to the Companion.
+7. otherwise — the shell, which will say it does not know the command.
+
+Steps 1, 2, 4, 5 and 7 are 1.0's terminal, unchanged, and they are all there is
+when Earth Mind is switched off, cannot be built, or TRANSLATOR is off. The
+header shows which of them answered last. Nothing typed is ever *executed* by
+Earth Mind: it answers, or it asks the shell's gated path for an operation,
+and one that would change the machine waits for a typed ``yes``.
 """
 
 from __future__ import annotations
 
 import os
 import queue
+import re
 import shlex
 import subprocess
 import threading
 import time
 from collections import deque
-from typing import Deque, List, Optional, Tuple
+from typing import Callable, Deque, List, Optional, Tuple
 
 from ..translator import CommandTranslator
 from ..widgets import (
@@ -59,6 +80,19 @@ NEEDS_TTY = {
 #: How much scrollback to keep. Enough to scroll back through a big listing,
 #: bounded so a runaway command cannot eat memory.
 MAX_LINES = 4000
+
+#: Built into the panel rather than run as programs.
+BUILTINS = ("cd", "pwd", "clear", "help", "exit", "quit", "logout")
+
+#: A second word no command takes as an argument: "who is…", "which are…".
+#: With one of these after it, a line that starts with a program's name is a
+#: sentence all the same.
+SENTENCE_WORDS = {"is", "are", "was", "were", "do", "does", "did", "can", "could", "should",
+                  "would", "will", "the", "my", "your", "you", "me", "about", "to", "it", "we"}
+
+#: Commands that destroy something. Worked out from English, one of these
+#: waits for a typed yes; typed as a command, it is the person's own.
+DESTRUCTIVE = re.compile(r"^\s*(?:sudo\s+)?(?:rm|rmdir|shred|mkfs\S*|dd)\b")
 
 KIND_COLORS = {
     "input": "accent2",
@@ -89,6 +123,14 @@ class TerminalScreen(Screen):
         self._queue: "queue.Queue[Tuple[str, str]]" = queue.Queue()
         self._proc: Optional[subprocess.Popen] = None
         self._worker: Optional[threading.Thread] = None
+        #: Who answered the last line: SHELL, TRANSLATED, SYSTEM, CDOS,
+        #: COMPANION, GAME · ELARA… Shown in the header.
+        self.mode = "SHELL"
+        #: True while Earth Mind is answering on its worker thread.
+        self._thinking = False
+        #: Something waiting for a typed yes: (what, on_yes, on_no).
+        self._awaiting: Optional[Tuple[str, Callable[[], None],
+                                       Optional[Callable[[], None]]]] = None
         self._input_rect: Tuple[float, float, float, float] = (0, 0, 0, 0)
         self._greeted = False
 
@@ -102,11 +144,14 @@ class TerminalScreen(Screen):
             self.emit("system", f"{name} TERMINAL — Universal Translator active")
             self.emit("system", "Type plain English or any shell command. "
                                 "'help' for examples.")
+            if self._mind() is not None:
+                self.emit("system", "Earth Mind is listening: ask about this "
+                                    "computer, ask a question, or just talk.")
             self.emit("system", "")
 
     @property
     def busy(self) -> bool:
-        return self._proc is not None and self._proc.poll() is None
+        return self._thinking or (self._proc is not None and self._proc.poll() is None)
 
     # ------------------------------------------------------------------
     # Layout
@@ -169,8 +214,11 @@ class TerminalScreen(Screen):
             where = "~"
         elif where.startswith(home + os.sep):
             where = "~" + where[len(home):]
-        state = " · RUNNING" if self.busy else ""
-        return f"{where}{state}"
+        if self._thinking:
+            state = " · THINKING"
+        else:
+            state = " · RUNNING" if self.busy else ""
+        return f"{where} · {self.mode}{state}"
 
     def _translate_label(self) -> str:
         return "TRANSLATOR ON" if self.translate_enabled else "TRANSLATOR OFF"
@@ -303,6 +351,9 @@ class TerminalScreen(Screen):
 
     def interrupt(self) -> None:
         proc = self._proc
+        if self._thinking:
+            self.emit("system", "Earth Mind is still answering; that cannot be interrupted.")
+            return
         if proc is None or proc.poll() is not None:
             self.emit("system", "Nothing is running.")
             return
@@ -479,15 +530,42 @@ class TerminalScreen(Screen):
             self.emit("error", "A command is still running. Press INTERRUPT to stop it.")
             return
 
-        command = line
-        if self.translate_enabled and self._answer_question(line):
+        # Something is waiting for a yes. Whatever was typed is the answer.
+        if self._awaiting is not None:
+            self._answer_approval(line)
             return
+
+        # "!ls" is the shell, exactly as typed: nothing translated, nothing asked.
+        if line.startswith("!"):
+            self.mode = "SHELL"
+            self._run_command(line[1:].strip())
+            return
+
+        command = line
         if self.translate_enabled:
+            # "? why is the sky blue" is Earth Mind, whatever it looks like.
+            if line.startswith("?") and self._ask_mind(line[1:].strip(), force=True):
+                return
+            if self._answer_question(line):
+                return
             translated = self.translator.translate(line)
             if translated and translated != line:
+                self.mode = "TRANSLATED"
                 self.emit("translate", f"  translated → {translated}")
+                if DESTRUCTIVE.match(translated):
+                    self._hold_command(translated)
+                    return
                 command = translated
+            elif self._ask_mind(line):
+                return
+            else:
+                self.mode = "SHELL"
+        else:
+            self.mode = "SHELL"
+        self._run_command(command)
 
+    def _run_command(self, command: str) -> None:
+        """A command line, as 1.0 ran it: built-ins here, the rest in a shell."""
         # -- built-ins that must run in-process ---------------------------
         head = command.split(maxsplit=1)[0] if command.split() else ""
         rest = command[len(head):].strip()
@@ -517,6 +595,169 @@ class TerminalScreen(Screen):
 
         self._spawn(command)
 
+    # ------------------------------------------------------------------
+    # Approval: a typed yes, for what would destroy or change something
+    # ------------------------------------------------------------------
+    def _hold(self, what: str, on_yes: Callable[[], None],
+              on_no: Optional[Callable[[], None]] = None) -> None:
+        self._awaiting = (what, on_yes, on_no)
+        self.emit("system", f"  needs approval → {what}")
+        self.emit("system", "  Type yes to go ahead; anything else cancels.")
+
+    def _hold_command(self, command: str) -> None:
+        """A destructive command worked out from English: nothing runs until a yes.
+
+        The translator adds ``-i`` so that ``rm`` asks first — but this panel
+        has no keyboard to give a program, so that question could never be
+        answered and the deletion never happened. The question is asked here
+        instead, and on a yes the command runs without the ``-i``.
+        """
+        approved = re.sub(r"^(\s*(?:sudo\s+)?rm) -(r?)i(?=\s)",
+                          lambda m: m.group(1) + (" -r" if m.group(2) else ""), command)
+        self._hold(approved, lambda: self._run_command(approved))
+
+    def _answer_approval(self, line: str) -> None:
+        what, on_yes, on_no = self._awaiting          # type: ignore[misc]
+        self._awaiting = None
+        if line.strip().lower() in ("yes", "y", "confirm"):
+            on_yes()
+            return
+        if on_no is not None:
+            on_no()
+        self.emit("system", "Cancelled. Nothing was run.")
+
+    # ------------------------------------------------------------------
+    # Earth Mind
+    # ------------------------------------------------------------------
+    def _mind(self):
+        """Earth Mind, or None when it is off, unbuildable, or the terminal opted out."""
+        get = getattr(self.app, "earth_mind", None)
+        if get is None or not bool(self.app.config.get("mind", "terminal", True)):
+            return None
+        try:
+            return get()
+        except Exception:
+            return None
+
+    def _reads_as_a_command(self, line: str) -> bool:
+        """Does *line* start like something this machine can run?
+
+        A built-in, or a program on the path — unless what follows is the
+        second word of a sentence ("who is…") or the line ends in a question
+        mark, which no command line does.
+        """
+        words = line.split()
+        if not words:
+            return False
+        head = words[0]
+        if head not in BUILTINS and not self.translator._is_executable(head):
+            return False
+        if line.rstrip().endswith("?"):
+            return False
+        return not (len(words) > 1 and words[1].lower() in SENTENCE_WORDS)
+
+    def _ask_mind(self, line: str, force: bool = False, priority_only: bool = False) -> bool:
+        """Hand *line* to Earth Mind if it is Earth Mind's. Returns whether it was taken."""
+        mind = self._mind()
+        if mind is None or not line:
+            return False
+        if not force and self.translator._looks_like_a_command(line):
+            return False                      # a flag, a pipe, a redirect: a command
+        try:
+            route = mind.route(line, "terminal")
+        except Exception:
+            return False
+        if not force:
+            in_game = route.kind == "game"
+            if priority_only and not (route.priority or in_game):
+                return False
+            if not (route.priority or in_game):
+                if route.control == "handoff" or self._reads_as_a_command(line):
+                    return False
+                kind = getattr(route.intent, "kind", "chat")
+                # Two unrecognised words are more likely a mistyped command
+                # than a conversation; let the shell say so.
+                if kind == "chat" and len(line.split()) < 3 and not line.rstrip().endswith(("?", "!", ".")):
+                    return False
+
+        if not route.slow:
+            self._show(mind.handle(line, "terminal", route=route), line)
+            return True
+
+        self._thinking = True
+
+        def worker() -> None:
+            try:
+                response = mind.handle(line, "terminal", route=route)
+            except Exception as exc:          # a subsystem failing must not hang the panel
+                self._queue.put(("error", f"Earth Mind: {type(exc).__name__}: {exc}"))
+                self._thinking = False
+                return
+            self._show(response, line)
+            self._thinking = False
+
+        threading.Thread(target=worker, daemon=True, name="earth-mind-terminal").start()
+        return True
+
+    def _show(self, response, line: str) -> None:
+        """Put an Earth Mind response on the scrollback, mode first."""
+        if response.handoff and response.proposal is None:
+            # Earth Mind read it as a task for the command path; here, that is the shell.
+            self.mode = "SHELL"
+            self._run_command(line)
+            return
+        self.mode = response.mode()
+        if response.proposal is not None:
+            self._carry_out(response)
+            return
+        where = "answered from live system readings" if response.source == "readings" \
+            else response.source
+        note = f"  earth mind → {response.mode().lower()} · {where}"
+        if response.model_calls:
+            note += f" · {response.model_calls} pass{'es' if response.model_calls != 1 else ''}"
+        if response.checked is True:
+            note += " · checked against the facts"
+        elif response.checked is False:
+            note += " · check failed: verified words used"
+        self.emit("translate", note)
+        hint = response.extra.get("hint") if isinstance(response.extra, dict) else ""
+        if hint:
+            self.emit("system", f"  {hint}")
+        if response.detail and response.source == "model":
+            # The verified findings first, then the Companion's explanation of them.
+            for row in response.detail.splitlines():
+                self.emit("output", row)
+            self.emit("output", "")
+        body = response.detail if (response.detail and response.source == "readings") else response.text
+        for row in (body or "…").splitlines():
+            self.emit("output" if response.ok else "error", row)
+
+    def _carry_out(self, response) -> None:
+        """A system operation Earth Mind asked for, taken down the shell's gated path."""
+        proposal = response.proposal
+        before = len(self.app.conversation)
+        self.emit("translate", f"  earth mind → system · {proposal.summary or proposal.target}")
+        ok, message = self.app.carry_out(proposal)
+        self._echo_shell(before)
+        if message:
+            self.emit("output" if ok else "error", message)
+        options = dict(self.app.pending_options)
+        if "CONFIRM" in options:
+            # Effectful: the shell has stopped at its choice strip. This screen
+            # has no strip, so the same choice is offered as a typed yes.
+            def confirmed() -> None:
+                mark = len(self.app.conversation)
+                options["CONFIRM"]()
+                self._echo_shell(mark)
+            self._hold(self.app.pending_prompt or proposal.summary, confirmed,
+                       options.get("CANCEL"))
+
+    def _echo_shell(self, start: int) -> None:
+        """What the computer said in the main conversation since *start*, shown here too."""
+        for entry in list(self.app.conversation)[start:]:
+            if entry.get("role") == "computer":
+                self.emit("output", str(entry.get("text", "")))
+
     def _answer_question(self, line: str) -> bool:
         """Questions about the machine get the shell's answer, not a command.
 
@@ -525,7 +766,15 @@ class TerminalScreen(Screen):
         how to answer it from the process list, so the terminal asks the
         same place rather than growing a second, drifting answer of its own.
         Something typed as a real command is never intercepted.
+
+        With Earth Mind on, this is where it takes the lines it knows better
+        than the translator would: an analysis, a diagnosis, an installed
+        program, a character. With it off, this is 1.0's analysis answer.
         """
+        if self._ask_mind(line, priority_only=True):
+            return True
+        if self._mind() is not None:
+            return False
         ask = getattr(self.app, "answer_question_as_text", None)
         if ask is None or self.translator._looks_like_a_command(line):
             return False
@@ -533,6 +782,7 @@ class TerminalScreen(Screen):
         if answer is None:
             return False
         ok, text = answer
+        self.mode = "SYSTEM"
         self.emit("translate", "  answered from live system readings")
         for row in text.splitlines():
             self.emit("output" if ok else "error", row)
@@ -629,6 +879,19 @@ class TerminalScreen(Screen):
             "   Go back two directories        →  cd ../../",
             "",
             "Ordinary shell commands work too: ls, cd, git, cp, grep, apt.",
+            "",
+            "Earth Mind answers what is not a command (the header shows who answered):",
+            "",
+            "   What is using the most RAM?        live readings",
+            "   Why is my computer running slowly? readings, then explained",
+            "   Open Firefox                       an installed program, by name",
+            "   What is 12 times 9?                CDOS: knowledge and sums",
+            "   I had a long day                   the Companion",
+            "   Talk to the shopkeeper             a game character; goodbye to leave",
+            "   Switch to the technical assistant  another personality",
+            "",
+            "   !command   run it in the shell exactly as typed",
+            "   ? words    ask Earth Mind, whatever the words look like",
             "",
             "Keys:  Up/Down history · Tab complete · Ctrl+C interrupt",
             "       Ctrl+L clear · Ctrl+A/E line start/end · Esc leave",

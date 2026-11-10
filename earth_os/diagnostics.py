@@ -298,6 +298,9 @@ def check_llm() -> Tuple[str, str]:
         wording = str(block.get("wording", "ollama"))
         detail = f"cdos: {bridge.status()}"
         if not bridge.available:
+            from .voice.computer_link import ComputerLink
+            if ComputerLink.from_config(config).available:
+                return (OK, detail + " · CDOS Computer answers (see 'computer')")
             return (WARN, detail)
         if not bridge.cli_path:
             return (WARN, detail + " — readings unavailable without the cdos CLI")
@@ -312,6 +315,90 @@ def check_llm() -> Tuple[str, str]:
                                model=str(block.get("model", "")),
                                api_key_env=str(block.get("api_key_env", "")))
     return (OK if driver.available else WARN, f"{name}: {driver.status()}")
+
+
+def check_computer() -> Tuple[str, str]:
+    """CDOS Computer: reachable, and what it reports about its corpus.
+
+    The service is asked for its health. An embedded computer is only located,
+    not started: starting it loads a corpus, which is not the doctor's job.
+    """
+    from .config import Config
+    from .voice.computer_link import ComputerLink, LinkError, health_rows
+    config = Config.load(write_default=False)
+    if str(config.get("voice", "llm", "cdos")) != "cdos":
+        return (OK, "not used: [voice] llm is not cdos")
+    link = ComputerLink.from_config(config)
+    if link.mode == "off":
+        return (OK, "disabled in config")
+    transport = link.transport()
+    if transport is None:
+        return (WARN, link.status() + " — run the cdos-api service, or keep "
+                "cdos-computer/ in this checkout")
+    if transport is link.embedded:
+        return (OK, f"embedded from {link.embedded.where()} (starts on first question)")
+    try:
+        rows = dict(health_rows(link.health()))
+    except LinkError as exc:
+        return (FAIL, f"service at {link.socket.where()}: {exc.why}")
+    detail = (f"service {link.socket.where()} · corpus {rows.get('CORPUS', '-')} "
+              f"{rows.get('VERSION', '')} · governor {rows.get('GOVERNOR', '-')}")
+    return (OK if rows.get("CORPUS") == "ready" else WARN, detail)
+
+
+def check_companion() -> Tuple[str, str]:
+    """The Companion Engine's model: served, and pulled."""
+    from .config import Config
+    config = Config.load(write_default=False)
+    if not bool(config.get("companion", "enabled", True)):
+        return (OK, "disabled in config")
+    from .companion.model import DEFAULT_MODEL, CompanionModel
+    block = config.section("companion")
+    if str(block.get("backend", "ollama")) != "ollama":
+        return (OK, f"backend {block.get('backend')}: see 'reasoning'")
+    model = CompanionModel(
+        host=str(block.get("host") or config.get("ollama", "host", "http://127.0.0.1:11434")),
+        model=str(block.get("model", DEFAULT_MODEL)))
+    if model.available:
+        return (OK, f"{model.model} @ {model.host}")
+    return (WARN, model.why + " — it still answers facts, sums and greetings without one")
+
+
+def check_mind() -> Tuple[str, str]:
+    """Earth Mind: built, and what each of its subsystems reports.
+
+    Building it calls no model, loads no corpus and takes no reading, so the
+    doctor can afford to. No shell is attached here, so the system subsystem
+    is reported by the 'platform' checks above, not by this one.
+    """
+    from .config import Config
+    config = Config.load(write_default=False)
+    if not bool(config.get("mind", "enabled", True)):
+        return (OK, "disabled in config: the Companion Engine answers on its own")
+    from .mind import build_mind
+    from .voice.computer_link import ComputerLink
+    link = ComputerLink.from_config(config)
+    mind = build_mind(config, link=link if link.mode != "off" else None)
+    try:
+        people = ", ".join(p.id for p in mind.personalities.all()) or "none"
+        model = mind.models.model()
+        if model is None:
+            voice = "no model configured"
+        elif model.available:
+            voice = f"model {model.name}"
+        else:
+            voice = f"model offline ({model.status()})"
+        detail = (f"personalities {people} · {voice} · {mind.games.status()} · "
+                  f"memory {mind.memory.path or 'in memory only'}")
+        bad = {**mind.personalities.unreadable, **mind.games.unreadable}
+        if bad:
+            first = sorted(bad.items())[0]
+            return (WARN, detail + f" · unreadable: {first[0]} ({first[1]})")
+        if model is None or not model.available:
+            return (WARN, detail + " — readings, CDOS answers and commands work without it")
+        return (OK, detail)
+    finally:
+        mind.close()
 
 
 def check_dbus() -> Tuple[str, str]:
@@ -476,6 +563,9 @@ CHECKS: List[Tuple[str, Callable[[], Tuple[str, str]]]] = [
     ("speech to text", check_stt),
     ("text to speech", check_tts),
     ("reasoning", check_llm),
+    ("computer", check_computer),
+    ("companion", check_companion),
+    ("earth mind", check_mind),
     ("claude code", check_claude_code),
     ("session bus", check_dbus),
     ("file openers", check_openers),
