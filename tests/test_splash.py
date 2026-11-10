@@ -140,10 +140,11 @@ class TestItIsTheSameFrame(unittest.TestCase):
         names = {p.name for p in chrome.pieces(ctx, chrome.Frame(ctx),
                                                title=splash.NAME)}
         self.assertIn("chrome_tl", names)
-        self.assertIn("chrome_bl", names)
         self.assertIn("chrome_titlebar", names)
-        self.assertIn("chrome_strip", names)
-        self.assertIn("chrome_clock", names)
+        # The bottom of the frame is gone: no elbow, no bar run, no clock
+        # pill. The column and the content run to the foot of the screen.
+        for removed in ("chrome_bl", "chrome_strip", "chrome_clock"):
+            self.assertNotIn(removed, names)
 
     def test_the_program_strip_is_not_among_them(self):
         """It needs the application, and the whole point is that there is not

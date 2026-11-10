@@ -406,6 +406,7 @@ class Shell:
             "access": self.toggle_listening,
             "log off": self.log_off,
             "shut down": self.shutdown,
+            "exit options": self.exit_options,
             "deactivate": self.deactivate,
             "continuous commands": lambda: self.set_continuous(True),
             "end commands": lambda: self.set_continuous(False),
@@ -1414,6 +1415,43 @@ class Shell:
     def reboot(self) -> None:
         self._end_session("system.reboot")
 
+    #: What EXIT offers, in the order the buttons appear.
+    EXIT_CHOICES = (
+        ("LOG OUT", "system.logout"),
+        ("SHUT DOWN", "system.shutdown"),
+        ("REBOOT", "system.reboot"),
+    )
+
+    def exit_options(self) -> None:
+        """EXIT: ask how to leave — log out, shut down or reboot.
+
+        Nothing happens on the first press; it only offers the three, on the
+        same strip every other confirmation uses. Pressing one of them is the
+        deliberate press the effectful gate asks for, so the choice runs
+        directly rather than asking a second time.
+
+        The strip is drawn by the main screen, so EXIT pressed from anywhere
+        else (the DIAGNOSTICS column) goes there to show it.
+        """
+        self.pending_prompt = "EXIT — LOG OUT, SHUT DOWN OR REBOOT?"
+        self.pending_options = [
+            (label, lambda c=capability: self._exit_chosen(c))
+            for label, capability in self.EXIT_CHOICES
+        ] + [("CANCEL", self.cancel_pending)]
+        if self.current not in ("main", "claude", "comms"):
+            self.go("main")
+        self.redraw()
+
+    def _exit_chosen(self, capability: str) -> None:
+        if capability == "system.shutdown":
+            self.say("Initiating shutdown sequence.")
+        if self.capabilities is None:
+            self.pending_options = []
+            self.pending_prompt = ""
+            self.quit()
+            return
+        self._end_session_confirmed(capability)
+
     def _end_session(self, capability: str) -> None:
         """Ask the platform to end the session — after a person confirms it.
 
@@ -1436,7 +1474,12 @@ class Shell:
             return
 
         spec = self.capabilities.spec(capability)
-        if spec is not None and spec.effectful and not self.pending_options:
+        # Always asks, even when something else is already waiting on the
+        # strip. It used to skip the question whenever any choice was up —
+        # so with EXIT's three choices showing, a misheard "shut down"
+        # would have powered off with no press. The new question replaces
+        # whatever was waiting.
+        if spec is not None and spec.effectful:
             self.pending_prompt = f"CONFIRM · {spec.name.upper()} — {spec.summary}"
             self.pending_options = [
                 ("CONFIRM", lambda: self._end_session_confirmed(capability)),

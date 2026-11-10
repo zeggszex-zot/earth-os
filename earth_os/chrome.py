@@ -28,8 +28,8 @@ from typing import List, Optional, Tuple
 
 from . import brand
 from .widgets import (
-    BarRun, Elbow, Element, FlatButton, HalfPillButton, Label, RenderContext,
-    Tile,
+    Elbow, Element, FlatButton, HalfPillButton, Label, RenderContext, Tile,
+    draw_text,
 )
 
 
@@ -50,8 +50,13 @@ class Frame:
         #: starts below it and nothing has to know the strip is there.
         self.strip_h = u(2.7)
         self.top_h = u(3.4) + self.strip_h
-        self.bottom_h = u(3.0)
+        #: There is no bottom chrome any more: the side column and the
+        #: content run to the foot of the screen. Kept as an attribute, at
+        #: zero, so geometry written against it stays correct.
+        self.bottom_h = 0.0
         self.elbow_w = self.col_w + u(3.2)
+        #: The main screen's right-hand status rail, whose foot is the clock.
+        self.rail_w = u(9.0)
 
     @property
     def box(self) -> Tuple[float, float, float, float]:
@@ -94,8 +99,26 @@ class Frame:
         x = self.margin + self.col_w + self.gap * 2
         y = self.margin + self.top_h + self.gap
         w = self.W - x - self.margin
-        h = self.H - y - self.bottom_h - self.gap - self.margin
+        h = self.H - y - self.bottom_h - self.margin
         return (x, y, w, h)
+
+    @property
+    def bottom(self) -> float:
+        """The lowest y anything inside the frame may reach."""
+        return self.H - self.margin - self.bottom_h
+
+    @property
+    def clock(self) -> Tuple[float, float, float, float]:
+        """The clock block: the foot of the main screen's rail.
+
+        A rectangle the width of the rail, running down to the bottom of the
+        frame. It replaced a small pill at the end of the bottom bar, which
+        went when the bar did.
+        """
+        u = self.ctx.u
+        h = u(4.2)
+        x = self.W - self.margin - self.rail_w
+        return (x, self.bottom - h, self.rail_w, h)
 
 
 def pieces(ctx: RenderContext, f: Frame, *, title: str = "",
@@ -157,36 +180,46 @@ def pieces(ctx: RenderContext, f: Frame, *, title: str = "",
             align="left", valign="top", z=2,
         ))
 
-    # Bottom-left elbow closing the side column.
-    bl_y = f.H - f.margin - f.bottom_h
-    out.append(Elbow(
-        "chrome_bl",
-        (f.margin, bl_y, f.elbow_w, f.bottom_h),
-        corner="bl", bar_w=f.col_w, bar_h=f.bar_h, color="frame",
-    ))
-    strip_x = f.margin + f.elbow_w + f.gap
-    out.append(BarRun(
-        "chrome_strip",
-        (strip_x, f.H - f.margin - f.bar_h,
-         max(f.W - strip_x - f.margin - u(6.7), u(2)), f.bar_h),
-        weights=(3, 1, 2, 1.4, 1, 2.2, 1.2, 3.4),
-        colors=("accent2", "accent3", "accent5", "accent4",
-                "accent2", "accent6", "accent3", "accent2"),
-        cap_right=False,
-    ))
-    # Date stacked above time: two short lines read faster than one long
-    # one, and stacking them gives the bar back most of its width.
-    out.append(HalfPillButton(
-        "chrome_clock",
-        (f.W - f.margin - u(6.4), f.H - f.margin - f.bar_h, u(6.4), f.bar_h),
-        side="right", color="accent4", label_align="center",
-        label="", enabled=False, label_size=0.30,
-    ))
+    # Nothing along the bottom. The elbow, the run of unlabelled bars and
+    # the clock pill that used to close the frame there did nothing, and
+    # took a band of every screen to do it; the side column and the content
+    # now run to the foot of the screen. The clock lives at the foot of the
+    # main screen's rail (see ClockBlock).
     return out
 
 
+class ClockBlock(FlatButton):
+    """The clock: a rectangle with the time large and the date above it.
+
+    ``label`` is :func:`clock_label`'s two lines, date then time, so anything
+    that sets the label keeps working; this only decides how they are drawn.
+    """
+
+    def __init__(self, name: str = "chrome_clock", rect=(0, 0, 0, 0), **kw):
+        kw.setdefault("color", "accent4")
+        kw.setdefault("enabled", False)
+        super().__init__(name, rect, **kw)
+
+    def _draw_label(self, cr, ctx: RenderContext, inset: float = 0.0) -> None:
+        text = self.display_label()
+        if not text:
+            return
+        date, _, clock = text.partition("\n")
+        x, y, w, h = self.rect
+        ink = self._label_color(ctx)
+        pad = min(w, h) * 0.12
+        # Text height is font size, not width, so a narrow block caps it too.
+        time_size = min(h * 0.40, w * 0.17)
+        date_size = time_size * 0.48
+        cx = x + w / 2
+        draw_text(cr, ctx, date, cx, y + h * 0.30, date_size, ink,
+                  align="center", valign="middle", max_width=w - pad * 2)
+        draw_text(cr, ctx, clock, cx, y + h * 0.66, time_size, ink,
+                  align="center", valign="middle", max_width=w - pad * 2)
+
+
 def clock_label(when: Optional[float] = None) -> str:
-    """What goes in the ``chrome_clock`` pill.
+    """What goes in the ``chrome_clock`` block: date, newline, time.
 
     Here rather than in the screen so the splash reads the same clock. A boot
     screen showing a different time format from the shell it becomes is a

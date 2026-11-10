@@ -11,6 +11,7 @@ from __future__ import annotations
 from typing import List, Tuple
 
 from .. import sysinfo
+from ..chrome import ClockBlock
 from ..widgets import (
     HalfPillButton, Label, LevelIndicator, RenderContext, ScrollPanel,
     StandardButton, TextButton, draw_text,
@@ -34,7 +35,8 @@ COLUMN: List[Tuple[str, str, str]] = [
     ("myTasks", "programs running", "accent5"),
     ("myScreenshot", "screen shot", "accent2"),
     ("mySpeech", "speech", "accent3"),
-    ("myDeactivate", "deactivate", "accent6"),
+    # EXIT asks how to leave: log out, shut down or reboot.
+    ("myExit", "exit options", "accent6"),
 ]
 
 
@@ -60,12 +62,14 @@ def add_command_column(screen: Screen, ctx: RenderContext, f: Frame) -> None:
     col_w = f.col_w - u(0.6)
     # Below the square box at the head of the column.
     top = f.column_top
-    bottom = f.H - f.margin - f.bottom_h - u(0.6)
+    # Down to the foot of the screen: the last button's bottom edge sits on
+    # the frame's bottom, level with the foot of the clock opposite.
+    bottom = f.bottom
     count = len(COLUMN)
-    slot_h = (bottom - top) / count
-    btn_h = min(slot_h * 0.80, u(1.9))
+    btn_h = min((bottom - top) / count * 0.80, u(1.9))
+    pitch = (bottom - top - btn_h) / max(count - 1, 1)
     for i, (key, action, color) in enumerate(COLUMN):
-        y = top + i * slot_h
+        y = top + i * pitch
         current = here is not None and action == here
         screen.g.add(HalfPillButton(
             key, (col_x, y, col_w, btn_h), side="left",
@@ -98,7 +102,8 @@ class MainScreen(Screen):
 
         # -- left column ------------------------------------------------
         add_command_column(self, ctx, f)
-        bottom = f.H - f.margin - f.bottom_h - u(0.6)
+        bottom = f.bottom
+        clock_x, clock_y, clock_w, clock_h = f.clock
 
         # -- right rail: gauges, live numbers, then the voice controls ----
         #
@@ -108,7 +113,7 @@ class MainScreen(Screen):
         # heights they need to stay legible, and the gauges take whatever is
         # left over. Sizing the gauges first and squeezing the text is the
         # wrong way round — unreadable numbers are worse than shorter bars.
-        rail_w = u(9.0)
+        rail_w = f.rail_w
         rail_x = f.W - f.margin - rail_w
         rail_y = f.margin + f.top_h + u(1.4)
         self.rail_x, self.rail_w = rail_x, rail_w
@@ -129,7 +134,10 @@ class MainScreen(Screen):
         spacer = u(0.5)
 
         fixed = tick_h + usage_h + listen_h + state_h + spacer * 3
-        rail_h = max(bottom - rail_y - fixed, u(4.0))
+        # The rail stacks down to the clock, which takes the rest of the
+        # column to the bottom of the screen.
+        rail_bottom = clock_y - f.gap
+        rail_h = max(rail_bottom - rail_y - fixed, u(4.0))
 
         gap = u(0.35)
         gw = (rail_w - gap * (len(gauges) - 1)) / len(gauges)
@@ -182,6 +190,11 @@ class MainScreen(Screen):
             provider=self._status_text, size=u(0.78), color="accent4",
             align="center", valign="middle",
         ))
+
+        # The clock: a block from under the voice state to the bottom of the
+        # screen. Its label is filled in every frame by draw_clock.
+        self.g.add(ClockBlock("chrome_clock",
+                              (clock_x, clock_y, clock_w, clock_h)))
 
         # -- centre panel -----------------------------------------------
         cx = f.margin + f.col_w + f.gap * 2

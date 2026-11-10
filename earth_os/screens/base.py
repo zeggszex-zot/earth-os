@@ -91,9 +91,9 @@ class Screen:
     def draw_toast(self, cr, ctx: RenderContext) -> None:
         """The shell's short message, over whichever screen is up.
 
-        Drawn last and above everything, along the bottom bar, because it is
-        the answer to a press and has to be where the person is looking — not
-        in the main screen's transcript, which may be two screens away.
+        Drawn last and above everything, near the foot of the screen, because
+        it is the answer to a press and has to be where the person is looking
+        — not in the main screen's transcript, which may be two screens away.
         """
         app = self.app
         text = getattr(app, "toast_text", "")
@@ -107,7 +107,7 @@ class Screen:
         tw, _ = text_size(cr, ctx, text, size)
         w = min(tw + h * 1.6, ctx.width * 0.8)
         x = (ctx.width - w) / 2
-        y = ctx.height - u(0.7) - u(3.0) - h - u(0.6)
+        y = ctx.height - u(0.7) - h - u(0.6)
         shapes.pill(cr, x, y, w, h, ends="both")
         shapes.fill(cr, ctx.color("accent4"))
         draw_text(cr, ctx, text, x + w / 2, y + h / 2, size,
@@ -205,9 +205,9 @@ class Screen:
             self.add_program_strip(ctx, f)
         self.add_box_controls(ctx, f)
 
-        bl_y = f.H - f.margin - f.bottom_h
+        bl_y = f.bottom + f.gap
         if back and self.name != "main":
-            # Sits clear above the bottom elbow's vertical arm.
+            # At the foot of the side column, which is the foot of the screen.
             self.g.add(StandardButton(
                 "chrome_back",
                 (f.margin + u(0.3), bl_y - f.gap - u(2.0),
