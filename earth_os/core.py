@@ -242,6 +242,13 @@ class Shell:
         #: runs a subprocess, so the frame clock asks :attr:`poll_due` first
         #: rather than polling thirty times a second.
         self._windows_next_poll = 0.0
+        #: The option list EXIT put on the strip, kept by identity so "is the
+        #: exit menu up" is true only while *that* list is the one showing —
+        #: not for an ambiguity question that replaced it.
+        self._exit_options: Optional[list] = None
+        #: The shell loses focus for a moment as the menu comes forward; a
+        #: loss of focus inside this window is not the person looking away.
+        self._exit_grace = 0.0
 
     # ------------------------------------------------------------------
     # Theme
@@ -1108,17 +1115,10 @@ class Shell:
 
         threading.Thread(target=worker, daemon=True, name="cdos-read").start()
 
-    def godcore_value(self, key: str, default: str = "") -> str:
-        block = self.cdos_snapshot.get("godcore")
-        if isinstance(block, dict):
-            return str(block.get(key, default))
-        return default
-
-    def weather_value(self, key: str, default: str = "") -> str:
-        block = self.cdos_snapshot.get("weather")
-        if isinstance(block, dict):
-            return str(block.get(key, default))
-        return default
+    # There is deliberately no accessor here for putting GODCORE on a screen.
+    # It is the computer's own state, read by the AI (the Companion, Earth
+    # Mind, game characters) straight from :attr:`cdos_snapshot`, and nothing
+    # in the interface shows it. tests/test_godcore_private.py holds that.
 
     # ------------------------------------------------------------------
     # Pending choices (CDOS reports ambiguity rather than resolving it)
@@ -1547,6 +1547,11 @@ class Shell:
         if not (self.frame_mode
                 and bool(self.config.get("windows", "auto_frame", True))):
             return
+        if self.exit_menu_open:
+            # A program that opens while the menu is up must not take the
+            # focus, and with it the front, from the question being asked.
+            self._known_windows -= {w.handle for w in fresh}
+            return
         # Newest last; frame it and let it have the focus.
         self.focus_program(fresh[-1])
 
@@ -1675,6 +1680,10 @@ class Shell:
         """
         window = self.framed_window
         if window is None or not self.frame_mode or not self.windows.available:
+            return
+        if self.exit_menu_open:
+            # The press that opened the menu ends here, and lifting the
+            # program now would put it straight back over the menu.
             return
         self.windows.backend.focus(window)
 
@@ -1826,7 +1835,77 @@ class Shell:
         ] + [("CANCEL", self.cancel_pending)]
         if self.current not in ("main", "claude", "comms"):
             self.go("main")
+        self._mark_exit_menu()
+        self._bring_menu_forward()
         self.redraw()
+
+    # -- the exit menu is modal: nothing may cover it ----------------------
+    @property
+    def exit_menu_open(self) -> bool:
+        """True while EXIT's strip (or its CONFIRM step) is what is showing."""
+        return bool(self.pending_options) and self.pending_options is self._exit_options
+
+    def _mark_exit_menu(self) -> None:
+        self._exit_options = self.pending_options
+        self._exit_grace = time.monotonic() + 0.6
+
+    def _bring_menu_forward(self) -> None:
+        """Put the shell in front of every program, whatever they are doing.
+
+        The strip is drawn by the shell, along the bottom of its own window,
+        and a program is a separate window that the compositor stacks by
+        focus. So the strip was at the mercy of whichever program had been
+        touched last: a framed program lay over it, a loose one too, and a
+        fullscreen one covered everything. Nothing the shell draws can fix
+        that; only putting its window in front can.
+
+        Fullscreen is released first because a fullscreen program stays on
+        top of whatever is focused next. While the menu is up nothing lifts
+        the framed program back (see :meth:`raise_framed`); it returns the
+        moment the menu is dismissed.
+        """
+        self.handed_over_to = ""
+        if not self.windows.available:
+            return
+        backend = self.windows.backend
+        try:
+            for window in self.windows.refresh():
+                if window.fullscreen:
+                    backend.fullscreen(window, False)
+            if hasattr(backend, "find_by_app"):
+                from .windows import SELF_APP_IDS
+                own = backend.find_by_app(SELF_APP_IDS)
+                if own is not None:
+                    backend.focus(own)
+        except Exception as exc:
+            self.status_message = f"could not bring the menu forward: {exc}"
+
+    def dismiss_exit_menu(self, quiet: bool = True) -> bool:
+        """Close the exit menu without choosing anything.
+
+        For a press anywhere that is not the menu, and for the shell losing
+        focus. It only closes it: the press that did so is not also acted on,
+        so reaching for a button and missing cannot power the machine down —
+        or press whatever was underneath. Returns whether a menu was open.
+        """
+        if not self.exit_menu_open:
+            return False
+        if self.voice is not None and hasattr(self.voice, "clear_pending"):
+            self.voice.clear_pending()
+        self.pending_options = []
+        self.pending_prompt = ""
+        self._exit_options = None
+        if not quiet:
+            self.say("Cancelled. Nothing was run.")
+        # The program that was waiting behind the menu comes back.
+        self.raise_framed()
+        self.redraw()
+        return True
+
+    def shell_lost_focus(self) -> None:
+        """The shell stopped being the focused window: look away, so close."""
+        if self.exit_menu_open and time.monotonic() >= self._exit_grace:
+            self.dismiss_exit_menu()
 
     def _exit_chosen(self, capability: str) -> None:
         if capability == "system.shutdown":
@@ -1871,6 +1950,10 @@ class Shell:
                 ("CONFIRM", lambda: self._end_session_confirmed(capability)),
                 ("CANCEL", self.cancel_pending),
             ]
+            # Powering off asks, and the question must not be coverable
+            # either, whether it came from EXIT or from a spoken "shut down".
+            self._mark_exit_menu()
+            self._bring_menu_forward()
             self.say(f"{spec.summary}?", speak=True)
             self.redraw()
             return

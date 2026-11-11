@@ -181,6 +181,26 @@ class TestTheSessionStaysEscapable(unittest.TestCase):
         text = SWAY_CONF.read_text()
         self.assertIn("$mod+F1", text)
 
+    def test_alt_tab_cycles_through_the_home_screen_and_programs(self):
+        """Has to be a compositor binding: once a program has the keyboard,
+        Alt+Tab goes to that program and the shell never sees it. Mod1 is
+        Alt; Mod4 is Super, which is what ``$mod`` means here."""
+        # sway ignores runs of spaces, and the config aligns its columns.
+        lines = {" ".join(line.split()) for _n, line in directives()}
+        self.assertIn("bindsym Mod1+Tab exec earth-os --switch", lines)
+        self.assertIn("bindsym Mod1+Shift+Tab exec earth-os --switch-back", lines)
+
+    def test_the_switch_flags_the_config_runs_are_ones_the_cli_accepts(self):
+        """A binding to a flag that does not exist fails silently, on a key
+        press, with no terminal to print the complaint to."""
+        from earth_os.cli import build_parser
+        flags = {opt for action in build_parser()._actions
+                 for opt in action.option_strings}
+        for _number, line in directives():
+            if "exec earth-os --" in line:
+                flag = line.split("exec earth-os ", 1)[1].split()[0]
+                self.assertIn(flag, flags, f"{line!r} names an unknown flag")
+
     def test_there_is_a_terminal_binding(self):
         """Binding this to a terminal the system does not have leaves no way
         to fix anything from inside the session, so it tries several."""

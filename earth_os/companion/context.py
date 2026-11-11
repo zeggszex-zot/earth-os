@@ -48,6 +48,9 @@ KIND_LINES = {
     "calculation": "Answer from KNOWN FACTS and keep their figures exactly.",
 }
 
+NOT_FOUND_EXPLORE = "The CDOS corpus has no entry on this: offer your understanding as such, not as fact."
+NOT_FOUND = "The CDOS corpus has nothing on this; do not supply facts about it."
+
 
 @dataclass
 class Built:
@@ -61,7 +64,7 @@ def build(text: str, intent, mode: str, persona, name: str, user: str,
           memories: List[str], session, facts_block: str = "",
           not_found: bool = False, rules: Optional[str] = None,
           facts_label: str = "", memory_label: str = "",
-          budget: Optional[int] = None) -> Built:
+          budget: Optional[int] = None, profile=None, free: bool = False) -> Built:
     """One turn's messages.
 
     *rules*, *facts_label*, *memory_label* and *budget* are for the other
@@ -71,18 +74,29 @@ def build(text: str, intent, mode: str, persona, name: str, user: str,
     unset, this is the companion's own prompt, unchanged. The order and the
     trimming are the same for every voice, which is the point of sharing the
     builder.
+
+    *profile* (:mod:`.profile`) supplies the companion's rules, mode and kind
+    lines, budget and history depth in place of this module's own, which are
+    the ``grounded`` profile and what is used when it is left unset. *free*
+    says a factual turn the corpus cannot answer is being answered anyway.
     """
-    budget = int(budget) if budget else BUDGET.get(mode, BUDGET[CASUAL])
-    system: List[str] = [(rules or RULES).format(name=name or "CDOS", user=user or "you"),
-                         MODE_LINES[mode]]
-    if intent.kind in KIND_LINES and rules is None:
-        system.append(KIND_LINES[intent.kind])
+    budgets = profile.budget if profile is not None else BUDGET
+    mode_lines = profile.mode_lines if profile is not None else MODE_LINES
+    kind_lines = profile.kind_lines if profile is not None else KIND_LINES
+    base_rules = profile.rules if profile is not None else RULES
+    budget = int(budget) if budget else budgets.get(mode, budgets[CASUAL])
+    system: List[str] = [(rules or base_rules).format(name=name or "CDOS", user=user or "you"),
+                         mode_lines[mode]]
+    if intent.kind in kind_lines and rules is None:
+        system.append(kind_lines[intent.kind])
     if facts_block:
         system.append((facts_label or "KNOWN FACTS (CDOS corpus; checked)") + ":\n" + facts_block)
     if not_found and intent.kind == "explore":
-        system.append("The CDOS corpus has no entry on this: offer your understanding as such, not as fact.")
+        system.append(profile.not_found_explore if profile is not None else NOT_FOUND_EXPLORE)
+    elif not_found and free and profile is not None:
+        system.append(profile.not_found_free)
     elif not_found:
-        system.append("The CDOS corpus has nothing on this; do not supply facts about it.")
+        system.append(profile.not_found if profile is not None else NOT_FOUND)
     optional: List[str] = []
     optional.extend(persona.style_lines())
     if memories:
@@ -108,7 +122,7 @@ def build(text: str, intent, mode: str, persona, name: str, user: str,
             dropped.append(part.split("\n", 1)[0][:40])
     system_text = "\n\n".join([core] + kept)
 
-    history = session.history(HISTORY.get(mode, 4))
+    history = session.history((profile.history if profile is not None else HISTORY).get(mode, 4))
     while history and used + sum(len(h["content"]) for h in history) > budget:
         history = history[2:] if len(history) > 1 else []
         dropped.append("an old turn")

@@ -159,8 +159,23 @@ DEFAULTS: Dict[str, Any] = {
         "backend": "ollama",
         "model": "llama3.2:3b",       # Llama 3.2 3B Instruct, Q4_K_M
         "host": "",                   # blank = [ollama] host
-        "timeout": 60,
-        "num_ctx": 4096,              # fixed: changing it reloads the model
+        # How freely it talks (earth_os/companion/profile.py):
+        # open     = like a conventional chat model: replies of several
+        #            paragraphs, higher temperatures, a larger prompt with
+        #            more of the conversation in it, its own general
+        #            knowledge alongside the corpus, and a question the
+        #            corpus cannot answer answered and marked unverified
+        # grounded = Earth OS 2.0's behaviour: short replies, facts only
+        #            from the corpus
+        # Neither changes what never reaches a model (sensitive turns,
+        # sums, commands) or lets the companion act.
+        "profile": "open",
+        # 0 = what the profile needs: 60 s and 4096 tokens grounded, 240 s
+        # and 8192 open. A figure written here is used as written, and the
+        # profile's prompt and reply lengths are scaled to fit it. Whatever
+        # it is, it is the same for every call: changing it reloads the model.
+        "timeout": 0,
+        "num_ctx": 0,
         "keep_alive": "10m",
         # Take plainly conversational sentences away from a command that
         # only recognised a word of them ("going home after work").
@@ -319,6 +334,7 @@ free_answers = false
 [companion]
 enabled      = true
 model        = "llama3.2:3b"        # ollama pull llama3.2:3b
+profile      = "open"               # open (long, free, like a chat model) | grounded (2.0: short, corpus only)
 guard        = true                 # talk is not taken for a command
 observe      = true                 # what you say about yourself → a pending note
 casual_facts = "worded"             # worded (checked) | verbatim

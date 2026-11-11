@@ -417,7 +417,14 @@ keep_conversations = false # true: conversations survive a restart
 [companion]
 enabled = true             # false as well: the 1.0 model path, exactly
 model   = "llama3.2:3b"
+profile = "open"           # open: long, free replies, like a chat model | grounded: 2.0's
 ```
+
+`profile` is how freely every OS personality talks (docs/COMPANION.md, Part
+4). It changes reply length, temperature, the size of the prompt and whether
+the model's own knowledge is welcome; it changes nothing about routing, what
+reaches a model, or what Earth Mind can do. Game characters keep their own
+rules and lengths; they share the model, and so its context window.
 
 `earth-os --doctor` reports three rows: `computer`, `companion`, `earth mind`.
 

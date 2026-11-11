@@ -55,7 +55,9 @@ GODCORE is not in either tree. It is the external `cdos` CLI
 `CdosBridge`. The shell already caches it: `Shell.refresh_cdos()` reads it on a
 worker every six seconds into `Shell.cdos_snapshot["godcore"|"weather"]`
 (name, role, mood, energy, attention, activity, pulse, I-Zene, tone, domain).
-When the binary is absent the snapshot simply has no GODCORE keys.
+When the binary is absent the snapshot simply has no GODCORE keys. The shell's
+background poll keeps it warm; no screen reads it, because GODCORE is for the
+AI and is never displayed.
 
 ### World Model
 
@@ -158,8 +160,9 @@ one to run.
   nothing runs between turns.
 * GODCORE is read from the shell's existing cache — no subprocess per turn.
 * Model availability is checked at most every 30 seconds.
-* A fixed `num_ctx` (4096), because changing it per call makes Ollama reload
-  the model; `num_predict` per mode instead.
+* A fixed `num_ctx` (4096; 8192 under the `open` profile, Part 4), because
+  changing it per call makes Ollama reload the model; `num_predict` per mode
+  instead.
 * Target: Ollama, `llama3.2:3b` (Llama 3.2 3B Instruct, Q4_K_M — the tag's
   default quantisation).
 
@@ -241,7 +244,9 @@ enabled      = true
 backend      = "ollama"             # or "reasoner": the shell's [voice] llm, through ask()
 model        = "llama3.2:3b"
 host         = ""                   # blank = [ollama] host
-num_ctx      = 4096
+profile      = "open"               # or "grounded": Part 4
+num_ctx      = 0                    # 0 = what the profile needs (4096 grounded, 8192 open)
+timeout      = 0                    # 0 = what the profile needs (60 s grounded, 240 s open)
 keep_alive   = "10m"
 guard        = true
 observe      = true                 # also needs [world] observe = true
@@ -250,6 +255,97 @@ idle_minutes = 30
 ```
 
 `[computer] free_answers` applies here too.
+
+---
+
+## Part 4 — Profiles: how freely it talks
+
+Parts 1 to 3 describe a companion that is deliberately held in: replies of a
+few sentences, moderate temperatures, a prompt of a few thousand characters,
+and rules that keep a 3B model to the corpus. That is the right default for a
+machine whose first job is to be correct, and it is not what talking to a
+conventional chat model feels like. `[companion] profile` chooses between
+them. Both are the same engine; a profile is a set of dials
+(`earth_os/companion/profile.py`) and nothing else.
+
+| | `grounded` (Parts 1–3, Earth OS 2.0) | `open` |
+|---|---|---|
+| reply length, tokens (casual / reflective / deep) | 160 / 320 / 600 | 640 / 1,024 / 1,536 |
+| temperature | 0.7 / 0.65 / 0.45 | 0.9 / 0.85 / 0.8 |
+| prompt budget, characters | 1,600 / 3,000 / 5,000 | 6,000 / 9,000 / 12,000 |
+| exchanges of history offered | 4 / 6 / 8 | 8 / 12 / 16 |
+| a turn carried in history | its first 400 characters | its first 2,400 |
+| the rules | facts only from KNOWN FACTS; one to three sentences in casual talk | its own general knowledge welcome; as long as the message deserves; follow-ups read in the light of the conversation |
+| the corpus has no entry | said as not knowing | the model answers, and the reply begins *"That isn't in my corpus, so this is unverified:"* |
+| a worded fact with a figure the evidence lacks | replaced by the computer's own sentence | kept, and marked *"(Some figures there aren't from my corpus — treat those as unverified.)"* — provided the computer's own figure is still in it |
+| context window / wait for a reply | 4,096 tokens / 60 s | 8,192 tokens / 240 s |
+
+`open` is what a new configuration is written with. `profile = "grounded"`
+puts everything in Parts 1 to 3 back, exactly: `grounded` is built from the
+constants in `context.py`, `model.py` and `session.py`, and
+`tests/test_companion_profile.py` holds that an engine given it sends a model
+the same bytes as an engine given nothing. `CompanionEngine(...)` built by
+hand is grounded unless it is told otherwise.
+
+### What no profile changes
+
+Decided before a profile is consulted, and held identical across both by the
+tests:
+
+* **Sensitive turns never reach a model.** Self-harm, health, money, law.
+* **The companion cannot act**, and the rules of both profiles say so. This
+  is not caution for its own sake: a small model that is not told it only
+  talks will say it has opened a program it did not open.
+* **A factual question goes to CDOS Computer first.** When the corpus answers
+  with a figure, that figure is in the reply or the computer's own sentence
+  is said instead. `open` lets the model say *more* than the corpus; it does
+  not let it say *otherwise*.
+* **Sums are the calculator's**, verbatim, with no model.
+* **System readings are explained under the grounded rules** whatever the
+  profile (`CompanionEngine.explain`). An explanation with a figure the
+  readings do not contain is discarded, not marked: an invented reading of
+  this machine is the defect AGENTS.md §3 is about.
+* **Memory.** Only what the person asked to be kept reaches a prompt.
+* **Which path a turn takes.** `intent.classify` and Earth Mind's router are
+  untouched, so a question still goes to the corpus before the model, and a
+  follow-up that starts like a fact question (*"what about the other one?"*)
+  is still asked of the corpus first — the model then answers it from the
+  conversation, marked unverified. Changing that is a change to the router,
+  not to a profile.
+
+### How it reaches the model
+
+Every model client already accepts two things beside the messages: a factor
+on its length and a shift on its temperature (GODCORE's low energy is 0.7 and
+−0.1). A profile is expressed through those two (`Profile.shape`), so it
+needs nothing new of a provider and GODCORE's own still apply on top:
+`open`, low energy, casual is 448 tokens at 0.8.
+
+### The context window
+
+`open`'s fullest turn is a 12,000-character prompt and a 1,536-token reply,
+which does not fit 4,096 tokens. Ollama does not refuse a prompt that is too
+long: it drops the front of it, and the front is the rules. So `num_ctx = 0`
+means *what the profile needs*, and when a figure is written down instead the
+profile is fitted to it (`Profile.fitted`): each mode's prompt budget and
+reply length are scaled down together until the worst case fits, never below
+`grounded`'s. `earth-os --doctor` says when that has happened. The window is
+still one figure for every call and every voice, so nothing reloads.
+
+### What it costs
+
+Not measured on a real model (see Part 3): the figures above are what is
+asked for, not what was timed. What follows from them is arithmetic. A reply
+four times as long takes about four times as long to generate. At ten tokens
+a second — a common figure for a 3B model with no GPU, and not one measured
+here — a full `deep` reply is two and a half minutes, which is why the wait
+is 240 seconds rather than 60. An 8,192-token window costs the model more memory
+than a 4,096-token one. On a small machine: `profile = "grounded"`, or keep
+`open` and write `num_ctx = 4096`.
+
+A larger model is one line and makes more difference to how it talks than any
+dial here (`[mind] model = "ollama:<tag>"`, after `ollama pull <tag>`); the
+profile applies to whatever model is named.
 
 ---
 

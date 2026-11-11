@@ -105,15 +105,18 @@ shell builds the sentence itself:
 Point a model at it and those become conversational. Take the model away and
 it still answers. That is the right failure mode for a machine you talk to.
 
-## GODCORE on screen
+## GODCORE is for the AI
 
-`cdos godcore` is the persistent computer self, and it belongs on an LCARS
-panel more than anywhere else. The engineering screen shows it beside the raw
-kernel figures: name, role, mood, energy, attention, activity, and the
-emotional weather — pulse, I-Zene position, tone, domain.
+`cdos godcore` is the persistent computer self. It is **not displayed**
+anywhere in the interface. It exists for the AI to use — the Companion in
+conversation, Earth Mind and the game characters in play — which read it as
+style: name, mood, energy, attention, and the emotional weather (pulse, I-Zene
+position, tone, domain). It colours how the computer speaks; it never decides
+what is true or what is done.
 
 The readings are cached and refreshed on a worker thread every six seconds,
-never on the frame clock, because each one costs a subprocess.
+driven by the shell's background poll rather than by any screen, and never by
+the frame clock, because each one costs a subprocess.
 
 With `godcore_events = true` the shell folds occasions into GODCORE as they
 happen, so its pulse advances with use. Nothing sets the count; occasions

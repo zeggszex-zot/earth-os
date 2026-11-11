@@ -85,11 +85,11 @@ class EngineeringScreen(Screen):
         ))
 
         # Identity block, sitting below both columns with clearance for the
-        # closing bar run.  When CDOS is the backend it takes the right half,
-        # showing its own interpretation beside the raw kernel figures.
+        # closing bar run.  Full width: GODCORE used to take the right half
+        # when CDOS was the backend, but it is the computer's own state for
+        # the AI to use, not something to read off a screen.
         ident_hdr_y = cy + u(13.8)
-        cdos_live = self.app.cdos_bridge() is not None
-        ident_w = cw * 0.56 if cdos_live else cw
+        ident_w = cw
         self.g.add(TextButton(
             "hdr_ident", (cx, ident_hdr_y, ident_w, u(1.3)),
             label="System Identification", color="accent5", label_color="accent4",
@@ -97,16 +97,6 @@ class EngineeringScreen(Screen):
         info_y = ident_hdr_y + u(2.0)
         info_h = max(ch - u(17.3), u(4))
         self.info_rect = (cx, info_y, ident_w, info_h)
-
-        self.cdos_rect = None
-        if cdos_live:
-            gx = cx + cw * 0.62
-            gw_ = cw - (gx - cx)
-            self.g.add(TextButton(
-                "hdr_cdos", (gx, ident_hdr_y, gw_, u(1.3)),
-                label="GODCORE", color="accent3", label_color="accent4",
-            ))
-            self.cdos_rect = (gx, info_y, gw_, info_h)
 
         self.g.add(BarRun(
             "eng_bar", (cx, cy + ch - u(1.1), cw, u(1.0)),
@@ -140,52 +130,7 @@ class EngineeringScreen(Screen):
         return cores[index] if index < len(cores) else 0.0
 
     # ------------------------------------------------------------------
-    def tick(self) -> None:
-        self.app.refresh_cdos()
-
-    def _draw_cdos(self, cr, ctx: RenderContext) -> None:
-        """GODCORE's self and CDOS's own reading of the machine."""
-        rect = getattr(self, "cdos_rect", None)
-        if rect is None:
-            return
-        u = ctx.u
-        x, y, w, h = rect
-        app = self.app
-
-        if not app.cdos_snapshot:
-            draw_text(cr, ctx, "READING...", x, y, u(0.68),
-                      ctx.color("accent5"), align="left", valign="top")
-            return
-        error = app.cdos_snapshot.get("error")
-        if error:
-            draw_text(cr, ctx, str(error).upper(), x, y, u(0.62),
-                      ctx.color("alert"), align="left", valign="top",
-                      max_width=w, wrap=True)
-            return
-
-        rows = [
-            ("NAME", app.godcore_value("name", "-")),
-            ("ROLE", app.godcore_value("role", "-")),
-            ("MOOD", app.godcore_value("mood", "-")),
-            ("ENERGY", app.godcore_value("energy", "-")),
-            ("ATTENTION", app.godcore_value("attention", "-")),
-            ("ACTIVITY", app.godcore_value("activity", "-")),
-            ("PULSE", app.weather_value("pulse", app.godcore_value("pulse", "-"))),
-            ("I-ZENE", app.weather_value("i-zene", app.godcore_value("i-zene", "-"))),
-            ("TONE", app.weather_value("tone", "-")),
-            ("DOMAIN", app.weather_value("domain", "-")),
-        ]
-        size = u(0.66)
-        row_h = min(h / max(len(rows), 1), u(1.15))
-        for i, (key, value) in enumerate(rows):
-            ry = y + i * row_h
-            draw_text(cr, ctx, key, x, ry, size, ctx.ink("accent3"),
-                      align="left", valign="top")
-            draw_text(cr, ctx, value, x + w * 0.99, ry, size, ctx.color("text"),
-                      align="right", valign="top", max_width=w * 0.66)
-
     def draw_overlay(self, cr, ctx: RenderContext) -> None:
-        self._draw_cdos(cr, ctx)
         rect = getattr(self, "info_rect", None)
         if rect is None:
             return

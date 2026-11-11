@@ -30,12 +30,15 @@ class Turn:
 
 
 class Session:
-    def __init__(self, clock=time.time):
+    def __init__(self, clock=time.time, turn_chars: int = TURN_CHARS, max_turns: int = MAX_TURNS):
         self.clock = clock
         self.id = uuid.uuid4().hex[:8]
         self.started = clock()
         self.last = self.started
-        self.turns: Deque[Turn] = deque(maxlen=MAX_TURNS)
+        #: How much of a long turn history carries, and how many turns are
+        #: kept. The module's figures unless a profile asks for more room.
+        self.turn_chars = max(80, int(turn_chars))
+        self.turns: Deque[Turn] = deque(maxlen=max(2, int(max_turns)))
         self.mode: Optional[str] = None       # set by the person: "let's go deeper"
         self.topic = ""
         self.facts: Deque[str] = deque(maxlen=MAX_FACTS)
@@ -54,7 +57,7 @@ class Session:
         recent = list(self.turns)[-turns * 2:] if turns > 0 else []
         out = []
         for t in recent:
-            text = t.text if len(t.text) <= TURN_CHARS else t.text[:TURN_CHARS - 1] + "…"
+            text = t.text if len(t.text) <= self.turn_chars else t.text[:self.turn_chars - 1] + "…"
             out.append({"role": t.role, "content": text})
         return out
 
@@ -65,15 +68,17 @@ class Session:
 class Sessions:
     """The current session, replaced after a quiet spell or on request."""
 
-    def __init__(self, idle_seconds: float = 1800.0, clock=time.time):
+    def __init__(self, idle_seconds: float = 1800.0, clock=time.time,
+                 turn_chars: int = TURN_CHARS, max_turns: int = MAX_TURNS):
         self.idle_seconds = float(idle_seconds)
         self.clock = clock
+        self.turn_chars, self.max_turns = int(turn_chars), int(max_turns)
         self._current: Optional[Session] = None
         self.count = 0
 
     def current(self) -> Session:
         if self._current is None or self._current.expired(self.idle_seconds):
-            self._current = Session(self.clock)
+            self._current = Session(self.clock, self.turn_chars, self.max_turns)
             self.count += 1
         return self._current
 

@@ -41,11 +41,13 @@ def build_mind(config, shell=None, link=None, ledger=None, reasoner=None,
     Building costs no model call, loads no corpus and takes no reading.
     """
     from ..config import config_dir, data_dir
+    from ..companion.profile import from_block
     from .game.world import BUILTIN_WORLDS
     from .personas import BUILTIN_DIR
 
     block = config.section("mind")
     companion = config.section("companion")
+    profile, _num_ctx, _timeout = from_block(companion)
     where = str(block.get("memory") or "").strip()
     if where == ":memory:":
         path: Optional[Path] = None
@@ -75,6 +77,7 @@ def build_mind(config, shell=None, link=None, ledger=None, reasoner=None,
             "casual_facts": str(companion.get("casual_facts", "worded")),
             "free_answers": bool(config.get("computer", "free_answers", False)),
             "idle_minutes": float(companion.get("idle_minutes", 30)),
+            "profile": profile,
         },
         explain=bool(block.get("explain", True)),
         keep_conversations=bool(block.get("keep_conversations", False)),

@@ -100,6 +100,8 @@ class Response:
             parts.append(f"{self.model_calls} pass{'es' if self.model_calls != 1 else ''}")
         if self.checked is True:
             parts.append("checked")
+        elif self.checked is False and self.source == "model":
+            parts.append("figures beyond the corpus: marked unverified")     # the model's words, kept
         elif self.checked is False:
             parts.append("check failed: verified words used")
         if self.proposal is not None and self.proposal.effectful:

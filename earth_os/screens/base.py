@@ -29,6 +29,11 @@ __all__ = ["Frame", "Screen"]
 #: without closing the slider.
 VOLUME_PARTS = ("volume_",)
 
+#: The elements that make up a confirmation strip: prompt and buttons. A press
+#: on any of these is the menu being used; a press anywhere else is the
+#: person leaving it.
+MENU_PARTS = ("choice_", "claude_choice_", "confirm_")
+
 
 class Screen:
     """A named page of the shell."""
@@ -127,6 +132,12 @@ class Screen:
         if volume is not None and volume.panel_open and not (
                 element is not None and element.name.startswith(VOLUME_PARTS)):
             volume.close_panel()
+            return None
+        # The exit menu is the same: a press that is not on it closes it, and
+        # only closes it, so the machine is never shut down by a stray press.
+        if getattr(self.app, "exit_menu_open", False) and not (
+                element is not None and element.name.startswith(MENU_PARTS)):
+            self.app.dismiss_exit_menu()
             return None
         if isinstance(element, Slider):
             self._dragging = element

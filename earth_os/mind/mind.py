@@ -156,7 +156,8 @@ class EarthMind:
                 casual_facts=str(opts.get("casual_facts", "worded")),
                 free_answers=bool(opts.get("free_answers", False)),
                 idle_minutes=float(opts.get("idle_minutes", 30)),
-                style=person.style_lines)
+                style=person.style_lines,
+                profile=opts.get("profile") or "grounded")
             self._resume_conversation(person, engine)
             self._companions[person.id] = engine
             return engine

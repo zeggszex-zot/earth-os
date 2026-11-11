@@ -87,6 +87,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--screenshot", action="store_true",
                         help="save a picture of the whole screen to "
                              "Pictures/EARTH OS Screenshots, print where, and exit")
+    parser.add_argument("--switch", action="store_true",
+                        help="move focus to the next program, or the home "
+                             "screen after the last, and exit (Alt+Tab)")
+    parser.add_argument("--switch-back", action="store_true",
+                        help="move focus to the previous program, and exit "
+                             "(Alt+Shift+Tab)")
     return parser
 
 
@@ -198,6 +204,10 @@ def main(argv: Optional[List[str]] = None) -> int:
     if args.screenshot:
         from .screengrab import capture_from_command_line
         return capture_from_command_line()
+
+    if args.switch or args.switch_back:
+        from .windows import switch_from_command_line
+        return switch_from_command_line(-1 if args.switch_back else 1)
 
     code = semantics_commands(args)
     if code is not None:

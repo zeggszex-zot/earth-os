@@ -353,14 +353,22 @@ def check_companion() -> Tuple[str, str]:
     if not bool(config.get("companion", "enabled", True)):
         return (OK, "disabled in config")
     from .companion.model import DEFAULT_MODEL, CompanionModel
+    from .companion.profile import from_block, known, resolve
     block = config.section("companion")
+    asked = str(block.get("profile") or "grounded")
+    if not known(asked):
+        return (WARN, f"[companion] profile = {asked!r} is not a profile (open, grounded): using grounded")
     if str(block.get("backend", "ollama")) != "ollama":
-        return (OK, f"backend {block.get('backend')}: see 'reasoning'")
+        return (OK, f"backend {block.get('backend')}: see 'reasoning' · {asked} profile")
+    profile, num_ctx, _timeout = from_block(block)
     model = CompanionModel(
         host=str(block.get("host") or config.get("ollama", "host", "http://127.0.0.1:11434")),
         model=str(block.get("model", DEFAULT_MODEL)))
+    talk = f"{profile.name} profile · context {num_ctx}"
+    if profile is not resolve(asked):
+        talk += f" (prompts and replies shortened to fit; {resolve(asked).num_ctx} gives it full room)"
     if model.available:
-        return (OK, f"{model.model} @ {model.host}")
+        return (OK, f"{model.model} @ {model.host} · {talk}")
     return (WARN, model.why + " — it still answers facts, sums and greetings without one")
 
 

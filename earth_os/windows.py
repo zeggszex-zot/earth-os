@@ -152,3 +152,85 @@ class WindowManager:
             if needle in (window.app or "").lower() or needle in (window.title or "").lower():
                 return window
         return None
+
+
+# ---------------------------------------------------------------------------
+# Alt+Tab: one ring through the home screen and every program
+# ---------------------------------------------------------------------------
+
+def _opening_order(window: "Window") -> Tuple[int, str]:
+    """Sort key that follows the order windows were opened in.
+
+    Handles are compositor ids, which count upward as windows appear, so
+    sorting them numerically keeps the ring stable between presses: a window
+    never changes place because somebody else was focused in between. A handle
+    that is not a number (wlrctl's is a line of text) sorts after the numeric
+    ones, by its text, which is still stable.
+    """
+    try:
+        return (0, f"{int(window.handle):012d}")
+    except (TypeError, ValueError):
+        return (1, str(window.handle))
+
+
+def switch_ring(found: List["Window"]) -> List["Window"]:
+    """The home screen first, then every program in the order it opened.
+
+    The shell's own window is the home screen — it is the LCARS interface —
+    so it leads the ring and is always one press from anywhere. If the shell
+    cannot be seen in the list, the ring is programs only.
+    """
+    own = [w for w in found if _is_self(w)]
+    others = sorted((w for w in found if not _is_self(w)), key=_opening_order)
+    return own[:1] + others
+
+
+def cycle(backend: "WindowBackend", step: int = 1) -> Tuple[bool, str]:
+    """Move focus *step* places round the ring: +1 forward, -1 back.
+
+    Returns ``(ok, message)``. Having nothing to switch to is not an error —
+    the person pressed Alt+Tab with only the home screen open — but it is not
+    a success either, so it says so rather than doing nothing silently.
+
+    A program that has taken the whole screen is taken out of fullscreen on
+    the way past, otherwise it would stay on top of whatever was focused next
+    and the press would appear to do nothing. This is the same thing the
+    session's Super+F11 binding does, for the same reason.
+    """
+    if not backend.available:
+        return (False, backend.status())
+    ring = switch_ring(backend.list_windows())
+    if len(ring) < 2:
+        return (False, "nothing else is open to switch to")
+
+    here = next((i for i, w in enumerate(ring) if w.focused), None)
+    if here is None:
+        # Focus is on nothing we know about (a popup, an empty workspace).
+        # Forward lands on the home screen, back on the last program.
+        target = ring[0] if step > 0 else ring[-1]
+    else:
+        target = ring[(here + step) % len(ring)]
+        if ring[here].fullscreen:
+            backend.fullscreen(ring[here], False)
+
+    if not backend.focus(target):
+        return (False, f"could not focus {target.label}")
+    return (True, "home" if _is_self(target) else target.label)
+
+
+def switch_from_command_line(step: int = 1) -> int:
+    """``earth-os --switch`` / ``--switch-back``: for the session's Alt+Tab.
+
+    The compositor takes the key before any program sees it, so a shell that
+    is not focused — which is the whole case, once a program has the
+    keyboard — can never be the one to answer it. This runs instead and asks
+    the window backend to move focus. Imports no toolkit, so it is quick
+    enough to bind to a key.
+    """
+    import sys
+    ok, message = cycle(detect("auto"), step)
+    if not ok:
+        print(f"earth-os: {message}", file=sys.stderr)
+        return 1
+    print(message)
+    return 0

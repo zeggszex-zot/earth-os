@@ -45,6 +45,10 @@ def numbers(text: str) -> Set[str]:
     return out
 
 
+#: The one problem that means the computer's own answer is missing from a reply,
+#: rather than that the reply said more than the evidence does.
+DROPPED = "the computer's figure was dropped"
+
 # Small numbers a sentence uses as words of grammar, not as claims.
 _TRIVIAL = {f"{n:.6g}" for n in range(0, 11)}
 
@@ -114,7 +118,7 @@ def check_reply(reply: str, retrieval: Optional[Retrieval], said: str) -> Tuple[
     if retrieval is not None:
         key = retrieval.key_numbers()
         if key and not (numbers(reply) & key):
-            problems.append("the computer's figure was dropped")
+            problems.append(DROPPED)
     return (not problems, problems)
 
 

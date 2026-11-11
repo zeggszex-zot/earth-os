@@ -717,6 +717,8 @@ class TerminalScreen(Screen):
             note += f" · {response.model_calls} pass{'es' if response.model_calls != 1 else ''}"
         if response.checked is True:
             note += " · checked against the facts"
+        elif response.checked is False and response.source == "model":
+            note += " · figures beyond the corpus: marked unverified"
         elif response.checked is False:
             note += " · check failed: verified words used"
         self.emit("translate", note)

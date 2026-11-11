@@ -213,8 +213,12 @@ class ModelManager:
         A machine configured for the Companion Engine before Earth Mind existed
         keeps talking to the same model with no new settings.
         """
+        from ..companion.profile import from_block
         mind = config.section("mind")
         companion = config.section("companion")
+        # The context window and the wait are the conversation profile's unless
+        # the configuration names its own ([companion] profile, num_ctx, timeout).
+        _profile, num_ctx, timeout = from_block(companion)
         default = str(mind.get("model") or "")
         if not default:
             backend = str(companion.get("backend", "ollama"))
@@ -224,8 +228,8 @@ class ModelManager:
                 default = "reasoner"
         options = {
             "host": str(companion.get("host") or config.get("ollama", "host", "http://127.0.0.1:11434")),
-            "timeout": companion.get("timeout", 60),
-            "num_ctx": companion.get("num_ctx", 4096),
+            "timeout": timeout,
+            "num_ctx": num_ctx,
             "keep_alive": companion.get("keep_alive", "10m"),
         }
         assignments = {"game": str(mind.get("game_model") or "")}

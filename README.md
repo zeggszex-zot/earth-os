@@ -68,9 +68,10 @@ earth-os --doctor                # if anything misbehaves, start here
   than bare numbers, so the shell can speak without one: *"Storage filling,
   91.0 percent."* Add a model and it gets conversational; take it away and it
   still answers.
-- **GODCORE on the panel.** The persistent computer self — mood, energy,
-  attention, and the emotional weather with its pulse and I-Zene position —
-  reads live on the engineering screen.
+- **GODCORE for the AI, not the screen.** The persistent computer self — mood,
+  energy, attention, and the emotional weather with its pulse and I-Zene
+  position — is never displayed. It is read by the AI in conversation and in
+  games, where it colours how the computer speaks and plays.
 - **Offline by default.** whisper.cpp, Piper and Ollama, all local. A cloud
   backend is one config key away if you want a smarter computer.
 - **Programs live inside the interface.** Like the original, an opened program

@@ -11,6 +11,11 @@
      └─ conversation                 → one model pass, with the topic's facts in REFLECTIVE/DEEP
                                        DEEP only: one revision if the evidence check fails
 
+How long and how freely the model answers — reply length, temperature, the
+size of the prompt, whether its own knowledge is welcome — is the *profile*
+(:mod:`.profile`): ``grounded``, which is everything described here, or
+``open``. A profile changes none of the routing above.
+
 The engine holds a model, a link to the computer, the ledger and a way to read
 GODCORE's cached state. It holds nothing that can act on the machine: no
 capability registry, no compositions, no agent, no bridge. That is what
@@ -26,10 +31,15 @@ from typing import Callable, Dict, List, Optional
 
 from . import context as ctx
 from .intent import CASUAL, DEEP, REFLECTIVE, Intent, classify
-from .knowledge import Knowledge, Retrieval, check_reply
+from .knowledge import DROPPED, Knowledge, Retrieval, check_reply
 from .memory import CompanionMemory
 from .persona import Persona
+from .profile import GROUNDED, Profile, resolve
 from .session import Sessions
+
+#: The kinds whose answer is the corpus's, not the model's.
+FACTUAL = ("knowledge", "calculation")
+UNVERIFIED = "That isn't in my corpus, so this is unverified: "
 
 NOTICES = {
     "self_harm": ("It sounds like you might be in real pain, and I'm glad you said it. Please talk to someone "
@@ -77,6 +87,8 @@ class Reply:
             parts.append(f"{len(self.queries)} lookup{'s' if len(self.queries) != 1 else ''}")
         if self.checked is True:
             parts.append("checked")
+        elif self.checked is False and self.source == "model":
+            parts.append("figures beyond the corpus: marked unverified")     # the model's words, kept
         elif self.checked is False:
             parts.append("check failed: computer's words used")
         if self.noticed:
@@ -90,8 +102,11 @@ class CompanionEngine:
                  name: str = "CDOS", user: str = "", observe: bool = True,
                  casual_facts: str = "worded", free_answers: bool = False,
                  idle_minutes: float = 30.0, clock=time.time,
-                 style: Optional[Callable[[], List[str]]] = None):
+                 style: Optional[Callable[[], List[str]]] = None,
+                 profile="grounded"):
         self.model = model
+        #: How freely the model talks (:mod:`.profile`): a name or a Profile.
+        self.profile: Profile = resolve(profile)
         #: Extra style lines from a configured personality (docs/EARTH_MIND.md).
         #: Style only: routing, facts and permissions are decided before any
         #: persona is consulted, exactly as for GODCORE.
@@ -101,8 +116,9 @@ class CompanionEngine:
         self.godcore = godcore or (lambda: {})
         self.name, self.user = name or "CDOS", user
         self.casual_facts = casual_facts if casual_facts in ("worded", "verbatim") else "worded"
-        self.free_answers = bool(free_answers)
-        self.sessions = Sessions(idle_seconds=idle_minutes * 60.0, clock=clock)
+        self.free_answers = bool(free_answers) or self.profile.free_answers
+        self.sessions = Sessions(idle_seconds=idle_minutes * 60.0, clock=clock,
+                                 turn_chars=self.profile.turn_chars, max_turns=self.profile.max_turns)
         self.last: Optional[Reply] = None
 
     # ------------------------------------------------------------------
@@ -207,6 +223,10 @@ class CompanionEngine:
         are — one model pass, every figure in the reply checked against them,
         and the findings themselves said when there is no model or the check
         fails. Nothing here reads the machine; the companion still only talks.
+
+        Always under the grounded profile, whatever the engine's own: these
+        are readings of this machine, and an explanation that adds a figure of
+        its own is discarded rather than marked.
         """
         from ..voice.computer_link import Answer
         session = self.sessions.current()
@@ -223,7 +243,7 @@ class CompanionEngine:
         elif not self.model_ready:
             reply = Reply(plain, "knowledge", intent.mode, "computer", queries=[text])
         else:
-            reply = self._generate(text, intent, session, self.persona(), retrieval)
+            reply = self._generate(text, intent, session, self.persona(), retrieval, profile=GROUNDED)
             if reply.checked is False or reply.source != "model":
                 reply.text, reply.source = plain, "computer"
         reply.session, reply.why = session.id, intent.why + reply.why
@@ -244,7 +264,8 @@ class CompanionEngine:
                              intent.kind, mode, "fixed", queries=queries)
             if self.free_answers and self.model_ready:
                 reply = self._generate(text, intent, session, persona, retrieval, not_found=True)
-                reply.text = "That isn't in my corpus, so this is unverified: " + reply.text
+                if reply.source == "model":          # a model that did not answer said nothing to label
+                    reply.text = UNVERIFIED + reply.text
                 return reply
             return Reply("I don't have that in my knowledge — my corpus has nothing on it, and I'd rather "
                          "not guess. I'm happy to think it through with you as speculation, if you like.",
@@ -254,24 +275,44 @@ class CompanionEngine:
         if (intent.kind == "calculation" or self.casual_facts == "verbatim" or not self.model_ready):
             return Reply(primary.text, intent.kind, mode, "computer", queries=queries)
         reply = self._generate(text, intent, session, persona, retrieval)
-        if reply.checked is False:
+        if reply.checked is False and not self._tolerated(reply.problems, self.profile):
             # The model wandered from the evidence: the computer's own sentence.
             reply.text, reply.source = primary.text, "computer"
         return reply
 
+    # -- the evidence check, as a profile reads it --------------------------------
+    @staticmethod
+    def _judge(out: str, retrieval: Optional[Retrieval], said: str, intent: Intent, profile: Profile):
+        """(ok, problems). A lenient profile does not ask talk to repeat a figure:
+        only a factual answer has to carry the computer's own."""
+        ok, problems = check_reply(out, retrieval, said)
+        if profile.lenient and intent.kind not in FACTUAL:
+            problems = [p for p in problems if p != DROPPED]
+            ok = not problems
+        return ok, problems
+
+    @staticmethod
+    def _tolerated(problems: List[str], profile: Profile) -> bool:
+        """A failed check a lenient profile keeps the reply through: it said
+        more than the evidence does, and the computer's figure is still there."""
+        return bool(profile.lenient and problems and DROPPED not in problems)
+
     def _generate(self, text, intent, session, persona, retrieval: Optional[Retrieval],
-                  not_found: bool = False) -> Reply:
+                  not_found: bool = False, profile: Optional[Profile] = None) -> Reply:
         mode = intent.mode
-        budget = ctx.BUDGET[mode]
+        profile = profile or self.profile
+        budget = profile.budget[mode]
+        length, warmth = profile.shape(mode, persona.length_factor, persona.temperature_shift)
         facts = retrieval.block(int(budget * 0.4)) if retrieval else ""
         for f in retrieval.facts if retrieval else []:
             session.note_fact(f.text)
         memories = self.memory.relevant(text, always=1 if mode != CASUAL else 0)
         built = ctx.build(text, intent, mode, persona, persona.name or self.name, self.user,
-                          memories, session, facts_block=facts, not_found=not_found)
+                          memories, session, facts_block=facts, not_found=not_found,
+                          profile=profile, free=self.free_answers and intent.kind in FACTUAL)
         reply = Reply("", intent.kind, mode, "model", queries=retrieval.queries if retrieval else [])
         try:
-            out = self.model.chat(built.messages, mode, persona.length_factor, persona.temperature_shift)
+            out = self.model.chat(built.messages, mode, length, warmth)
         except Exception as exc:
             reply.model_calls = 1
             reply.prompt_chars = built.chars
@@ -282,24 +323,26 @@ class CompanionEngine:
         out = out.strip() or "…"
 
         if facts:
-            ok, problems = check_reply(out, retrieval, text)
-            if not ok and mode == DEEP:
+            ok, problems = self._judge(out, retrieval, text, intent, profile)
+            if not ok and mode == DEEP and not self._tolerated(problems, profile):
                 # One revision, and only when it is justified: name the problem.
                 revise = built.messages + [
                     {"role": "assistant", "content": out},
                     {"role": "user", "content": ("Revise your answer: " + "; ".join(problems)
                                                  + ". Use only the figures in KNOWN FACTS.")}]
                 try:
-                    out2 = self.model.chat(revise, mode, persona.length_factor, persona.temperature_shift)
+                    out2 = self.model.chat(revise, mode, length, warmth)
                     reply.model_calls += 1
                     reply.prompt_chars += sum(len(m["content"]) for m in revise)
-                    ok2, problems2 = check_reply(out2, retrieval, text)
-                    if ok2:
-                        out, ok, problems = out2.strip(), True, []
+                    ok2, problems2 = self._judge(out2, retrieval, text, intent, profile)
+                    if ok2 or self._tolerated(problems2, profile):
+                        out, ok, problems = out2.strip(), ok2, problems2
                 except Exception:
                     pass
             reply.checked, reply.problems = ok, problems
-            if not ok and intent.kind not in ("knowledge", "calculation"):
+            if not ok and self._tolerated(problems, profile):
+                out += profile.caveat
+            elif not ok and intent.kind not in FACTUAL:
                 out += " (One figure there isn't from my corpus — treat it as unverified.)"
         reply.text = out
         return reply

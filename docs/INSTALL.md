@@ -252,6 +252,16 @@ program the key is still `Super`+`F1`, which the compositor catches.
 | `F6` | The RUNNING PROGRAMS screen | the shell has focus |
 | **`Super`+`F1`** | **Back to LCARS** | **always** |
 | `Super`+`F11` | Leave fullscreen and return to LCARS | always |
+| `Alt`+`Tab` | Next program, then the home screen after the last | always |
+| `Alt`+`Shift`+`Tab` | Previous program, or the last one from home | always |
+
+**EXIT** (log out, shut down, reboot) is modal. While its buttons are showing
+the shell is in front of every program — a fullscreen program is released
+first — so a program can never cover them. A press anywhere else closes the
+menu and does nothing more, so a missed press cannot power the machine off.
+`Escape`, and switching away from the shell with `Alt`+`Tab`, close it too.
+A click *inside* a program that is already focused cannot be seen by the
+shell, so that one does not close it; click the LCARS frame or press `Escape`.
 
 > The `Super` keys matter. Once a program has the keyboard, a bare `F1` goes to
 > *that program* — Firefox opens its help — and the shell never sees it. Only
@@ -296,7 +306,9 @@ you instead of sitting unread in `/usr/share`.
 
 It binds the keys sway has to provide, because there is no desktop panel and
 because a key pressed inside a program never reaches the shell:
-`Super+F1` or `Super+Home` back to the shell, `Super+F11` to drop a program out
+`Super+F1` or `Super+Home` back to the shell, `Alt+Tab` / `Alt+Shift+Tab`
+round the home screen and every open program (home first, then programs in the
+order they opened), `Super+F11` to drop a program out
 of fullscreen and return, `Super+Return` a terminal, `Super+q` close,
 `Super+Shift+E` exit, `Print` or `Super+Shift+S` a screenshot (through
 `earth-os --screenshot`, so it works with no `~/Pictures` and says where the

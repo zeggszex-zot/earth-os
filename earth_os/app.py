@@ -110,6 +110,10 @@ class EarthWindow(Gtk.ApplicationWindow):
         keys.connect("key-pressed", self._on_key)
         self.add_controller(keys)
 
+        # Looking away from the shell closes the exit menu: Alt+Tab to a
+        # program, or a press that lands on one, takes focus from this window.
+        self.connect("notify::is-active", self._on_active_changed)
+
         if fullscreen:
             self.fullscreen()
 
@@ -204,6 +208,10 @@ class EarthWindow(Gtk.ApplicationWindow):
         # opened while the PROGRAM INDEX is up has to be framed just the same.
         if self.shell.poll_due:
             self.shell.poll_windows()
+            # GODCORE is for the AI, not for a screen, so nothing on screen
+            # is there to keep its reading warm. Throttled to six seconds
+            # inside, and the read itself runs on a worker thread.
+            self.shell.refresh_cdos()
         self.shell.notice_screenshots()
         # Animation and live readings both want a steady redraw.
         self.area.queue_draw()
@@ -296,6 +304,11 @@ class EarthWindow(Gtk.ApplicationWindow):
         return False
 
     # ------------------------------------------------------------------
+    def _on_active_changed(self, window, _param) -> None:
+        shell = self.shell
+        if shell is not None and not self.is_active():
+            shell.shell_lost_focus()
+
     def _on_key(self, controller, keyval, keycode, state) -> bool:
         name = Gdk.keyval_name(keyval) or ""
         ctrl = bool(state & Gdk.ModifierType.CONTROL_MASK)
@@ -311,6 +324,9 @@ class EarthWindow(Gtk.ApplicationWindow):
             # jump to it the moment it appears.
             return False
         if name == "Escape":
+            if shell.dismiss_exit_menu():
+                self.area.queue_draw()
+                return True
             shell.go_back()
             return True
         if name in ("F1", "Home"):

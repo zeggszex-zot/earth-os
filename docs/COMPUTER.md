@@ -114,8 +114,8 @@ up without a restart:
   Core*: link, corpus ready or not, its content-hash version and integrity,
   the active neural model (or *rules only*), the Governor (*ok*, *no policy*,
   *DEGRADED*), the emergency-stop latch, plugins and capabilities switched
-  off. With cdos-bridge installed too, GODCORE's rows follow. Refreshed on a
-  worker every six seconds, like GODCORE.
+  off. Refreshed on a
+  worker every six seconds. (GODCORE is not shown anywhere: it is for the AI.)
 * **Status line** — after an answer: *computer · knowledge · ESTABLISHED · 2
   facts*, so a fact from the corpus, an inference, a calculation and the
   random sampler are told apart.
