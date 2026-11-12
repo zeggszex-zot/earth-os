@@ -158,6 +158,8 @@ phosphor      = true           # glow and scanlines
 language      = "Earth OS"
 computer_name = "EARTH OS"
 shell_mode    = false        # true: DEACTIVATE powers the machine off
+fps           = 30           # the rate when something is actually moving
+adaptive      = true         # draw on change, not on a clock (docs/RENDERING.md)
 
 [voice]
 stt = "whisper"              # whisper | vosk | none
@@ -280,6 +282,9 @@ nothing else is touched. Full detail in [docs/INSTALL.md](docs/INSTALL.md).
   model never decides anything, and what GODCORE contributes
 - **[docs/CLAUDE_CODE.md](docs/CLAUDE_CODE.md)** — the built-in coding agent:
   the gate, the bridge, what needs a press, and where changes go
+- **[docs/RENDERING.md](docs/RENDERING.md)** — why the shell used to spend a
+  third of a core drawing the same picture, the measurements that showed it,
+  the adaptive engine that replaced the frame clock, and how to roll back
 
 ## Credit and licensing
 

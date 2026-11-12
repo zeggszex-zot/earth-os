@@ -124,7 +124,7 @@ class Shell:
         )
 
         self.conversation: List[Dict[str, object]] = []
-        self.status_message = ""
+        self._status_message = ""
         self.redraw_hook: Optional[Callable[[], None]] = None
         self.quit_hook: Optional[Callable[[], None]] = None
         #: Run a callable on the interface thread. Set by the application
@@ -343,6 +343,84 @@ class Shell:
     def redraw(self) -> None:
         if self.redraw_hook:
             self.redraw_hook()
+
+    @property
+    def status_message(self) -> str:
+        """The line screens show to explain what just happened.
+
+        A property rather than a plain attribute because frames are no
+        longer produced on a clock: whatever sets this has, by definition,
+        changed what is on screen, and there are forty places that set it —
+        several from worker threads finishing a launch or a capability. A
+        redraw at each of them is forty chances to forget one, and a
+        forgotten one is an error message that never appears. Here it cannot
+        be forgotten. Unchanged text asks for nothing, so assigning the same
+        message twice does not cost a frame.
+        """
+        return self._status_message
+
+    @status_message.setter
+    def status_message(self, text: str) -> None:
+        text = text or ""
+        if text == self._status_message:
+            return
+        self._status_message = text
+        self.redraw()
+
+    # ------------------------------------------------------------------
+    # What changed? — the two questions the background jobs ask
+    # ------------------------------------------------------------------
+    def telemetry_signature(self) -> Tuple:
+        """Every live hardware reading a screen might draw, as one value.
+
+        The point of this is to keep sampling separate from rendering. The
+        gauges are live, but at thirty frames a second the readings behind
+        them only move once — ``sysinfo`` caches for a second — so
+        twenty-nine of those frames redrew an identical picture. Sampling
+        now happens on its own one-second timer, and a frame is asked for
+        only when this value differs from the last one.
+
+        Finer than what is displayed on purpose. The gauges quantise to
+        twentieths and the numbers to whole percents, so a signature this
+        precise occasionally asks for a frame that draws the same pixels.
+        That costs one frame; the opposite mistake would be a gauge that
+        sticks, so the rounding errs this way deliberately.
+        """
+        mon = self.monitor
+        try:
+            return (
+                round(mon.cpu(), 4),
+                round(mon.memory()[0], 5), mon.memory()[1],
+                round(mon.swap()[0], 5),
+                round(mon.disk()[0], 5),
+                tuple(round(c, 4) for c in mon.cores()),
+                tuple(round(v, 1) for v in mon.net_rate()),
+                int(mon.uptime()),
+                mon.processes(),
+                mon.temperature(),
+                mon.battery(),
+                tuple(round(v, 3) for v in mon.load()),
+            )
+        except Exception:
+            # A reading that cannot be taken is not a reason to stop drawing;
+            # the monotonic clock makes every call differ, so the next frame
+            # happens and the gauge shows whatever the screen makes of it.
+            return (time.monotonic(),)
+
+    def window_signature(self) -> Tuple:
+        """The running-program list as the chrome strip draws it.
+
+        ``poll_windows`` does its own work regardless; this is how the
+        caller tells whether the result would change the picture, so a poll
+        that finds nothing new costs no frame.
+        """
+        manager = getattr(self, "windows", None)
+        windows = list(getattr(manager, "windows", []) or [])
+        framed = (self.framed_window.handle
+                  if getattr(self, "framed_window", None) is not None else None)
+        return (tuple((w.handle, w.app or w.title) for w in windows),
+                framed, bool(getattr(manager, "available", False)),
+                self.handed_over_to)
 
     # ------------------------------------------------------------------
     # Audio

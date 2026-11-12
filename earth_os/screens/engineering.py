@@ -20,6 +20,8 @@ from .main import add_command_column
 
 class EngineeringScreen(Screen):
     name = "engineering"
+    #: Every reading on this screen is live.
+    live = True
     title = "ENGINEERING"
 
     def __init__(self, app):

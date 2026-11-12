@@ -82,7 +82,13 @@ class TestTheAiStillHasIt(unittest.TestCase):
         was only ever fresh while someone looked at that screen. Games and
         conversation do not."""
         app = (PACKAGE / "app.py").read_text(encoding="utf-8")
-        self.assertIn("self.shell.refresh_cdos()", app)
+        # app.py drives it, which is the point. It used to be spelled
+        # ``self.shell.refresh_cdos()`` inside the frame-clock callback; the
+        # refresh now has its own interval in the background jobs, where it
+        # is independent of the frame rate, and the shell is in hand as
+        # ``shell``. Asserting on the call rather than on the receiver keeps
+        # this test about where the refresh lives instead of about spelling.
+        self.assertIn("refresh_cdos()", app)
         for path in sorted(SCREENS.rglob("*.py")):
             self.assertNotIn("refresh_cdos", path.read_text(encoding="utf-8"),
                              f"{path.name} drives the refresh again")

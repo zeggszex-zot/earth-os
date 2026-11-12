@@ -13,6 +13,7 @@ Screen`` keeps working; it is one frame either way.
 
 from __future__ import annotations
 
+import time
 from typing import Optional, Tuple
 
 from .. import brand
@@ -67,7 +68,26 @@ class Screen:
         """Populate ``self.g``.  Called on first paint and on every resize."""
 
     def invalidate(self) -> None:
+        """Throw away the built geometry; it is rebuilt on the next paint.
+
+        And ask for that paint. Invalidating *means* the picture on screen is
+        out of date, so the two always belonged together — it only worked
+        without the request because a clock was redrawing regardless.
+
+        It matters most for the call sites inside ``draw_overlay``, which
+        notice a changed option list part-way through a frame whose geometry
+        was already built. That frame shows the old layout; the rebuilt one
+        appears on the next, so without a request here a confirmation strip
+        would be a frame behind and, with nothing else asking, would stay
+        there. The conditions guarding those call sites go false once
+        ``build`` records what it drew, so this settles after one extra frame
+        rather than looping.
+        """
         self._built_for = (0.0, 0.0)
+        app = getattr(self, "app", None)
+        redraw = getattr(app, "redraw", None)
+        if callable(redraw):
+            redraw()
 
     def on_enter(self) -> None:
         pass
@@ -77,6 +97,55 @@ class Screen:
 
     def tick(self) -> None:
         pass
+
+    #: Seconds between frames for a screen whose picture changes once a
+    #: second on its own — a running clock, a hardware gauge. Screens set
+    #: :attr:`live` rather than overriding :meth:`next_frame_in`, so the
+    #: common case stays one word.
+    SECOND = 1.0
+
+    #: True on screens that show a clock ticking seconds or a live reading,
+    #: and so need a frame a second even when nobody is touching them.
+    live = False
+
+    def next_frame_in(self) -> Optional[float]:
+        """How long until this screen's picture changes by itself.
+
+        Seconds, or ``None`` for "nothing here is moving". This is the whole
+        of what the frame scheduler knows about animation, and the reason a
+        static screen costs nothing: :class:`earth_os.scheduler.FrameScheduler`
+        asks every screen this, and a ``None`` from the screen on display is
+        what lets it take its timer down and leave the process asleep until
+        something wakes it.
+
+        The base class answers for the two things every screen can have
+        moving: the shell's toast, which expires, and an element mid-flash
+        after a press. Subclasses add what is theirs — a caret, a transcript
+        being typed out — and should take the minimum of their own answer
+        and ``super().next_frame_in()`` rather than replacing it, or a flash
+        on their screen will stick.
+        """
+        now = time.monotonic()
+        deadlines = []
+
+        toast_until = getattr(self.app, "toast_until", 0.0)
+        if toast_until > now:
+            # One frame after it expires, to draw the screen without it.
+            deadlines.append(toast_until - now)
+
+        for element in self.g.items:
+            flash = getattr(element, "flash_until", 0.0)
+            if flash > now:
+                deadlines.append(flash - now)
+
+        if self.live:
+            # Align to the next whole second rather than one second from
+            # now, so a clock showing seconds changes when the second does
+            # instead of drifting a fraction later each time.
+            deadlines.append(max(self.SECOND - (time.time() % self.SECOND),
+                                 0.0))
+
+        return min(deadlines) if deadlines else None
 
     # -- painting ----------------------------------------------------------
     def draw(self, cr, ctx: RenderContext) -> None:

@@ -326,6 +326,30 @@ class TerminalScreen(Screen):
         if drained and getattr(self, "panel", None) is not None:
             if self.panel.follow_tail:
                 self.panel.scroll_to_end()
+        if drained:
+            # Output arrived from a worker thread, which cannot know whether
+            # a frame is already coming. Nothing else asks for one on this
+            # path, so without this a command's output would appear only
+            # when the caret next blinked.
+            self.app.redraw()
+
+    # ------------------------------------------------------------------
+    def next_frame_in(self):
+        """Half a second, for the caret, unless a command is running.
+
+        The caret blinks about twice a second off the wall clock, so the
+        deadline is the next flip of ``int(time.time() * 2)`` rather than a
+        flat half second — otherwise the blink drifts and reads as uneven.
+        While a command runs the caret is held steady on purpose, so there is
+        nothing on this screen moving by itself and the answer is whatever
+        the base class says.
+        """
+        base = super().next_frame_in()
+        if self.busy:
+            return base
+        period = 0.5
+        until_flip = period - (time.time() % period)
+        return until_flip if base is None else min(base, until_flip)
 
     # ------------------------------------------------------------------
     # Output helpers

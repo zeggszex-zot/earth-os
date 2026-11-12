@@ -48,6 +48,7 @@ from gi.repository import Gdk, Gio, GLib, Gtk  # noqa: E402
 
 from .config import Config
 from . import brand, phosphor, splash
+from .scheduler import Background, FrameScheduler
 
 if TYPE_CHECKING:                       # names for annotations only: importing
     from .core import Shell             # these for real would cost the frame
@@ -79,7 +80,22 @@ class EarthWindow(Gtk.ApplicationWindow):
         self._pressed: Optional["Element"] = None
         self._pointer: tuple = (0.0, 0.0)
         self._last_tick = 0.0
-        self._frame_source: Optional[int] = None
+
+        #: Decides when frames happen; see :mod:`earth_os.scheduler`. Starts
+        #: on the boot rate and is reconfigured from the shell's own settings
+        #: at :meth:`attach`.
+        self.frames = FrameScheduler(
+            self._invalidate, fps=BOOT_FPS, grace=0.45,
+            animation_delay=self._animation_delay,
+            # The boot screen genuinely animates every frame, so adaptive
+            # rendering has nothing to save until there is a shell.
+            enabled=False)
+        #: Window polling, GODCORE, screenshot notices and telemetry, each on
+        #: its own interval rather than on the frame clock.
+        self.jobs = Background(self.frames)
+        #: The last composited frame, for repaints GTK asks for itself.
+        self._cache = phosphor.FrameCache()
+        self._cache_enabled = True
 
         fullscreen = bool(config.get("shell", "fullscreen", True))
         self.set_default_size(1280, 800)
@@ -129,13 +145,35 @@ class EarthWindow(Gtk.ApplicationWindow):
             Gdk.Display.get_default(), css,
             Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
 
-        self._start_frame_clock(BOOT_FPS)
+        self.frames.start()
 
     # ------------------------------------------------------------------
+    def _invalidate(self) -> None:
+        """Ask GTK for a frame. The scheduler's only way out to the toolkit."""
+        self.area.queue_draw()
+
+    def _animation_delay(self) -> Optional[float]:
+        """How long until the picture changes by itself, for the scheduler.
+
+        Before there is a shell this is the boot sweep, which moves every
+        frame. Afterwards it is whatever the screen on display says.
+        """
+        shell = self.shell
+        if shell is None:
+            return 0.0
+        screen = shell.screen()
+        if screen is None:
+            return 0.0
+        try:
+            return screen.next_frame_in()
+        except Exception:
+            # A screen that cannot answer gets frames rather than a freeze.
+            return 0.0
+
     def say(self, message: str) -> None:
         """Set the boot diagnostic line. Ignored once the shell is up."""
         self.message = message
-        self.area.queue_draw()
+        self.frames.request_frame()
 
     def attach(self, shell: "Shell") -> None:
         """Start drawing the shell into the window that is already open.
@@ -154,16 +192,82 @@ class EarthWindow(Gtk.ApplicationWindow):
         if bool(shell.config.get("shell", "cursor", True)):
             self.set_cursor(None)
 
-        self._start_frame_clock(
-            max(int(shell.config.get("shell", "fps", 30)), 5))
-        self.area.queue_draw()
+        config = shell.config
+        self._cache_enabled = bool(config.get("shell", "frame_cache", True))
+        self.frames.reconfigure(
+            fps=max(int(config.get("shell", "fps", 30)), 5),
+            idle_fps=float(config.get("shell", "idle_fps", 0) or 0),
+            grace=float(config.get("shell", "interaction_grace", 0.45)),
+            enabled=bool(config.get("shell", "adaptive", True)))
+        self._start_background(shell)
+        self.frames.request_frame()
 
-    def _start_frame_clock(self, fps: int) -> None:
-        """Run the redraw timer at *fps*, replacing any previous one."""
-        if self._frame_source is not None:
-            GLib.source_remove(self._frame_source)
-        self._frame_source = GLib.timeout_add(
-            int(1000 / max(fps, 1)), self._on_frame)
+    # ------------------------------------------------------------------
+    def _start_background(self, shell: "Shell") -> None:
+        """Put the periodic work on its own intervals, off the frame clock.
+
+        All four of these used to run inside ``_on_frame``, which tied how
+        often the machine looked for a new window to how smoothly it drew —
+        two unrelated things. Each job returns True when it changed
+        something a person would see, and only then is a frame asked for.
+        """
+        config = shell.config
+        poll = max(float(config.get("windows", "poll_interval", 1.2)), 0.2)
+        telemetry = max(float(config.get("shell", "telemetry_interval", 1.0)),
+                        0.1)
+        tick = max(float(config.get("shell", "tick_interval", 0.1)), 0.02)
+
+        def windows() -> bool:
+            # poll_due still arms its own interval, so a configuration that
+            # asks for a slower poll than this timer still gets one.
+            if not shell.poll_due:
+                return False
+            before = shell.window_signature()
+            shell.poll_windows()
+            return shell.window_signature() != before
+
+        def godcore() -> bool:
+            # Throttled to six seconds inside, and the read itself runs on a
+            # worker thread, which asks for its own frame when it lands.
+            shell.refresh_cdos()
+            return False
+
+        def screenshots() -> bool:
+            before = shell.last_screenshot
+            shell.notice_screenshots()
+            return shell.last_screenshot != before
+
+        def readings() -> bool:
+            """Sample the hardware, and draw only if a reading moved.
+
+            This is the line between telemetry and rendering. The gauges are
+            live; they are not a reason to redraw the whole screen thirty
+            times a second, and at one sample a second a frame follows only
+            when the picture would differ.
+            """
+            before = shell.telemetry_signature()
+            shell.monitor.poll()
+            if shell.telemetry_signature() == before:
+                return False
+            screen = shell.screen()
+            # A reading changing is only news on a screen that shows one.
+            return bool(screen is not None and getattr(screen, "live", False))
+
+        def ticks() -> bool:
+            # Screens notice their own news here — command output, a
+            # refreshed mailbox — and ask for a frame themselves when they
+            # find any, because only they know whether it is visible.
+            screen = shell.screen()
+            if screen is not None:
+                screen.tick()
+            self._publish_frame_rect()
+            return False
+
+        self.jobs.add("windows", poll, windows)
+        self.jobs.add("godcore", max(poll, 1.0), godcore)
+        self.jobs.add("screenshots", 1.0, screenshots)
+        self.jobs.add("telemetry", telemetry, readings)
+        self.jobs.add("ticks", tick, ticks)
 
     # ------------------------------------------------------------------
     def _on_draw(self, area, cr, width, height) -> None:
@@ -190,33 +294,17 @@ class EarthWindow(Gtk.ApplicationWindow):
             if screen is not None:
                 screen.draw(c, ctx)
 
-        phosphor.composite(cr, width, height, paint,
-                           background=shell.palette.background, enabled=tube)
-
-    def _on_frame(self) -> bool:
-        now = time.monotonic()
-        if self.shell is None:
-            # Still coming up: repaint so the sweep moves, and nothing else.
-            # A boot screen that polls the machine is competing with the boot.
-            self.area.queue_draw()
-            return GLib.SOURCE_CONTINUE
-        screen = self.shell.screen()
-        if screen is not None:
-            screen.tick()
-        self._publish_frame_rect()
-        # Watch for new windows here rather than in a screen's tick: a program
-        # opened while the PROGRAM INDEX is up has to be framed just the same.
-        if self.shell.poll_due:
-            self.shell.poll_windows()
-            # GODCORE is for the AI, not for a screen, so nothing on screen
-            # is there to keep its reading warm. Throttled to six seconds
-            # inside, and the read itself runs on a worker thread.
-            self.shell.refresh_cdos()
-        self.shell.notice_screenshots()
-        # Animation and live readings both want a steady redraw.
-        self.area.queue_draw()
-        self._last_tick = now
-        return GLib.SOURCE_CONTINUE
+        # The cache is offered a token only when the picture is not moving.
+        # While anything animates — a caret, a flash, a clock mid-second —
+        # the drawing depends on ``ctx.now`` as well as on the model, and a
+        # token that stood only for the model would hand back a stale frame.
+        # None means "composite this properly and keep nothing".
+        token = None
+        if self._cache_enabled and self._animation_delay() is None:
+            token = (self.frames.generation, id(screen), tube)
+        self._cache.draw(cr, width, height, paint,
+                         background=shell.palette.background,
+                         enabled=tube, token=token)
 
     def _publish_frame_rect(self) -> None:
         """Tell the shell where, in screen pixels, a program should be put.
@@ -276,20 +364,27 @@ class EarthWindow(Gtk.ApplicationWindow):
         screen = self._screen()
         if screen is not None:
             self._pressed = screen.on_press(x, y)
-            self.area.queue_draw()
+            # A press is the start of a drag as often as not, so the full
+            # rate is held from here rather than discovered a frame late.
+            self.frames.note_interaction()
 
     def _on_released(self, gesture, n_press, x, y) -> None:
         screen = self._screen()
         if screen is not None:
             screen.on_release(x, y, self._pressed)
         self._pressed = None
-        self.area.queue_draw()
+        self.frames.note_interaction()
 
     def _on_motion(self, controller, x, y) -> None:
         self._pointer = (x, y)
         screen = self._screen()
-        if screen is not None and screen.on_motion(x, y):
-            self.area.queue_draw()
+        if screen is None:
+            return
+        changed = screen.on_motion(x, y)
+        # Either way the pointer is moving, so stay at the full rate: the
+        # next move may cross into a button, and that must light up at once.
+        # Only a move that actually changed something asks for a frame.
+        self.frames.note_interaction(redraw=bool(changed))
 
     def _on_scroll(self, controller, dx, dy) -> bool:
         # GTK4 scroll events carry no coordinates, so use the last position
@@ -299,8 +394,9 @@ class EarthWindow(Gtk.ApplicationWindow):
             return False
         x, y = self._pointer
         if screen.on_scroll(x, y, dy):
-            self.area.queue_draw()
+            self.frames.note_interaction()
             return True
+        self.frames.note_interaction(redraw=False)
         return False
 
     # ------------------------------------------------------------------
@@ -314,7 +410,9 @@ class EarthWindow(Gtk.ApplicationWindow):
         ctrl = bool(state & Gdk.ModifierType.CONTROL_MASK)
         screen = self._screen()
         if screen is not None and screen.on_key(keyval, name, ctrl):
-            self.area.queue_draw()
+            # Typing is interaction: hold the rate so a held key repeats
+            # smoothly rather than one frame at a time.
+            self.frames.note_interaction()
             return True
         shell = self.shell
         if shell is None:
@@ -325,7 +423,7 @@ class EarthWindow(Gtk.ApplicationWindow):
             return False
         if name == "Escape":
             if shell.dismiss_exit_menu():
-                self.area.queue_draw()
+                self.frames.request_frame()
                 return True
             shell.go_back()
             return True
@@ -491,8 +589,14 @@ class EarthApplication(Gtk.Application):
             GLib.timeout_add(600, lambda: (shell.say(greeting), False)[1])
 
     def _redraw(self) -> None:
+        """What ``Shell.redraw()`` reaches: a request, not a repaint.
+
+        Thread-safe, because the scheduler is: a worker calling
+        ``shell.redraw()`` sets the flag and the timers are touched on the
+        main loop.
+        """
         if self.window is not None:
-            GLib.idle_add(self.window.area.queue_draw)
+            self.window.frames.request_frame()
 
     def _step_aside(self) -> None:
         """Drop out of fullscreen so another program can be seen."""
@@ -523,6 +627,13 @@ class EarthApplication(Gtk.Application):
         GLib.idle_add(apply)
 
     def _release(self) -> None:
+        # Timers first: a restart replaces this process image, and a frame
+        # timer that outlives the shell it was drawing is how a "runaway
+        # timer" happens. Both of these are idempotent.
+        window = self.window
+        if window is not None:
+            window.jobs.stop()
+            window.frames.stop()
         if self.shell.voice is not None:
             self.shell.voice.shutdown()
         agent = getattr(self.shell, "agent", None)

@@ -44,6 +44,27 @@ DEFAULTS: Dict[str, Any] = {
         "fullscreen": True,
         "cursor": True,
         "fps": 30,
+        # Draw a frame because something changed, not because a clock said
+        # so. False restores the original fixed-rate frame clock exactly,
+        # which is the way back if an adaptive frame ever misses something.
+        "adaptive": True,
+        # A floor under the idle rate, in frames per second. 0 means no
+        # floor: a static, untouched screen is not redrawn at all. Set it to
+        # 1 or 2 on a machine where something draws without saying so.
+        "idle_fps": 0,
+        # How long the full rate is held after the last input event, in
+        # seconds, so a drag and the flash that follows a release are smooth.
+        "interaction_grace": 0.45,
+        # How often the hardware gauges are sampled, in seconds. Sampling is
+        # not drawing: a frame follows only when a reading a screen shows has
+        # actually changed.
+        "telemetry_interval": 1.0,
+        # How often screens are given a chance to notice their own news —
+        # command output, a refreshed mailbox. Cheap; it is not a redraw.
+        "tick_interval": 0.1,
+        # Keep the last composited frame so a repaint GTK asks for on its own
+        # is a blit rather than a second trip through the glow.
+        "frame_cache": True,
         "sounds": True,
         "volume": 0.6,
         "shell_mode": False,
@@ -290,7 +311,13 @@ computer_name = "EARTH OS"
 operator      = ""                  # blank = the logged-in account's name
 fullscreen    = true
 cursor        = true                # false hides the pointer, for touch panels
-fps           = 30
+fps           = 30                  # the rate when something is actually moving
+adaptive      = true                # draw on change, not on a clock; false = old engine
+idle_fps      = 0                   # floor under the idle rate; 0 = do not redraw at rest
+interaction_grace  = 0.45           # seconds of full rate after the last input
+telemetry_interval = 1.0            # how often the gauges are sampled, in seconds
+tick_interval      = 0.1            # how often screens notice their own news
+frame_cache   = true                # reuse the composited frame when nothing changed
 sounds        = true
 volume        = 0.6
 shell_mode    = false

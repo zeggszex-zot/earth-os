@@ -2,7 +2,9 @@ PREFIX ?= /usr
 PYTHON ?= python3
 
 .PHONY: help run windowed test shots lint install uninstall models clean \
-        splash bootcheck conformance bundle acceptance bench
+        splash bootcheck conformance bundle acceptance bench \
+        renderbench glowbench cpubench cpubench-interactive damage \
+        tube tube-save
 
 help:
 	@echo "EARTH OS shell"
@@ -12,6 +14,13 @@ help:
 	@echo "  make test       run the test suite"
 	@echo "  make acceptance the thirteen Earth OS 2.0 acceptance tests"
 	@echo "  make bench      measure Earth Mind on this machine"
+	@echo
+	@echo "  the rendering engine (docs/RENDERING.md):"
+	@echo "  make renderbench what one frame costs, stage by stage"
+	@echo "  make glowbench   where the glow's milliseconds go"
+	@echo "  make damage      how many frames are identical to the one before"
+	@echo "  make cpubench    the A-F matrix, real process, needs Xvfb"
+	@echo "  make tube        check the CRT look is pixel-identical"
 	@echo "  make shots      render every screen to /tmp/cdos-shots"
 	@echo "  make splash     render the boot frame to /tmp/cdos-splash.png"
 	@echo "  make bootcheck  measure the boot: one window, frame up first"
@@ -35,6 +44,49 @@ acceptance:
 # Earth Mind's own cost on this machine, and the model's if one is running.
 bench:
 	$(PYTHON) tools/mind_bench.py
+
+# ---------------------------------------------------------------------------
+# The rendering engine. Investigate, benchmark, verify — in that order.
+# All of these need pycairo; cpubench also needs Xvfb, because it measures the
+# real process rather than the draw path.
+# ---------------------------------------------------------------------------
+
+SIZE ?= 1920x1080
+
+# Where a frame's milliseconds go, per screen and per stage.
+renderbench:
+	$(PYTHON) tools/render_bench.py --size $(SIZE) --frames 30
+
+# The glow broken into halvings, mix and the upscale that dominates it.
+glowbench:
+	$(PYTHON) tools/glow_bench.py --size $(SIZE)
+
+# The diagnosis: what share of drawn frames are the same picture as the last.
+damage:
+	@for s in main engineering terminal programs; do \
+		$(PYTHON) tools/damage_audit.py --screen $$s --size 1280x800 \
+			--seconds 3 --fps 30; echo; \
+	done
+
+# The A-F matrix on the real process. Each configuration restarts the shell.
+cpubench:
+	$(PYTHON) tools/cpu_bench.py --matrix --screens main,engineering,programs \
+		--size $(SIZE) --settle 5 --window 5
+
+# And the same under a pointer being swept across the window.
+cpubench-interactive:
+	$(PYTHON) tools/cpu_bench.py --interact --screens main,programs \
+		--size $(SIZE) --settle 5 --window 6
+
+# The look must not change. Save references, change code, check against them.
+# TUBE_REF is kept between runs on purpose.
+TUBE_REF ?= /tmp/earth-os-tube-ref
+
+tube-save:
+	$(PYTHON) tools/phosphor_compare.py --save $(TUBE_REF) --size 1280x800
+
+tube:
+	$(PYTHON) tools/phosphor_compare.py --check $(TUBE_REF) --size 1280x800
 
 # Measure this machine against the capability contract. Needs no GTK and no
 # third-party packages, so it runs on a bare Debian or Kali box that has

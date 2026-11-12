@@ -50,6 +50,8 @@ def _short_kind(kind: str) -> str:
 
 class CommsScreen(Screen):
     name = "comms"
+    #: Draws the clock.
+    live = True
     title = "COMMUNICATIONS"
 
     def __init__(self, app):

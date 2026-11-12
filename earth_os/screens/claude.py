@@ -44,6 +44,8 @@ PASSTHROUGH_KEYS = ("Escape", "F1", "F2", "F3", "F4", "F5", "F6", "F7",
 
 class ClaudeScreen(Screen):
     name = "claude"
+    #: Draws the clock.
+    live = True
     title = "CLAUDE CODE"
 
     def __init__(self, app):
@@ -247,6 +249,9 @@ class ClaudeScreen(Screen):
             panel = getattr(self, "panel", None)
             if panel is not None and panel.follow_tail:
                 panel.scroll_to_end()
+            # The agent answers on its own thread and does not ask for a
+            # frame; this is the only place that notices it has spoken.
+            self.app.redraw()
 
     # ------------------------------------------------------------------
     def submit(self, text: str) -> None:

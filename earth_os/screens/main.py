@@ -83,6 +83,8 @@ def add_command_column(screen: Screen, ctx: RenderContext, f: Frame) -> None:
 
 class MainScreen(Screen):
     name = "main"
+    #: A clock ticking seconds and three hardware gauges.
+    live = True
     title = "MAIN"
 
     def __init__(self, app):
