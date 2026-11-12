@@ -219,11 +219,12 @@ class ChangeApplier:
             return False
         return _find(lines, tunable.section, tunable.key)[1] >= 0
 
-    def apply(self, proposal) -> Dict[str, object]:
+    def apply(self, proposal, by: str = "") -> Dict[str, object]:
         """Make *proposal*'s change. Raises :class:`ChangeRefused` otherwise.
 
         Returns the record that was written to the history: what changed,
-        from what, where the backup is, and how to put it back.
+        from what, on whose press (*by*), where the backup is, and how to put
+        it back.
         """
         if getattr(proposal, "status", "") != APPROVED:
             raise ChangeRefused(
@@ -252,7 +253,7 @@ class ChangeApplier:
 
         record = {
             "event": "change-applied", "proposal": proposal.id, "title": proposal.title,
-            "file": str(path), "setting": tunable.name,
+            "by": str(by or "").strip(), "file": str(path), "setting": tunable.name,
             "previous": previous, "was_in_file": was_in_file, "value": value,
             "backup": str(backup) if backup else "",
             # What the file held the moment after the change, so a rollback
@@ -266,7 +267,7 @@ class ChangeApplier:
         self.store.append_history(record)
         return record
 
-    def revert(self, proposal) -> Dict[str, object]:
+    def revert(self, proposal, by: str = "") -> Dict[str, object]:
         """Put back what :meth:`apply` changed, and only that.
 
         If the file is exactly as the change left it, the backup is copied
@@ -306,7 +307,7 @@ class ChangeApplier:
         self.config.values.setdefault(tunable.section, {})[tunable.key] = applied.get("previous")
         record = {
             "event": "change-rolled-back", "proposal": proposal.id, "title": proposal.title,
-            "file": str(path), "setting": tunable.name,
+            "by": str(by or "").strip(), "file": str(path), "setting": tunable.name,
             "restored": applied.get("previous"), "backup": str(backup) if backup else "",
             "whole_file_restored": exact, "restart": tunable.restart,
         }

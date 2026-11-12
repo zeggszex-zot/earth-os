@@ -635,10 +635,12 @@ class EvolutionScreen(Screen):
                 what = e.get("event")
                 if what == "change-applied":
                     text = (f"CHANGE APPLIED  {e.get('proposal')}  {e.get('setting')} = "
-                            f"{e.get('value')} (was {e.get('previous')})  backup {e.get('backup') or '-'}")
+                            f"{e.get('value')} (was {e.get('previous')})  — by "
+                            f"{e.get('by') or 'not recorded'}  backup {e.get('backup') or '-'}")
                 elif what == "change-rolled-back":
                     text = (f"CHANGE ROLLED BACK  {e.get('proposal')}  {e.get('setting')} "
-                            f"restored to {e.get('restored')}")
+                            f"restored to {e.get('restored')}  — by "
+                            f"{e.get('by') or 'not recorded'}")
                 else:
                     text = (f"{e.get('status')}  {e.get('proposal')}  {e.get('title')}  "
                             f"— by {e.get('by')}: {e.get('note')}")
@@ -697,6 +699,11 @@ class EvolutionScreen(Screen):
             if existing is not None:
                 return [(f"ON ROADMAP · {existing.id}", "accent2",
                          lambda: self._show_proposal(existing.id))]
+            if section == "optimization":
+                item = next((o for o in center.optimizations() if o.id == chosen), None)
+                if item is None or not center.proposable(item):
+                    # Already so: the engine would refuse, so do not offer.
+                    return []
             return [("PROPOSE", "accent4", lambda: self._propose(kind, chosen))]
         if section == "roadmap":
             out: List[Tuple[str, str, Callable[[], None]]] = []
@@ -793,7 +800,8 @@ class EvolutionScreen(Screen):
         center = self.center()
         proposal = center.propose_from(kind, key, by=self.operator()) if center else None
         self._after(f"{proposal.id} is on the roadmap as {proposal.status}. Nothing has changed."
-                    if proposal is not None else "That could not be proposed.")
+                    if proposal is not None else
+                    "Nothing to propose: that is already in effect, or is no longer listed.")
 
     def _propose_existing(self, pid: str) -> None:
         center = self.center()

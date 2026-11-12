@@ -715,6 +715,24 @@ class TestHealthRules(unittest.TestCase):
         unchecked = by_id(self.analyzer.analyze(snapshot(), doctor=None))
         self.assertIn("configuration.unchecked", unchecked)
 
+    def test_the_machines_condition_is_listed_before_the_component_checks(self):
+        """A dozen optional components can be missing at once, all LOW. Listed
+        alphabetically they stood in front of *storage is filling up* — the
+        one LOW row that was about the machine. Severity still comes first."""
+        rows = [("warn", name, "not installed") for name in
+                ("audio input", "bluetooth", "wireless", "speech to text")]
+        rows.append(("fail", "display", "no display"))
+        findings = self.analyzer.analyze(snapshot(disk=0.85), doctor=rows)
+        ids = [f.id for f in findings]
+        self.assertEqual(by_id(findings)["storage.pressure"].severity, LOW)
+        for name in ("audio input", "bluetooth", "wireless", "speech to text"):
+            self.assertLess(ids.index("storage.pressure"),
+                            ids.index(f"configuration.check.{name}"))
+        # A failed check is HIGH, and still above a LOW about the machine.
+        self.assertLess(ids.index("configuration.check.display"), ids.index("storage.pressure"))
+        ranks = [severity_rank(f.severity) for f in findings]
+        self.assertEqual(ranks, sorted(ranks, reverse=True))
+
     def test_an_aggressive_configuration_is_noticed(self):
         config = Config.load(Path(tempfile.mkdtemp()) / "c.toml")
         config.values["shell"]["fps"] = 120
@@ -1049,6 +1067,23 @@ class TestTheRoadmap(unittest.TestCase):
         self.assertEqual(again.id, proposal.id)
         self.assertIsNone(self.center.propose_from("capability", "no-such-thing"))
 
+    def test_what_is_already_in_effect_cannot_be_proposed(self):
+        """There would be nothing to carry out, and the proposal's "how to
+        reverse" would describe undoing a change nobody made."""
+        advice = {o.id: o for o in self.center.optimizations()}
+        self.assertEqual(advice["adaptive-rendering"].state, "IN EFFECT")
+        self.assertIsNone(self.center.propose_from("optimization", "adaptive-rendering",
+                                                   by="operator"))
+        self.assertEqual(self.planner.proposals, {})
+        # And the screen does not offer what the engine would refuse.
+        screen = self.shell.screens["evolution"]
+        self.shell.go("evolution")
+        screen._go_section("optimization")
+        screen.picked["optimization"] = "adaptive-rendering"
+        self.assertEqual(screen._actions(), [])
+        screen.picked["optimization"] = "phosphor-off"         # AVAILABLE: offered
+        self.assertEqual([label for label, _c, _f in screen._actions()], ["PROPOSE"])
+
     def test_the_whole_line_for_work_a_person_carries_out(self):
         p = self.new()
         self.planner.propose(p.id)
@@ -1298,6 +1333,16 @@ class TestNothingChangesWithoutApproval(unittest.TestCase):
         self.assertEqual(proposal.status, ROLLED_BACK)
         events = [e["event"] for e in self.center.store.read_history()]
         self.assertIn("change-rolled-back", events)
+
+    def test_the_record_of_a_change_names_who_pressed(self):
+        """The decision already carried a name; the change it led to did not,
+        and the change is the line somebody will go looking for."""
+        proposal = self.optimization(APPROVED)
+        self.planner.implement(proposal.id, by="operator")
+        self.planner.roll_back(proposal.id, by="somebody else")
+        records = {e["event"]: e for e in self.center.store.read_history()}
+        self.assertEqual(records["change-applied"]["by"], "operator")
+        self.assertEqual(records["change-rolled-back"]["by"], "somebody else")
 
     def test_rolling_back_does_not_undo_what_the_person_changed_since(self):
         proposal = self.optimization(APPROVED)

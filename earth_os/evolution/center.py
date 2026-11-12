@@ -31,8 +31,8 @@ from .changes import ChangeApplier
 from .health import HealthAnalyzer, counts, worst
 from .inspector import Inspector
 from .model import (
-    INCOMPLETE, MISSING, NEEDS_IMPROVEMENT, RECOMMENDED, CapabilityEntry, Finding,
-    INFORMATIONAL, Optimization, Reading, Snapshot,
+    IN_EFFECT, INCOMPLETE, MISSING, NEEDS_IMPROVEMENT, RECOMMENDED, CapabilityEntry,
+    Finding, INFORMATIONAL, Optimization, Reading, Snapshot,
 )
 from .optimizer import OptimizationAdvisor
 from .planner import Planner, Proposal
@@ -386,13 +386,23 @@ class EvolutionCenter:
                 created.append(proposal)
         return created
 
+    @staticmethod
+    def proposable(item: Optimization) -> bool:
+        """Is there anything to propose? Not for what is already so."""
+        return item.state != IN_EFFECT
+
     def propose_from(self, kind: str, item_id: str, by: str = "engine") -> Optional[Proposal]:
         """Write one optimization or capability up as a proposal. None if unknown.
 
         This is the PROPOSE button. It creates a record; it approves nothing.
+        An optimization that is already in effect is not written up: there
+        would be nothing to carry out, and its "how to reverse" would describe
+        undoing a change nobody made.
         """
         if kind == "optimization":
             item = next((o for o in self.optimizations() if o.id == item_id), None)
+            if item is not None and not self.proposable(item):
+                return None
             fields = self._from_optimization(item) if item is not None else None
         elif kind == "capability":
             entry = next((c for c in self.capabilities() if c.id == item_id), None)

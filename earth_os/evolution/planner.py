@@ -329,7 +329,7 @@ class Planner:
             if self.applier is None:
                 raise Refused("this center has no way to apply a setting change")
             try:
-                proposal.applied = self.applier.apply(proposal)
+                proposal.applied = self.applier.apply(proposal, by=by)
             except ChangeRefused as exc:
                 raise Refused(str(exc)) from exc
         if before:
@@ -366,7 +366,7 @@ class Planner:
             if self.applier is None:
                 raise Refused("this center has no way to roll a setting change back")
             try:
-                self.applier.revert(proposal)
+                self.applier.revert(proposal, by=by)
             except ChangeRefused as exc:
                 raise Refused(str(exc)) from exc
         self._move(proposal, ROLLED_BACK, by,

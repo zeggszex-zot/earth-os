@@ -48,6 +48,19 @@ LEAK_BYTES = 32 * 1024 * 1024
 LEAK_MIN_SAMPLES, LEAK_MIN_SPAN = 9, 600.0
 
 
+#: The order findings of equal severity are listed in: the machine's own
+#: condition first, then Earth OS's parts, then the per-component checks.
+#: There can be a dozen of those at one severity, and listed alphabetically
+#: they stood in front of "storage is filling up" — the one row in the list
+#: that was about the machine.
+AREA_ORDER = ("processor", "memory", "storage", "thermal", "processes", "leaks",
+              "rendering", "applications", "services", "configuration")
+
+
+def _area_rank(area: str) -> int:
+    return AREA_ORDER.index(area) if area in AREA_ORDER else len(AREA_ORDER)
+
+
 def _pct(fraction: float) -> str:
     return f"{fraction * 100:.0f}%"
 
@@ -62,7 +75,7 @@ class HealthAnalyzer:
                 doctor: Optional[List[Tuple[str, str, str]]] = None,
                 errors: Optional[Dict[str, str]] = None,
                 error_log: Optional[Tuple[str, float]] = None) -> List[Finding]:
-        """Every finding, most severe first.
+        """Every finding, most severe first; at one severity, in ``AREA_ORDER``.
 
         *doctor* is ``Shell.doctor_rows()`` if the checks have been run, else
         None. *errors* is what the shell recorded failing as it started.
@@ -76,7 +89,7 @@ class HealthAnalyzer:
         findings.extend(self._services(snap))
         findings.extend(self._applications(errors or {}, error_log))
         findings.extend(self._configuration(config, doctor))
-        findings.sort(key=lambda f: (-severity_rank(f.severity), f.area, f.id))
+        findings.sort(key=lambda f: (-severity_rank(f.severity), _area_rank(f.area), f.id))
         return findings
 
     # -- processor ---------------------------------------------------------------
@@ -464,7 +477,8 @@ class HealthAnalyzer:
                 "Component checks have not been run this session",
                 "The same checks as earth-os --doctor. They start programs to probe for "
                 "audio, speech and network components, so they run when asked, not on a clock.",
-                "Press RUN CHECKS on DIAGNOSTICS."))
+                "Press RUN CHECKS on DIAGNOSTICS, or add --checks to "
+                "earth-os --evolution-report."))
             return findings
         failed = [(n, d) for s, n, d in doctor if s == "fail"]
         warned = [(n, d) for s, n, d in doctor if s == "warn"]
