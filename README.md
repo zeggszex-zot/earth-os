@@ -109,6 +109,7 @@ earth-os --doctor                # if anything misbehaves, start here
 | **Running programs** | Switch to, fullscreen or close another window |
 | **Communications** | Wireless networks and Bluetooth devices: scan, join, pair, connect, forget (`F9`) |
 | **Claude Code** | A coding agent that drives the shell and changes its interface, behind the test gate |
+| **System Evolution Center** | Where Earth OS examines itself: health findings, optimizations, missing capabilities and a development roadmap. It proposes; nothing changes without an approval ([docs/EVOLUTION_CENTER.md](docs/EVOLUTION_CENTER.md)) |
 | **Auto destruct** | A shutdown timer with a countdown and a two-step arm |
 
 The square at the head of the side column holds four spots for icons. The
@@ -213,6 +214,14 @@ earth_os/
     system.py      readings through the capability layer; operations are proposals
     game/          worlds, events, relationships, per-character memory
     redact.py      keeping secrets out of a model's context
+  evolution/       the System Evolution Center's engine (docs/EVOLUTION_CENTER.md)
+    inspector.py   one snapshot of readings; unavailable is never zero
+    health.py      deterministic rules → findings with a severity
+    optimizer.py   the optimization catalogue, six answers each
+    registry.py    what the machine cannot do, half does, or might
+    planner.py     the roadmap, its statuses, and who may move them
+    changes.py     the one actuator: thirteen settings, backed up first
+    reporter.py    seven reports, as text or JSON
   companion/       the Companion Engine: conversation (docs/COMPANION.md)
   world_model.py   what the person let the computer remember (docs/WORLD_MODEL.md)
   agent/           Claude Code, built in (docs/CLAUDE_CODE.md)
@@ -282,6 +291,11 @@ nothing else is touched. Full detail in [docs/INSTALL.md](docs/INSTALL.md).
   model never decides anything, and what GODCORE contributes
 - **[docs/CLAUDE_CODE.md](docs/CLAUDE_CODE.md)** — the built-in coding agent:
   the gate, the bridge, what needs a press, and where changes go
+- **[docs/EVOLUTION_CENTER.md](docs/EVOLUTION_CENTER.md)** — the System
+  Evolution Center: its eight sections, what it may change and what it may
+  never do, `earth-os --evolution-report`, and the measured test results;
+  **[docs/SEC_ARCHITECTURE.md](docs/SEC_ARCHITECTURE.md)** is the assessment
+  and plan written before it was built
 - **[docs/RENDERING.md](docs/RENDERING.md)** — why the shell used to spend a
   third of a core drawing the same picture, the measurements that showed it,
   the adaptive engine that replaced the frame clock, and how to roll back

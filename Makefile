@@ -4,7 +4,7 @@ PYTHON ?= python3
 .PHONY: help run windowed test shots lint install uninstall models clean \
         splash bootcheck conformance bundle acceptance bench \
         renderbench glowbench cpubench cpubench-interactive damage \
-        tube tube-save
+        tube tube-save evolutionbench
 
 help:
 	@echo "EARTH OS shell"
@@ -21,6 +21,7 @@ help:
 	@echo "  make damage      how many frames are identical to the one before"
 	@echo "  make cpubench    the A-F matrix, real process, needs Xvfb"
 	@echo "  make tube        check the CRT look is pixel-identical"
+	@echo "  make evolutionbench  what the System Evolution Center costs, real process"
 	@echo "  make shots      render every screen to /tmp/cdos-shots"
 	@echo "  make splash     render the boot frame to /tmp/cdos-splash.png"
 	@echo "  make bootcheck  measure the boot: one window, frame up first"
@@ -72,6 +73,12 @@ damage:
 cpubench:
 	$(PYTHON) tools/cpu_bench.py --matrix --screens main,engineering,programs \
 		--size $(SIZE) --settle 5 --window 5
+
+# What the System Evolution Center costs: the real process on each of its
+# sections, beside the home screen with the center never opened and with it
+# hidden (docs/EVOLUTION_CENTER.md). Needs Xvfb.
+evolutionbench:
+	$(PYTHON) tools/evolution_bench.py --size $(SIZE)
 
 # And the same under a pointer being swept across the window.
 cpubench-interactive:
