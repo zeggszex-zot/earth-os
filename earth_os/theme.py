@@ -261,6 +261,7 @@ class Strings:
         "myStatus": "SYSTEM STATUS", "myListening": "LISTENING",
         "myStandby": "STANDBY", "myWorking": "WORKING",
         "myComms": "COMMUNICATIONS", "myScreenshot": "SCREEN SHOT",
+        "myEvolution": "EVOLUTION", "myEvolutionTitle": "SYSTEM EVOLUTION CENTER",
     })
 
     @classmethod

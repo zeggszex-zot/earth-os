@@ -114,6 +114,18 @@ class Shell:
         self._companion = None
         self._companion_built = False
 
+        #: The System Evolution Center's engine (docs/EVOLUTION_CENTER.md).
+        #: Built on first use, like Earth Mind, so boot pays nothing for it —
+        #: the package is not even imported until :meth:`evolution` is asked.
+        self._evolution = None
+        self._evolution_built = False
+        self.evolution_error = ""
+        #: Rendering and background-job statistics, as a callable returning a
+        #: dict. Published by the window when it attaches; None means there
+        #: is no window (headless, a test, a robot), and anything that reads
+        #: it says "unavailable" rather than reporting zero frames.
+        self.render_stats: Optional[Callable[[], Dict[str, object]]] = None
+
         self.palette = self._load_palette()
         self.strings = self._load_strings()
         self.monitor = sysinfo.SystemMonitor()
@@ -499,6 +511,10 @@ class Shell:
             # The built-in coding agent. "Claude, <request>" is routed to it
             # directly in handle_utterance; the bare name opens its screen.
             "claude": lambda: self.go("claude"),
+            # The System Evolution Center. Spoken only by its full names
+            # (vCommands.ini): a bare "evolution" would fire inside ordinary
+            # conversation, the way the bare "home" does.
+            "evolution": lambda: self.go("evolution"),
             "home": lambda: self.go("main"),
             "programs running": lambda: self.go("tasks"),
             "switch": lambda: self.go("tasks"),
@@ -844,25 +860,170 @@ class Shell:
         return False, f"Unable to comply. Unknown kind of request: {proposal.kind}."
 
     # -- what Earth Mind's system subsystem asks of the shell ------------------
-    def answer_reading(self, capability: str) -> Tuple[bool, str]:
-        """Take one reading and put it into words. Readings only.
+    def _not_a_reading(self, capability: str) -> str:
+        """Why *capability* may not be taken as a reading, or "" if it may.
 
-        The same check :meth:`answer_analysis` makes, at the moment of
-        running: in the catalogue, parameterless, **not effectful**, and
-        listed as a reading. Anything else is refused before it is invoked, so
-        this cannot be talked into changing the machine.
+        The one statement of the rule, at the moment of running: in the
+        catalogue, parameterless, **not effectful**, and listed as a reading.
         """
         from .capability_corpus import READINGS
         if self.capabilities is None:
-            return False, f"no platform adapter: {self.platform_error}"
+            return f"no platform adapter: {self.platform_error}"
         spec = self.capabilities.spec(capability)
         if spec is None or spec.effectful or spec.params or capability not in READINGS:
-            return False, f"{capability} is not a reading"
-        result = self.capabilities.invoke(capability)
+            return f"{capability} is not a reading"
+        return ""
+
+    def take_reading(self, capability: str) -> CapabilityResult:
+        """Take one reading and return its value. Readings only.
+
+        What :meth:`answer_reading` is to a sentence, this is to a value: the
+        System Evolution Center reasons about figures, and parsing them back
+        out of prose would be a second, worse reading. Anything that is not a
+        parameterless, non-effectful reading is refused before it is invoked,
+        so nothing holding a shell can use this to change the machine. A
+        reading the machine could not take comes back ``ok=False`` with the
+        adapter's reason; it is never a default.
+        """
+        refused = self._not_a_reading(capability)
+        if refused:
+            return CapabilityResult(ok=False, capability=capability or "", error=refused)
+        return self.capabilities.invoke(capability)        # type: ignore[union-attr]
+
+    def answer_reading(self, capability: str) -> Tuple[bool, str]:
+        """Take one reading and put it into words. Readings only.
+
+        The same check :meth:`answer_analysis` makes, and the one
+        :meth:`take_reading` makes — it *is* :meth:`take_reading`, with the
+        value said. Anything else is refused before it is invoked, so this
+        cannot be talked into changing the machine.
+        """
+        refused = self._not_a_reading(capability)
+        if refused:
+            return False, refused
+        result = self.take_reading(capability)
+        spec = self.capabilities.spec(capability)          # type: ignore[union-attr]
         if not result.ok:
             return False, f"{spec.summary}: {result.error}"
         said = self.capability_corpus.say_result(capability, result.value)
         return True, f"{spec.summary[:1].upper()}{spec.summary[1:]}: {said}"
+
+    # -- the System Evolution Center (docs/EVOLUTION_CENTER.md) ----------------
+    def evolution(self):
+        """The System Evolution Center, built once on first use.
+
+        None if ``[evolution] enabled = false`` or it cannot be built; a
+        failure is recorded in :attr:`evolution_error` and leaves the shell
+        exactly as it was. Building it takes no reading and writes nothing.
+        """
+        if not bool(self.config.get("evolution", "enabled", True)):
+            return None
+        if self._evolution_built:
+            return self._evolution
+        self._evolution_built = True
+        try:
+            from .evolution import build_center
+            self._evolution = build_center(self)
+        except Exception as exc:                  # never stop the shell
+            self.evolution_error = f"{type(exc).__name__}: {exc}"
+            self._evolution = None
+        return self._evolution
+
+    def evolution_background(self) -> bool:
+        """One slow trend sample while the center is not on show.
+
+        Called by the window's ``evolution`` job. It never *builds* the
+        center: until somebody has opened it there is nothing to keep a trend
+        for, and a machine whose owner never looks pays nothing. While the
+        center is the screen on display its own tick does the sampling, so
+        this stands aside rather than sampling twice. Never asks for a frame.
+        """
+        center = self._evolution
+        if center is None:
+            return False
+        if self.current == "evolution" and not self.handed_over_to:
+            return False
+        try:
+            center.sample(visible=False)
+        except Exception as exc:                  # a sample must not stop the timer
+            self.evolution_error = f"{type(exc).__name__}: {exc}"
+        return False
+
+    def doctor_rows(self) -> List[Tuple[str, str, str]]:
+        """The doctor's checks, run now: ``(status, name, detail)`` rows.
+
+        The same list ``earth-os --doctor`` runs, with the status as a word —
+        ``ok``, ``warn`` or ``fail``. They start programs to probe for audio,
+        speech and network components, which is why this is only ever called
+        on a press and off the interface thread.
+        """
+        from . import diagnostics
+        words = {diagnostics.OK: "ok", diagnostics.WARN: "warn", diagnostics.FAIL: "fail"}
+        report = diagnostics.Report()
+        for name, check in diagnostics.CHECKS:
+            if check is diagnostics.check_can_open_a_window and callable(self.render_stats):
+                # That check builds a window to see whether one can be built,
+                # and it would be doing so from a worker thread underneath a
+                # toolkit that is already running. There is no need: a window
+                # is publishing its statistics, so the answer is on screen.
+                report.ok(name, "yes (this window is open)")
+                continue
+            diagnostics._safe(report, name, check)
+        return [(words.get(status, "warn"), name, detail)
+                for status, name, detail in report.rows]
+
+    def explain_findings(self, question: str, findings: List[str],
+                         origin: str = "verified system findings") -> Tuple[str, str]:
+        """Have the Companion put *findings* into plain words: ``(text, source)``.
+
+        *source* is ``"model"`` only when a model's wording came back with
+        every figure checked against the findings (the Companion's own rule,
+        ``CompanionEngine.explain``). In every other case — no model, Earth
+        Mind off, a figure the findings do not contain, an error — the text
+        is the findings exactly as given and the source says why. Nothing is
+        read from the machine here and nothing a model says is acted on.
+        """
+        given = list(findings)
+        plain = " ".join(str(f) for f in given)
+        if not plain.strip():
+            return "", "findings (there was nothing to explain)"
+        try:
+            mind = self.earth_mind()
+            if mind is not None:
+                engine = mind.companion(mind.persona("terminal").id)
+            else:
+                engine = self.companion_engine()
+            if engine is None:
+                return plain, "findings (no model: the Companion is switched off)"
+            reply = engine.explain(question, given, origin=origin)
+        except Exception as exc:
+            return plain, f"findings ({type(exc).__name__}: {exc})"
+        text = str(getattr(reply, "text", "") or "").strip()
+        if getattr(reply, "source", "") == "model" and text:
+            return text, "model"
+        return plain, "findings (no model answered, or its wording did not check)"
+
+    def hand_to_agent(self, brief: str) -> Tuple[bool, str]:
+        """Give *brief* to the built-in agent: ``(taken, why not)``.
+
+        The Evolution Center's hand-over for an approved proposal, and only
+        ever called from a press. The agent's own gate — the suite, the
+        boundary ratchet, the protected files — decides whether anything it
+        writes is kept; this passes the request on and shows the agent's
+        screen so the work is watched rather than assumed.
+        """
+        agent = self.agent
+        if agent is None:
+            return False, "The built-in agent is not available."
+        try:
+            taken = bool(agent.ask(brief))
+        except Exception as exc:
+            return False, f"The agent could not be asked: {type(exc).__name__}: {exc}"
+        if not taken:
+            why = str(getattr(agent, "problem", "") or "it is busy")
+            return False, f"The agent did not take the request: {why}."
+        self.go("claude")
+        return True, ""
 
     def _program_index(self) -> list:
         now = time.monotonic()

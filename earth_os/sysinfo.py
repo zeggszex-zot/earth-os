@@ -52,6 +52,9 @@ class SystemMonitor:
         self._cache: Dict[str, object] = {}
         self._taken: Dict[str, float] = {}
         self._error = ""
+        #: Why each reading is showing its default, by key. Empty for a
+        #: reading that was taken. See :meth:`problem`.
+        self._problems: Dict[str, str] = {}
 
     # ------------------------------------------------------------------
     @property
@@ -81,12 +84,16 @@ class SystemMonitor:
             return self._cache[key]
         platform = self.platform
         if platform is None:
+            self._problems[key] = self._error or "no platform adapter for this host"
             return default
         try:
             value = take(platform)
         except (PlatformError, OSError, ValueError, AttributeError) as exc:
             self._error = str(exc)
+            self._problems[key] = str(exc) or type(exc).__name__
             value = default
+        else:
+            self._problems.pop(key, None)
         self._cache[key] = value
         self._taken[key] = now
         return value
@@ -108,6 +115,23 @@ class SystemMonitor:
     @property
     def last_error(self) -> str:
         return self._error
+
+    def problem(self, key: str) -> str:
+        """Why the reading called *key* is a default, or "" if it was taken.
+
+        A gauge has to draw something, so a reading that fails comes back as
+        its default — ``0.0``, ``(0, 0)``, ``None``. That is right for a bar
+        and wrong for anything that reasons: *0 % busy* and *could not be
+        read* are different facts, and :attr:`last_error` cannot tell them
+        apart because it holds one message for every reading there is. This
+        says which reading failed, and stops saying so the moment that
+        reading is taken again.
+
+        *key* is the cache key: ``cpu``, ``cores``, ``memory``, ``swap``,
+        ``disk:/``, ``load``, ``uptime``, ``temp``, ``battery``, ``net``,
+        ``procs``, ``host``, ``kernel``, ``distro``, ``cpu_model``.
+        """
+        return self._problems.get(key, "")
 
     # -- readings ------------------------------------------------------
     def cpu(self) -> float:

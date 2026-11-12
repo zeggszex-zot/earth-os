@@ -93,7 +93,77 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--switch-back", action="store_true",
                         help="move focus to the previous program, and exit "
                              "(Alt+Shift+Tab)")
+    parser.add_argument("--evolution-report", metavar="KIND",
+                        help="print a System Evolution Center report and exit, "
+                             "without opening a window: health, cpu, ram, "
+                             "applications, hardware, optimization or progress")
+    parser.add_argument("--json", action="store_true",
+                        help="with --evolution-report: JSON instead of text")
+    parser.add_argument("--checks", action="store_true",
+                        help="with --evolution-report: run the --doctor checks "
+                             "first, so their results are in the report")
     return parser
+
+
+def evolution_report(kind: str, config_path: Optional[str] = None,
+                     as_json: bool = False, checks: bool = False,
+                     settle: float = 1.1) -> int:
+    """Print one System Evolution Center report. No window, and nothing written.
+
+    The same engine the SYSTEM EVOLUTION CENTER screen presents, so a machine
+    with no display — a robot, a server, an ssh session — gets the same
+    findings from the same readings. It reads the machine and the center's
+    own records; it changes neither, and it does not create a configuration
+    file where there was none.
+
+    Processor load is the difference between two readings, so this waits
+    *settle* seconds between them rather than report the first as "0 %".
+
+    Exit status: 0 printed, 1 the center could not be built, 2 no such report.
+    """
+    import time
+
+    try:
+        from .evolution.reporter import KINDS, Reporter
+    except Exception as exc:
+        print(f"earth-os: the System Evolution Center could not be loaded: "
+              f"{type(exc).__name__}: {exc}", file=sys.stderr)
+        return 1
+    kind = (kind or "").strip().lower()
+    if kind not in KINDS:
+        print(f"earth-os: no such report: {kind or '(none)'}. "
+              f"One of: {', '.join(KINDS)}", file=sys.stderr)
+        return 2
+
+    try:
+        from .config import Config
+        from .core import Shell
+        config = Config.load(config_path, write_default=False)
+        # In memory only, and only so that asking for a report has no side
+        # effects: no microphone opened, no starter vocabulary written.
+        config.values.setdefault("voice", {})["enabled"] = False
+        config.values.setdefault("semantics", {})["seed"] = False
+        shell = Shell(config)
+        shell.sound.enabled = False
+        center = shell.evolution()
+    except Exception as exc:
+        print(f"earth-os: the shell could not be built: {type(exc).__name__}: {exc}",
+              file=sys.stderr)
+        return 1
+    if center is None:
+        print("earth-os: the System Evolution Center is unavailable: "
+              + (shell.evolution_error or "[evolution] enabled = false"), file=sys.stderr)
+        return 1
+
+    shell.monitor.poll(force=True)
+    if settle > 0:
+        time.sleep(settle)
+    center.sample(force=True)
+    if checks:
+        center.run_checks(wait=True)
+    report = center.report(kind)
+    print(Reporter.as_json(report) if as_json else Reporter.as_text(report))
+    return 0
 
 
 def semantics_commands(args) -> Optional[int]:
@@ -208,6 +278,10 @@ def main(argv: Optional[List[str]] = None) -> int:
     if args.switch or args.switch_back:
         from .windows import switch_from_command_line
         return switch_from_command_line(-1 if args.switch_back else 1)
+
+    if args.evolution_report:
+        return evolution_report(args.evolution_report, args.config,
+                                as_json=args.json, checks=args.checks)
 
     code = semantics_commands(args)
     if code is not None:

@@ -295,6 +295,29 @@ DEFAULTS: Dict[str, Any] = {
         # Judge every turn's changes as soon as it finishes.
         "auto_verify": True,
     },
+    "evolution": {
+        # The System Evolution Center (docs/EVOLUTION_CENTER.md): where Earth
+        # OS examines itself and its development is planned. It proposes; it
+        # does not act. False removes it: nothing is built and nothing sampled.
+        "enabled": True,
+        # While the center is on screen: seconds between samples. It starts
+        # no sampler of its own — these are the shell's existing readings,
+        # looked at this often.
+        "poll_interval": 2.0,
+        # The full process list costs more than everything else together, so
+        # it has its own, slower interval and is only read for the sections
+        # that show it.
+        "process_interval": 5.0,
+        # While it is not on screen: one trend sample this often, from
+        # readings the shell already holds. 0 = nothing at all while hidden.
+        # Read when Earth OS starts.
+        "background_interval": 60.0,
+        # Samples kept for behaviour over time, in memory only.
+        "history": 360,
+        # Let a model put findings into plain words. The findings themselves
+        # never come from it, and the center works the same without one.
+        "explain": True,
+    },
     "colors": {},
     "programs": [],
 }
@@ -438,6 +461,18 @@ model       = ""                   # blank = Claude Code's default
 workspace   = ""                   # blank = this checkout, or ~/.local/share/earth-os/src
 python      = "/usr/bin/python3.12" # what the gate runs the suite under
 auto_verify = true                 # judge each turn's changes when it finishes
+
+# The System Evolution Center: what Earth OS is doing, what needs improvement,
+# what is missing and what to build next (docs/EVOLUTION_CENTER.md). It reads
+# the machine and writes proposals. It changes nothing until you approve a
+# proposal, and then only a setting from a short fixed list, backed up first.
+[evolution]
+enabled             = true
+poll_interval       = 2.0      # seconds between samples while it is on screen
+process_interval    = 5.0      # seconds between reads of the full process list
+background_interval = 60.0     # one trend sample this often while hidden; 0 = none
+history             = 360      # samples kept in memory for trends
+explain             = true     # a model may reword findings; it is never their source
 
 # Override individual palette slots by name if you disagree with the mapping.
 # Slots: accent1 accent2 accent3 accent4 accent5 accent6 text alert frame

@@ -199,8 +199,27 @@ class EarthWindow(Gtk.ApplicationWindow):
             idle_fps=float(config.get("shell", "idle_fps", 0) or 0),
             grace=float(config.get("shell", "interaction_grace", 0.45)),
             enabled=bool(config.get("shell", "adaptive", True)))
+        # What the window knows and the shell cannot otherwise see: how
+        # often frames happen, what one costs, and what the periodic jobs
+        # have been doing. Published as a callable so reading it is the
+        # reader's cost, paid only when something asks.
+        shell.render_stats = self.render_stats
         self._start_background(shell)
         self.frames.request_frame()
+
+    def render_stats(self) -> dict:
+        """Frame and background-job statistics, measured, for the shell.
+
+        The scheduler's own counters, with each job's tally beside them —
+        ``Background.ran`` and ``changed`` were kept "for the diagnostics
+        screen" and this is the first thing to read them.
+        """
+        stats = dict(self.frames.stats())
+        stats["frame_cache"] = bool(self._cache_enabled)
+        stats["jobs"] = {name: {"ran": self.jobs.ran.get(name, 0),
+                                "changed": self.jobs.changed.get(name, 0)}
+                         for name in self.jobs.names}
+        return stats
 
     # ------------------------------------------------------------------
     def _start_background(self, shell: "Shell") -> None:
@@ -269,6 +288,15 @@ class EarthWindow(Gtk.ApplicationWindow):
         self.jobs.add("telemetry", telemetry, readings)
         self.jobs.add("ticks", tick, ticks)
 
+        # The System Evolution Center keeps a slow trend while it is not on
+        # screen, so "has memory been growing" has more to go on than the
+        # minutes it was open. One sample a minute from readings the shell
+        # already holds; nothing at all until the center has been opened
+        # once, and 0 switches it off.
+        slow = float(config.get("evolution", "background_interval", 60.0) or 0.0)
+        if slow > 0 and bool(config.get("evolution", "enabled", True)):
+            self.jobs.add("evolution", max(slow, 5.0), shell.evolution_background)
+
     # ------------------------------------------------------------------
     def _on_draw(self, area, cr, width, height) -> None:
         shell = self.shell
@@ -302,9 +330,13 @@ class EarthWindow(Gtk.ApplicationWindow):
         token = None
         if self._cache_enabled and self._animation_delay() is None:
             token = (self.frames.generation, id(screen), tube)
+        started = time.perf_counter()
         self._cache.draw(cr, width, height, paint,
                          background=shell.palette.background,
                          enabled=tube, token=token)
+        # What this frame cost, cached or not: a measurement for anything
+        # that wants to say whether drawing is expensive on this machine.
+        self.frames.note_draw(time.perf_counter() - started)
 
     def _publish_frame_rect(self) -> None:
         """Tell the shell where, in screen pixels, a program should be put.

@@ -153,6 +153,16 @@ class FrameScheduler:
         self.wakeups = 0
         self.idle_periods = 0
 
+        # What drawing has cost, as measured by whoever does the drawing and
+        # reported through :meth:`note_draw`. The scheduler decides *when* a
+        # frame happens and never sees one painted, so it cannot time this
+        # itself; it is kept here because this is where every other figure
+        # about frames already lives.
+        self.draws_timed = 0
+        self.draw_seconds = 0.0
+        self.draw_peak = 0.0
+        self.draw_last = 0.0
+
     # ------------------------------------------------------------------
     @property
     def period(self) -> float:
@@ -374,8 +384,25 @@ class FrameScheduler:
         self._invalidate()
 
     # ------------------------------------------------------------------
+    def note_draw(self, seconds: float) -> None:
+        """One frame took *seconds* to paint. Called by the drawing code.
+
+        A measurement, so that "rendering is slow" is a reading rather than
+        an impression. A negative figure is a clock that stepped backwards
+        and is dropped: one bad sample must not become the recorded peak.
+        """
+        seconds = float(seconds)
+        if seconds < 0.0:
+            return
+        self.draws_timed += 1
+        self.draw_seconds += seconds
+        self.draw_last = seconds
+        if seconds > self.draw_peak:
+            self.draw_peak = seconds
+
     def stats(self) -> Dict[str, object]:
         """What the scheduler has been doing, for the diagnostics screen."""
+        mean = self.draw_seconds / self.draws_timed if self.draws_timed else 0.0
         return {
             "state": self.state,
             "fps": self.fps,
@@ -384,6 +411,11 @@ class FrameScheduler:
             "frames_requested": self.frames_requested,
             "wakeups": self.wakeups,
             "idle_periods": self.idle_periods,
+            # Zero frames timed means the three below are not measurements.
+            "draws_timed": self.draws_timed,
+            "draw_ms_mean": mean * 1000.0,
+            "draw_ms_peak": self.draw_peak * 1000.0,
+            "draw_ms_last": self.draw_last * 1000.0,
         }
 
 

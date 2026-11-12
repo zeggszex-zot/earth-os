@@ -25,6 +25,9 @@ COLUMN: List[Tuple[str, str, str]] = [
     ("myComp", "my computer", "accent2"),
     ("mySettings", "specify parameters", "accent3"),
     ("myEngineering", "engineering", "accent2"),
+    # Beside DIAGNOSTICS: that screen shows the gauges, this one reasons
+    # about them. docs/EVOLUTION_CENTER.md.
+    ("myEvolution", "evolution", "accent4"),
     ("myComms", "communications", "accent5"),
     ("myTerminal", "terminal", "accent5"),
     ("myClaude", "claude", "accent4"),

@@ -31,4 +31,6 @@ EARTH OS Language File
         myStatus = "SYSTEM STATUS"
         myComms = "NETWORK"
         myScreenshot = "SCREEN SHOT"
+        myEvolution = "EVOLUTION"
+        myEvolutionTitle = "SYSTEM EVOLUTION CENTER"
 </Language>

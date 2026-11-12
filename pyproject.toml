@@ -42,6 +42,7 @@ packages = [
     "earth_os.companion",
     "earth_os.mind",
     "earth_os.mind.game",
+    "earth_os.evolution",
 ]
 
 [tool.setuptools.package-data]
