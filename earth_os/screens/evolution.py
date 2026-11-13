@@ -704,19 +704,24 @@ class EvolutionScreen(Screen):
                                                      " Only that key was restored: the file had "
                                                      "been edited since, and those edits were kept."),
                                    "accent4"))
-            if p.expected:
-                blocks.append(("Expected — an ESTIMATE, not a measurement",
-                               p.expected + (f"\nBasis: {p.basis}" if p.basis else ""), "accent5"))
+            # What was measured, then what was expected, straight under the
+            # title: once a change is under way these are what a person
+            # opened the proposal to read.
+            evidence: List[Block] = []
             if "before" in p.measured:
                 from ..evolution.compare import describe
                 from ..evolution.reporter import _vitals
                 verified = isinstance(p.measured.get("comparison"), dict)
                 after = p.measured.get("after") if verified else center.after_change(p)
-                blocks.append(("MEASURED before → after" if verified else
-                               "MEASURED before → after, so far — press VERIFIED to keep it",
-                               f"Before: {_vitals(p.measured['before'])}\n"
-                               f"After: {_vitals(after)}\n"
-                               + describe(center.comparison(p)), "text"))
+                evidence.append(("MEASURED before → after" if verified else
+                                 "MEASURED before → after, so far — press VERIFIED to keep it",
+                                 f"Before: {_vitals(p.measured['before'])}\n"
+                                 f"After: {_vitals(after)}\n"
+                                 + describe(center.comparison(p)), "text"))
+            if p.expected:
+                evidence.append(("Expected — an ESTIMATE, not a measurement",
+                                 p.expected + (f"\nBasis: {p.basis}" if p.basis else ""), "accent5"))
+            blocks[1:1] = evidence
             blocks.append(("Completion history",
                            "\n".join(f"{_stamp(e.get('at'))}  {e.get('status')}  by {e.get('by')} "
                                      f"— {e.get('note')}" for e in p.events), "text"))
