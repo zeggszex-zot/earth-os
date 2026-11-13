@@ -25,6 +25,13 @@ Three rules keep a comparison honest.
    two windows together. Otherwise the comparison says the difference is
    within the variation measured — which is a result, not a failure.
 
+4. **A difference is not a cause.** Anything else that changed between the
+   windows shows up too — Earth OS still warming up after it started is the
+   usual one. So each window also records how far each figure moved from its
+   first half to its second, and a measured difference in a figure that was
+   already moving that way before the change is flagged rather than credited
+   to the change.
+
 The windows also record how much of the time the center itself was on
 screen, because sampling and drawing it costs something: a *before* taken
 while looking at the center and an *after* taken while it was hidden are not
@@ -110,6 +117,15 @@ def _per_frame(samples: List[Sample]) -> Optional[Tuple[float, List[float]]]:
     return total_ms / total_frames, each
 
 
+def _drift(parts: Sequence[float]) -> Optional[float]:
+    """Second half's mean minus the first half's, or None with too few."""
+    if len(parts) < MIN_INTERVALS:
+        return None
+    half = len(parts) // 2
+    first, second = parts[:half], parts[len(parts) - half:]
+    return sum(second) / len(second) - sum(first) / len(first)
+
+
 def summarize(samples: List[Sample]) -> Dict[str, object]:
     """One window of samples as figures, ready to store as JSON.
 
@@ -134,14 +150,14 @@ def summarize(samples: List[Sample]) -> Dict[str, object]:
         if result is not None:
             mean, parts = result
             _m, sd = _mean_sd(parts)
-            figures[key] = {"mean": mean, "sd": sd, "n": len(parts)}
+            figures[key] = {"mean": mean, "sd": sd, "n": len(parts), "drift": _drift(parts)}
 
     for key, field, scale in (("own_memory", "own_memory", 1 / (1024 * 1024)),
                               ("cpu", "cpu", 100.0), ("memory", "memory", 100.0)):
         values = [float(v) * scale for v in (s.get(field) for s in samples) if v is not None]
         if values:
             mean, sd = _mean_sd(values)
-            figures[key] = {"mean": mean, "sd": sd, "n": len(values)}
+            figures[key] = {"mean": mean, "sd": sd, "n": len(values), "drift": _drift(values)}
     out["figures"] = figures
     return out
 
@@ -180,6 +196,15 @@ def compare(before: object, after: object) -> Dict[str, object]:
             noise = 2.0 * math.sqrt(float(b["sd"]) ** 2 / int(b["n"])
                                     + float(a["sd"]) ** 2 / int(a["n"]))
             row["verdict"] = MEASURED if abs(delta) > max(noise, 1e-9) else WITHIN
+            drift = b.get("drift")
+            if row["verdict"] == MEASURED and isinstance(drift, (int, float)) \
+                    and drift * delta > 0 and abs(drift) * 2 >= abs(delta):
+                # Moving the same way, by a comparable amount, before anything
+                # was changed: the difference may be that, not the change.
+                row["already_moving"] = True
+                notes.append(f"{label} was already {'rising' if drift > 0 else 'falling'} "
+                             "before the change, by a comparable amount, so its difference "
+                             "may not be the change's doing.")
         rows.append(row)
 
     on_b, on_a = before.get("center_on_screen"), after.get("center_on_screen")
@@ -218,8 +243,9 @@ def describe(comparison: Dict[str, object]) -> str:
         delta = format_figure({**row, "delta": abs(change)}, "delta")
         rel = f", {sign}{abs(percent):.0f}%" if isinstance(percent, (int, float)) else ""
         lines.append(f"{row['label']}: {format_figure(row, 'before')} → "
-                     f"{format_figure(row, 'after')} ({sign}{delta}{rel}) — {row['verdict']} "
-                     f"[{row['n_before']} vs {row['n_after']} intervals]")
+                     f"{format_figure(row, 'after')} ({sign}{delta}{rel}) — {row['verdict']}"
+                     + (", BUT ALREADY MOVING BEFORE" if row.get("already_moving") else "")
+                     + f" [{row['n_before']} vs {row['n_after']} intervals]")
     for note in comparison.get("notes") or []:       # type: ignore[union-attr]
         lines.append(f"Note: {note}")
     return "\n".join(lines) or "Nothing to compare yet."

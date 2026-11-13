@@ -337,7 +337,9 @@ def _comparison_row(row: Dict[str, object]) -> str:
     rel = f", {sign}{abs(float(percent)):.0f}%" if isinstance(percent, (int, float)) else ""
     return (f"{format_figure(row, 'before')} → {format_figure(row, 'after')} "
             f"({sign}{format_figure({**row, 'delta': abs(change)}, 'delta')}{rel}) — "
-            f"{row['verdict']} ({row['n_before']} and {row['n_after']} intervals)")
+            f"{row['verdict']}"
+            + (", but already moving before the change" if row.get("already_moving") else "")
+            + f" ({row['n_before']} and {row['n_after']} intervals)")
 
 
 def _vitals(vitals: object) -> str:

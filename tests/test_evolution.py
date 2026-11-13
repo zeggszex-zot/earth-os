@@ -1874,6 +1874,25 @@ class TestBeforeAndAfter(unittest.TestCase):
         self.assertEqual(row(compare(before, same))["verdict"], WITHIN)
         self.assertEqual(row(compare(before, few))["verdict"], TOO_FEW)
 
+    def test_a_figure_already_moving_is_not_credited_to_the_change(self):
+        """Memory still climbing after start-up, a change made part-way: the
+        after-window is higher, measurably — and the comparison must say that
+        it was rising before anything was changed."""
+        from earth_os.evolution.compare import MEASURED, compare, summarize
+        before = self.series(0.0, 12)
+        after = self.series(100.0, 12)
+        for i, sample in enumerate(before + after):
+            sample.values["own_memory"] = (100.0 + i * 0.5) * 1024 * 1024
+        result = compare(summarize(before), summarize(after))
+        row = next(r for r in result["rows"] if r["key"] == "own_memory")
+        self.assertEqual(row["verdict"], MEASURED)
+        self.assertTrue(row.get("already_moving"))
+        self.assertTrue(any("already rising before the change" in n for n in result["notes"]))
+        # A flat before-window is not flagged.
+        flat = compare(summarize(self.series(0.0, 12, memory=100.0)),
+                       summarize(self.series(100.0, 12, memory=120.0)))
+        self.assertFalse(next(r for r in flat["rows"] if r["key"] == "own_memory").get("already_moving"))
+
     def test_not_like_for_like_is_said(self):
         from earth_os.evolution.compare import compare, summarize
         result = compare(summarize(self.series(0.0, 10, visible=True)),

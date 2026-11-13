@@ -194,6 +194,155 @@ def run_one(display: Display, plan: str, label: str, *, settle: float, window: f
     return row
 
 
+#: The before-and-after check: the real application on the home screen with
+#: the center hidden and sampling every 5 s; at the change point it carries
+#: one optimization through the center's own approval line — propose,
+#: approve, apply — and at the end through testing and VERIFIED. The center's
+#: comparison is written out with the window edges, so the bench can measure
+#: the same windows from outside.
+BEFORE_AFTER = r'''
+import json, sys, time
+from earth_os.config import Config
+from earth_os.app import EarthApplication
+from gi.repository import GLib
+
+config_path, report_path, optimization, before_s, after_s, warm = sys.argv[1:7]
+before_s, after_s, warm = float(before_s), float(after_s), float(warm)
+app = EarthApplication(Config.load(config_path))
+out = {"optimization": optimization}
+
+def ready():
+    return app.shell is not None and app.window is not None and app.window.shell is not None
+
+def open_once():
+    if not ready():
+        return True
+    if "booted" not in out:
+        out["booted"] = time.time()
+    if time.time() - out["booted"] < warm:
+        return True                  # let start-up settle: it is not the change
+    app.shell.go("evolution")        # builds the center, as a person opening it would
+    app.shell.go("main")
+    out["opened"] = time.time()
+    GLib.timeout_add(int(before_s * 1000), change)
+    return False
+
+def change():
+    shell = app.shell
+    center = shell._evolution
+    planner = center.planner
+    p = center.propose_from("optimization", optimization, by="bench")
+    planner.approve(p.id, by="bench")
+    planner.implement(p.id, by="bench", before=center.vitals())
+    out["proposal"] = p.id
+    out["changed_at"] = p.measured["changed_at"]
+    out["applied"] = {k: p.applied.get(k) for k in ("setting", "value", "previous",
+                                                    "in_effect_now", "backup")}
+    GLib.timeout_add(int(after_s * 1000), verify)
+    return False
+
+def verify():
+    center = app.shell._evolution
+    p = center.planner.get(out["proposal"])
+    center.planner.begin_testing(p.id, by="bench")
+    center.planner.complete(p.id, by="bench", after=center.after_change(p))
+    out["before"] = p.measured["before"]
+    out["after"] = p.measured["after"]
+    out["comparison"] = p.measured["comparison"]
+    out["config_after"] = open(config_path).read()
+    center.planner.roll_back(p.id, by="bench")
+    out["rolled_back"] = p.applied.get("reverted")
+    out["config_rolled_back"] = open(config_path).read()
+    with open(report_path, "w") as fh:
+        json.dump(out, fh, default=str)
+    app.quit()
+    return False
+
+GLib.timeout_add(500, open_once)
+sys.exit(app.run([sys.argv[0]]))
+'''
+
+
+def before_after(display: Display, optimization: str, *, before: float, after: float,
+                 python: str, screen_size: str, warm: float = 20.0) -> Dict:
+    """Carry one optimization through the center in the real application,
+    and measure the same two windows from outside through /proc."""
+    from earth_os.evolution.compare import SETTLE_SECONDS
+    workdir = Path(tempfile.mkdtemp(prefix="earthos-sec-ba-"))
+    config = workdir / "config.toml"
+    config.write_text(CONFIG.format(phosphor="true", background=5.0))
+    original = config.read_text()
+    report = workdir / "result.json"
+    env = display.env
+    env.update({"XDG_CACHE_HOME": str(workdir / "cache"), "XDG_CONFIG_HOME": str(workdir / "config"),
+                "XDG_DATA_HOME": str(workdir / "data"), "HOME": str(workdir),
+                "PYTHONPATH": str(ROOT)})
+    proc = subprocess.Popen([python, "-c", BEFORE_AFTER, str(config), str(report), optimization,
+                             str(before), str(after), str(warm)],
+                            cwd=str(ROOT), env=env, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+    outside: List[tuple] = []           # (wall, cpu seconds, rss kb)
+    try:
+        while proc.poll() is None:
+            cpu, kb = proc_cpu_seconds(proc.pid), proc_rss_kb(proc.pid)
+            if cpu is not None:
+                outside.append((time.time(), cpu, kb or 0))
+            time.sleep(0.5)
+        result = json.loads(report.read_text())
+    except (OSError, ValueError):
+        err = (proc.stderr.read() or b"").decode("utf-8", "replace") if proc.stderr else ""
+        return {"error": err.strip()[-600:] or "no result"}
+    finally:
+        if proc.poll() is None:
+            proc.kill()
+        shutil.rmtree(workdir, ignore_errors=True)
+
+    def window(start: float, end: float) -> Dict:
+        inside = [o for o in outside if start <= o[0] <= end]
+        if len(inside) < 2:
+            return {}
+        (w0, c0, _), (w1, c1, _) = inside[0], inside[-1]
+        return {"cpu_percent": 100.0 * (c1 - c0) / (w1 - w0),
+                "rss_mb": statistics.mean(o[2] for o in inside) / 1024.0,
+                "seconds": w1 - w0}
+
+    b, a = result["before"], result["after"]
+    result["outside"] = {"before": window(float(b["from"]), float(b["to"])),
+                         "after": window(float(a["from"]), float(a["to"]))}
+    result["restored_exactly"] = result.get("config_rolled_back") == original
+    result["settle"] = SETTLE_SECONDS
+    return result
+
+
+def print_before_after(result: Dict) -> None:
+    if "error" in result:
+        print("FAILED:", result["error"])
+        return
+    from earth_os.evolution.compare import describe
+    print(f"Optimization {result['optimization']} as {result['proposal']}: "
+          f"{result['applied']['setting']} {result['applied']['previous']} -> "
+          f"{result['applied']['value']}, in effect now: {result['applied']['in_effect_now']}")
+    for label in ("before", "after"):
+        w = result[label]
+        print(f"  {label:<6} window: {w['samples']} samples over {w['span_seconds']} s, "
+              f"center on screen {w.get('center_on_screen', 0):.0%}")
+    print()
+    print("What the center reports:")
+    for line in describe(result["comparison"]).splitlines():
+        print("  " + line)
+    print()
+    print("Measured from outside (/proc), the same two windows:")
+    ob, oa = result["outside"]["before"], result["outside"]["after"]
+    if ob and oa:
+        print(f"  Earth OS processor time  {ob['cpu_percent']:.2f}% -> {oa['cpu_percent']:.2f}% of one core")
+        print(f"  Earth OS memory (RSS)    {ob['rss_mb']:.1f} MB -> {oa['rss_mb']:.1f} MB")
+    rb = result.get("rolled_back") or {}
+    print()
+    print(f"Rolled back: restored to {rb.get('restored')}, whole file "
+          f"{'restored byte for byte' if rb.get('whole_file_restored') else 'NOT restored'}, "
+          f"in effect now: {rb.get('in_effect_now')}; config identical to the original: "
+          f"{result['restored_exactly']}")
+
+
 def table(rows: List[Dict]) -> str:
     head = (f"{'where':<26}{'CPU %':>7}{'median':>8}{'max':>7}{'RSS MB':>9}{'grew':>7}"
             f"{'frames':>8}{'samples':>9}{'ms each':>9}{'engine':>8}")
@@ -225,7 +374,25 @@ def main() -> int:
                          "of one or two sections)")
     ap.add_argument("--python", default=sys.executable)
     ap.add_argument("--json", default="")
+    ap.add_argument("--before-after", metavar="OPTIMIZATION", default="",
+                    help="instead of the cost table: carry one optimization (e.g. "
+                         "phosphor-off) through the center in the real application and "
+                         "check its before/after comparison against /proc")
+    ap.add_argument("--phase", type=float, default=90.0,
+                    help="with --before-after: seconds before, and after, the change")
     args = ap.parse_args()
+
+    if args.before_after:
+        sys.path.insert(0, str(ROOT))
+        with Display(args.size, number=74) as display:
+            result = before_after(display, args.before_after, before=args.phase,
+                                  after=args.phase + 6.0, python=args.python,
+                                  screen_size=args.size)
+        print_before_after(result)
+        if args.json:
+            Path(args.json).write_text(json.dumps(result, indent=2, default=str))
+            print(f"\nwrote {args.json}")
+        return 0 if "error" not in result else 1
 
     plans = [] if args.only_sections else [("main", "main (center never opened)", 60.0),
                                             ("engineering", "engineering", 60.0)]
