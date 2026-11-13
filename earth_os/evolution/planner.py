@@ -366,9 +366,13 @@ class Planner:
             if self.applier is None:
                 raise Refused("this center has no way to roll a setting change back")
             try:
-                self.applier.revert(proposal, by=by)
+                reverted = self.applier.revert(proposal, by=by)
             except ChangeRefused as exc:
                 raise Refused(str(exc)) from exc
+            if isinstance(proposal.applied, dict) and isinstance(reverted, dict):
+                proposal.applied["reverted"] = {
+                    k: reverted.get(k) for k in ("restored", "whole_file_restored",
+                                                 "in_effect_now", "backup")}
         self._move(proposal, ROLLED_BACK, by,
                    note or ("setting restored" if proposal.automatic else "rolled back"))
         return proposal

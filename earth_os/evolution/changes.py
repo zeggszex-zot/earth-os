@@ -29,14 +29,26 @@ not belong here however useful it would be.
 
 from __future__ import annotations
 
-import hashlib
 import re
+import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Optional, Tuple
+from typing import Callable, Dict, Optional, Tuple
 
 from .model import APPROVED
 from .store import Store
+
+
+def _sha256(text: str) -> str:
+    """The digest that tells whether a file was edited after a change.
+
+    ``hashlib`` is imported here, not at the top: it loads OpenSSL, which
+    measured 3.5–4.5 MB of resident memory — most of what importing the
+    whole engine cost — for something needed only on an APPLY or a ROLL
+    BACK press. docs/EVOLUTION_CENTER.md §5.
+    """
+    import hashlib
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
 class ChangeRefused(Exception):
@@ -52,7 +64,12 @@ class Tunable:
     high: float = 0.0
     choices: Tuple[str, ...] = ()
     #: Whether the new value only takes effect when Earth OS is restarted.
-    restart: bool = True
+    #: False means a running Earth OS puts it into effect at once
+    #: (``Shell.apply_setting``) — and ``tests/test_evolution.py`` checks that
+    #: claim against a real window for every entry that makes it. Whether a
+    #: particular change *did* take effect is recorded with the change, as
+    #: ``in_effect_now``: no window, or voice switched off, means it did not.
+    restart: bool = False
     what: str = ""
 
     @property
@@ -80,10 +97,11 @@ TUNABLES: Dict[str, Tunable] = dict([
        what="seconds between looks at the window list"),
     _t("voice", "continuous", "bool", what="listen without the wake word"),
     _t("companion", "keep_alive", "choice", choices=("0", "2m", "5m", "10m", "30m"),
+       restart=True,                # read when the model client is built
        what="how long the companion model stays loaded after use"),
-    _t("evolution", "poll_interval", "float", low=1.0, high=30.0, restart=False,
+    _t("evolution", "poll_interval", "float", low=1.0, high=30.0,
        what="seconds between the Evolution Center's own samples"),
-    _t("evolution", "process_interval", "float", low=2.0, high=120.0, restart=False,
+    _t("evolution", "process_interval", "float", low=2.0, high=120.0,
        what="seconds between process-list readings"),
     _t("evolution", "background_interval", "float", low=0.0, high=3600.0,
        what="seconds between trend samples while the center is hidden"),
@@ -197,13 +215,27 @@ class ChangeApplier:
     """Applies an approved change to the configuration file, and undoes one.
 
     *config* is the shell's live :class:`~earth_os.config.Config`: its
-    ``path`` is the file, and its ``values`` are updated too so the rest of
-    the shell sees the setting it would read after a restart.
+    ``path`` is the file, and its ``values`` are updated too. Then
+    *on_change* is told, so a running shell puts the value into effect, and
+    the record says whether it did.
     """
 
-    def __init__(self, config, store: Store):
+    def __init__(self, config, store: Store,
+                 on_change: Optional[Callable[[str, str], bool]] = None):
         self.config = config
         self.store = store
+        #: Told ``(section, key)`` after the value changes; returns whether
+        #: the running shell put it into effect. The shell's
+        #: ``apply_setting`` — nothing that can change anything else.
+        self.on_change = on_change
+
+    def _take_effect(self, tunable: Tunable) -> bool:
+        if not callable(self.on_change):
+            return False
+        try:
+            return bool(self.on_change(tunable.section, tunable.key))
+        except Exception:
+            return False
 
     def current(self, tunable: Tunable) -> Tuple[bool, object]:
         """``(explicitly_set, value)`` for *tunable* as configured now."""
@@ -250,6 +282,7 @@ class ChangeApplier:
         except OSError as exc:
             raise ChangeRefused(f"cannot write {path}: {exc}") from exc
         self.config.values.setdefault(tunable.section, {})[tunable.key] = value
+        live = self._take_effect(tunable)
 
         record = {
             "event": "change-applied", "proposal": proposal.id, "title": proposal.title,
@@ -258,8 +291,9 @@ class ChangeApplier:
             "backup": str(backup) if backup else "",
             # What the file held the moment after the change, so a rollback
             # can tell whether anybody has edited it since.
-            "written_sha256": hashlib.sha256(written.encode("utf-8")).hexdigest(),
-            "restart": tunable.restart,
+            "written_sha256": _sha256(written),
+            "restart": tunable.restart, "in_effect_now": live,
+            "at": time.time(),
             "rollback": (f"Press ROLL BACK on {proposal.id}, or set [{tunable.section}] "
                          f"{tunable.key} = {_literal(previous)} in {path}"
                          + (f", or copy {backup} back over it." if backup else ".")),
@@ -290,8 +324,7 @@ class ChangeApplier:
             text = path.read_text(encoding="utf-8") if path.exists() else ""
             backup = self.store.back_up(path, f"{proposal.id}-rollback-{tunable.name}")
             original = Path(str(applied.get("backup") or ""))
-            untouched = hashlib.sha256(text.encode("utf-8")).hexdigest() \
-                == applied.get("written_sha256")
+            untouched = _sha256(text) == applied.get("written_sha256")
             if untouched and applied.get("backup") and original.is_file():
                 text = original.read_text(encoding="utf-8")
                 exact = True
@@ -305,11 +338,13 @@ class ChangeApplier:
         # The live value goes back to what it was, whether that came from
         # the file or from a default.
         self.config.values.setdefault(tunable.section, {})[tunable.key] = applied.get("previous")
+        live = self._take_effect(tunable)
         record = {
             "event": "change-rolled-back", "proposal": proposal.id, "title": proposal.title,
             "by": str(by or "").strip(), "file": str(path), "setting": tunable.name,
             "restored": applied.get("previous"), "backup": str(backup) if backup else "",
             "whole_file_restored": exact, "restart": tunable.restart,
+            "in_effect_now": live,
         }
         self.store.append_history(record)
         return record

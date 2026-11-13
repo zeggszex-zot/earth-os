@@ -69,6 +69,12 @@ def _change(section: str, key: str, value: object) -> Dict[str, object]:
     return {"section": section, "key": key, "value": value}
 
 
+def _restart(section: str, key: str) -> bool:
+    """Whether a change to ``[section] key`` needs a restart: :data:`TUNABLES`
+    says, so the optimization and the change it carries cannot disagree."""
+    return TUNABLES[f"{section}.{key}"].restart
+
+
 def _undo(section: str, key: str, previous: object) -> str:
     shown = str(previous).lower() if isinstance(previous, bool) else str(previous)
     return (f"ROLL BACK on the proposal restores it, or set [{section}] {key} = {shown} "
@@ -90,7 +96,7 @@ def _adaptive(c: Context) -> Optional[Optimization]:
               + RENDERING_DOC,
         drawbacks="A screen that changes without asking for a frame would stop updating. "
                   "None is known; [shell] idle_fps is the safety net.",
-        restart=True, reverse=_undo("shell", "adaptive", on),
+        restart=_restart("shell", "adaptive"), reverse=_undo("shell", "adaptive", on),
         state=IN_EFFECT if on else RECOMMENDED,
         reason=("Adaptive rendering is on." if on else
                 "Adaptive rendering is switched off in the configuration."),
@@ -113,7 +119,7 @@ def _frame_cache(c: Context) -> Optional[Optimization]:
         benefits="ESTIMATE: repaints of an unchanged screen cost a fraction of a full draw.",
         basis="0.64 ms to copy against 14.26 ms to compose. " + RENDERING_DOC,
         drawbacks="Holds one full-size frame in memory." + cost,
-        restart=True, reverse=_undo("shell", "frame_cache", on),
+        restart=_restart("shell", "frame_cache"), reverse=_undo("shell", "frame_cache", on),
         state=IN_EFFECT if on else RECOMMENDED,
         reason="The frame cache is on." if on else "The frame cache is switched off.",
         change=None if on else _change("shell", "frame_cache", True))
@@ -130,7 +136,7 @@ def _idle_floor(c: Context) -> Optional[Optimization]:
             basis="By construction: zero frames requested is zero frames drawn.",
             drawbacks="None known. The floor exists for a machine where something draws "
                       "without saying so.",
-            restart=True, reverse=_undo("shell", "idle_fps", int(floor)),
+            restart=_restart("shell", "idle_fps"), reverse=_undo("shell", "idle_fps", int(floor)),
             state=IN_EFFECT, reason="There is no idle floor.")
     return Optimization(
         id="idle-floor", title="Draw nothing while nothing changes", area="rendering",
@@ -140,7 +146,7 @@ def _idle_floor(c: Context) -> Optional[Optimization]:
         basis="By construction: the floor is exactly this many draws a second.",
         drawbacks="If something on this machine draws without asking for a frame, it "
                   "would stop updating until touched.",
-        restart=True, reverse=_undo("shell", "idle_fps", int(floor)),
+        restart=_restart("shell", "idle_fps"), reverse=_undo("shell", "idle_fps", int(floor)),
         state=RECOMMENDED, reason=f"An idle floor of {floor:g} frames a second is configured.",
         change=_change("shell", "idle_fps", 0))
 
@@ -165,7 +171,7 @@ def _phosphor(c: Context) -> Optional[Optimization]:
         basis="The glow was 6.8 ms of a 14.3 ms frame. " + RENDERING_DOC,
         drawbacks="The interface loses the look of the tube it imitates. This is a "
                   "matter of taste as much as performance.",
-        restart=True, reverse=_undo("shell", "phosphor", on), state=state, reason=reason,
+        restart=_restart("shell", "phosphor"), reverse=_undo("shell", "phosphor", on), state=state, reason=reason,
         change=_change("shell", "phosphor", False) if on else None)
 
 
@@ -189,7 +195,7 @@ def _frame_rate(c: Context) -> Optional[Optimization]:
                  "something is moving; no change at rest.",
         basis=f"Arithmetic: {target} is {target / fps * 100:.0f}% of {fps}.",
         drawbacks="Dragging a slider and typed-out text look less smooth.",
-        restart=True, reverse=_undo("shell", "fps", fps), state=state, reason=reason,
+        restart=_restart("shell", "fps"), reverse=_undo("shell", "fps", fps), state=state, reason=reason,
         change=_change("shell", "fps", target))
 
 
@@ -216,7 +222,7 @@ def _telemetry(c: Context) -> Optional[Optimization]:
                  "correspondingly fewer gauge redraws on the screens that show them.",
         basis=f"Arithmetic: one sample every {target:g} s instead of every {interval:g} s.",
         drawbacks="Gauges and the clock's neighbours update less often.",
-        restart=True, reverse=_undo("shell", "telemetry_interval", interval),
+        restart=_restart("shell", "telemetry_interval"), reverse=_undo("shell", "telemetry_interval", interval),
         state=state, reason=reason, change=_change("shell", "telemetry_interval", target))
 
 
@@ -234,7 +240,7 @@ def _window_poll(c: Context) -> Optional[Optimization]:
         basis=f"Arithmetic: one look every {target:g} s instead of every {interval:g} s.",
         drawbacks="A newly started program takes up to that long to appear in the strip "
                   "and be put in the frame.",
-        restart=True, reverse=_undo("windows", "poll_interval", interval),
+        restart=_restart("windows", "poll_interval"), reverse=_undo("windows", "poll_interval", interval),
         state=RECOMMENDED if interval < 1.2 else AVAILABLE,
         reason=f"The window list is polled every {interval:g} s.",
         change=_change("windows", "poll_interval", target))
@@ -253,7 +259,7 @@ def _tick(c: Context) -> Optional[Optimization]:
         benefits=f"ESTIMATE: {interval / target * 100:.0f}% of the wake-ups at rest now.",
         basis=f"Arithmetic: one tick every {target:g} s instead of every {interval:g} s.",
         drawbacks="Terminal output and agent messages appear up to that much later.",
-        restart=True, reverse=_undo("shell", "tick_interval", interval),
+        restart=_restart("shell", "tick_interval"), reverse=_undo("shell", "tick_interval", interval),
         state=RECOMMENDED if interval < 0.1 else AVAILABLE,
         reason=f"Screens are ticked every {interval:g} s.",
         change=_change("shell", "tick_interval", target))
@@ -270,7 +276,7 @@ def _voice(c: Context) -> Optional[Optimization]:
         benefits="ESTIMATE: speech recognition runs only on what follows the wake word.",
         basis="How the voice engine is built; no figure has been measured.",
         drawbacks="Every command has to start with the wake word again.",
-        restart=True, reverse=_undo("voice", "continuous", True),
+        restart=_restart("voice", "continuous"), reverse=_undo("voice", "continuous", True),
         state=RECOMMENDED if busy else AVAILABLE,
         reason="Continuous listening is on" + (" and the processor is busy." if busy else "."),
         change=_change("voice", "continuous", False))
@@ -293,7 +299,7 @@ def _companion(c: Context) -> Optional[Optimization]:
                  "model, and the center has no figure for it.",
         basis="How the model server holds models; no figure has been measured here.",
         drawbacks="The first reply after a pause waits for the model to load again.",
-        restart=True, reverse=_undo("companion", "keep_alive", f'"{keep}"'),
+        restart=_restart("companion", "keep_alive"), reverse=_undo("companion", "keep_alive", f'"{keep}"'),
         state=RECOMMENDED if pressure else AVAILABLE,
         reason=(f"{pressure.title}; the model is kept loaded for {keep}." if pressure
                 else f"The model is kept loaded for {keep} after use."),
@@ -312,7 +318,7 @@ def _own_poll(c: Context) -> Optional[Optimization]:
                  "center is on screen.",
         basis=f"Arithmetic: one sample every 2 s instead of every {interval:g} s.",
         drawbacks="OVERVIEW figures update every two seconds.",
-        restart=False, reverse=_undo("evolution", "poll_interval", interval),
+        restart=_restart("evolution", "poll_interval"), reverse=_undo("evolution", "poll_interval", interval),
         state=RECOMMENDED, reason=f"The center samples every {interval:g} s.",
         change=_change("evolution", "poll_interval", 2.0))
 

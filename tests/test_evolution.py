@@ -1067,6 +1067,27 @@ class TestTheRoadmap(unittest.TestCase):
         self.assertEqual(again.id, proposal.id)
         self.assertIsNone(self.center.propose_from("capability", "no-such-thing"))
 
+    def test_an_optimizations_restart_answer_is_the_settings_own(self):
+        """Question 5 ("restart needed?") used to be written by hand beside
+        each optimization, apart from the actuator's table. Now it is read
+        from that table, so the two cannot disagree."""
+        from earth_os.evolution.changes import TUNABLES
+        for item in self.center.optimizations():
+            if item.change:
+                name = f"{item.change['section']}.{item.change['key']}"
+                self.assertEqual(item.restart, TUNABLES[name].restart, item.id)
+        self.assertEqual([n for n, t in TUNABLES.items() if t.restart], ["companion.keep_alive"])
+
+    def test_without_a_window_an_applied_change_says_it_is_not_yet_in_effect(self):
+        """A headless shell — a report from a terminal, a test — has no frame
+        clock to change. The change is still made and recorded; the record
+        does not pretend it took effect."""
+        proposal = self.center.propose_from("optimization", "phosphor-off", by="operator")
+        self.center.planner.approve(proposal.id, by="operator")
+        self.center.planner.implement(proposal.id, by="operator")
+        self.assertFalse(proposal.applied["in_effect_now"])
+        self.assertEqual(self.shell.config.get("shell", "phosphor"), False)
+
     def test_what_is_already_in_effect_cannot_be_proposed(self):
         """There would be nothing to carry out, and the proposal's "how to
         reverse" would describe undoing a change nobody made."""
@@ -1925,6 +1946,110 @@ class TestInARealWindow(unittest.TestCase):
         taken = self.center.samples_taken
         self.pump(5.0)
         self.assertEqual(self.center.samples_taken, taken)
+
+
+    # -- settings take effect when they say they do ------------------------------
+    def approved_change(self, section, key, value):
+        """An APPROVED proposal carrying one tunable change, as a press would make it."""
+        proposal = self.center.planner.discover(
+            title=f"set {section}.{key}", kind="optimization",
+            source=f"test:{section}.{key}:{value}",
+            change={"section": section, "key": key, "value": value})[0]
+        self.center.planner.approve(proposal.id, by="operator")
+        return proposal
+
+    def running(self):
+        """What the running window and shell are actually doing, read from them."""
+        from earth_os import phosphor
+        w = self.window
+        return {
+            ("shell", "fps"): w.frames.fps,
+            ("shell", "idle_fps"): w.frames.idle_fps,
+            ("shell", "adaptive"): w.frames.enabled,
+            ("shell", "frame_cache"): w._cache_enabled,
+            ("shell", "phosphor"): phosphor.enabled(self.shell.config),
+            ("shell", "telemetry_interval"): w.jobs.intervals.get("telemetry"),
+            ("shell", "tick_interval"): w.jobs.intervals.get("ticks"),
+            ("windows", "poll_interval"): w.jobs.intervals.get("windows"),
+            ("voice", "continuous"): getattr(self.shell.voice, "continuous", None),
+            ("evolution", "poll_interval"): self.center.poll_interval,
+            ("evolution", "process_interval"): self.center.process_interval,
+            ("evolution", "background_interval"): w.jobs.intervals.get("evolution"),
+        }
+
+    def test_every_setting_that_claims_to_apply_at_once_does(self):
+        """The restart flag is a claim. For every tunable that says it needs no
+        restart, apply a change through the one actuator and read the running
+        window: the value it is using now must be the new one, and the record
+        must say so. Before this, all of these but phosphor and the center's
+        own intervals were read once, at attach."""
+        from earth_os.evolution.changes import TUNABLES
+        self.shell.voice = SimpleNamespace(continuous=False, available=False)   # voice off in tests
+        targets = {"fps": 24, "idle_fps": 1, "adaptive": False, "frame_cache": False,
+                   "phosphor": False, ("shell", "telemetry_interval"): 3.0,
+                   ("shell", "tick_interval"): 0.25, ("windows", "poll_interval"): 4.0,
+                   "continuous": True, ("evolution", "poll_interval"): 7.0,
+                   ("evolution", "process_interval"): 20.0,
+                   ("evolution", "background_interval"): 45.0}
+        checked = 0
+        for name, tunable in TUNABLES.items():
+            if tunable.restart:
+                continue
+            where = (tunable.section, tunable.key)
+            value = targets.get(where, targets.get(tunable.key))
+            self.assertIsNotNone(value, f"no test value for {name}")
+            proposal = self.approved_change(tunable.section, tunable.key, value)
+            self.center.planner.implement(proposal.id, by="operator")
+            self.pump(0.05)
+            self.assertTrue(proposal.applied["in_effect_now"], name)
+            self.assertEqual(self.running()[where], value, f"{name} is not in effect")
+            checked += 1
+        self.assertEqual(checked, sum(1 for t in TUNABLES.values() if not t.restart))
+        self.assertGreaterEqual(checked, 12)
+
+    def test_a_rollback_takes_effect_too(self):
+        before = self.window.frames.fps
+        proposal = self.approved_change("shell", "fps", 12)
+        self.center.planner.implement(proposal.id, by="operator")
+        self.assertEqual(self.window.frames.fps, 12)
+        self.center.planner.roll_back(proposal.id, by="operator")
+        self.assertEqual(self.window.frames.fps, before)
+        self.assertTrue(proposal.applied["reverted"]["in_effect_now"])
+
+    def test_background_interval_is_applied_to_the_running_timer(self):
+        """The case the audit started from. NEVER removes the job; a value
+        afterwards puts one back at that interval; nothing else is touched."""
+        jobs = self.window.jobs
+        self.assertEqual(jobs.intervals["evolution"], 60.0)
+        others = {k: v for k, v in jobs.intervals.items() if k != "evolution"}
+        screen = self.shell.screens["evolution"]
+        self.shell.go("evolution")
+        screen._go_section("settings")
+        screen._set("background_interval", 0.0)
+        self.assertNotIn("evolution", jobs.names)
+        self.assertNotIn("evolution", jobs.intervals)
+        # A timer that fired just before the change does nothing.
+        self.shell.go("main")
+        before = self.center.overhead()["samples"]
+        self.shell.evolution_background()
+        self.assertEqual(self.center.overhead()["samples"], before)
+        self.shell.go("evolution")
+        screen._set("background_interval", 30.0)
+        self.assertEqual(jobs.intervals["evolution"], 30.0)
+        self.assertEqual({k: v for k, v in jobs.intervals.items() if k != "evolution"}, others)
+        # And the statistics the center reads say the same.
+        self.assertEqual(self.shell.render_stats()["jobs"]["evolution"]["every"], 30.0)
+
+    def test_the_settings_rows_say_in_effect_and_whether_saved(self):
+        screen = self.shell.screens["evolution"]
+        self.shell.go("evolution")
+        screen._go_section("settings")
+        saved = screen._saved_values()
+        self.assertEqual(screen._setting_state("poll_interval", saved)[0], "IN EFFECT NOW · SAVED")
+        screen._set("poll_interval", 5.0)
+        self.assertEqual(screen._setting_state("poll_interval", screen._saved_values())[0],
+                         "IN EFFECT NOW · NOT SAVED")
+        self.assertEqual(self.center.poll_interval, 5.0)
 
 
 if __name__ == "__main__":

@@ -20,7 +20,7 @@ new sample changed what is shown, which is at most once per poll interval.
 from __future__ import annotations
 
 import time
-from typing import Callable, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
 
 from ..widgets import (
     BarRun, Element, Label, Meter, RenderContext, ScrollPanel, StandardButton,
@@ -123,6 +123,19 @@ class Rows(Element):
                 draw_text(cr, ctx, f"+{more} MORE — SCROLL", x + w, y + h, rh * 0.36,
                           ctx.ink("accent3"), align="right", valign="bottom")
 
+
+
+def _took_effect(record: Dict[str, object]) -> str:
+    """Whether an applied or rolled-back change is in effect, in a sentence.
+
+    From what happened, not from what the setting usually does: the change
+    record says whether the running shell put it into effect.
+    """
+    if record.get("in_effect_now"):
+        return "In effect now."
+    if record.get("restart"):
+        return "Restart Earth OS for it to take effect."
+    return "Recorded, not yet in effect: nothing running could apply it — it applies when Earth OS next starts."
 
 def _stamp(at: object) -> str:
     try:
@@ -484,16 +497,40 @@ class EvolutionScreen(Screen):
         ("explain", "REWORD WITH A MODEL", ((True, "ON"), (False, "OFF"))),
     )
 
+    def _saved_values(self) -> Dict[str, object]:
+        """The ``[evolution]`` block as ``config.toml`` holds it, read now."""
+        import tomllib
+        try:
+            with open(self.app.config.path, "rb") as fh:
+                block = tomllib.load(fh).get("evolution", {})
+        except (OSError, ValueError):
+            return {}
+        return block if isinstance(block, dict) else {}
+
+    def _setting_state(self, key: str, saved: Dict[str, object]) -> Tuple[str, str]:
+        """What a person needs to know about one setting: is it in effect, is it kept."""
+        live = self.app.config.get("evolution", key, None)
+        kept = key in saved and saved[key] == live
+        if key == "background_interval" and not callable(getattr(self.app, "settings_hook", None)):
+            when = "NO WINDOW"           # a headless shell has no background job to change
+        else:
+            when = "IN EFFECT NOW"
+        return f"{when} · {'SAVED' if kept else 'NOT SAVED'}", ("accent5" if kept else "accent4")
+
     def _build_settings(self, ctx: RenderContext, body) -> None:
         u = ctx.u
         x, y, w, h = body
         cfg = self.app.config
+        saved = self._saved_values()
         for r, (key, label, options) in enumerate(self.SETTINGS):
             ry = y + r * u(2.4)
             self.g.add(Label(f"set_l_{r}", (x, ry, w * 0.26, u(1.8)), text=label,
                              size=u(0.72), color="accent5", valign="middle"))
             current = cfg.get("evolution", key, options[0][0])
-            bw = (w * 0.72 - u(0.4) * (len(options) - 1)) / len(options)
+            state, slot = self._setting_state(key, saved)
+            self.g.add(Label(f"set_s_{r}", (x + w * 0.80, ry, w * 0.20, u(1.8)), text=state,
+                             size=u(0.56), color=slot, valign="middle", align="right"))
+            bw = (w * 0.50 - u(0.4) * (len(options) - 1)) / len(options)
             for i, (value, text) in enumerate(options):
                 on = (bool(current) == value) if isinstance(value, bool) \
                     else abs(float(current) - float(value)) < 1e-6
@@ -506,14 +543,19 @@ class EvolutionScreen(Screen):
         self._add_detail((x, top, w, y + h - top))
 
     def _set(self, key: str, value) -> None:
-        """One of the center's own settings, for this session.
+        """One of the center's own settings, changed by a person's press.
 
-        The same convention as the SETTINGS screen: it applies now, and SAVE
-        there is what writes ``config.toml``. This is a person pressing a
-        button, not the center changing its own configuration.
+        The same convention as the SETTINGS screen: it is in effect at once
+        — the shell applies it, the background timer included — and SAVE
+        there is what writes ``config.toml``. Each row says both. This is a
+        person pressing a button, not the center changing its own settings.
         """
         self.app.config.values.setdefault("evolution", {})[key] = value
-        self.invalidate()
+        apply = getattr(self.app, "apply_setting", None)
+        live = bool(apply("evolution", key)) if callable(apply) else False
+        label = next((l for k, l, _o in self.SETTINGS if k == key), key)
+        self._after(f"{label}: {'in effect now' if live else 'recorded; not in effect — no window is running'}. "
+                    "SAVE on the SETTINGS screen keeps it after a restart.")
 
     # -- the detail pane ---------------------------------------------------------
     def _blocks(self) -> List[Block]:
@@ -602,10 +644,19 @@ class EvolutionScreen(Screen):
                                   "in config.toml — backed up first.", "accent4"))
             if p.applied:
                 blocks.append(("Applied", f"{p.applied.get('setting')} = {p.applied.get('value')} "
-                                          f"(was {p.applied.get('previous')}). Backup: "
-                                          f"{p.applied.get('backup') or 'none needed'}."
-                                          + (" Restart Earth OS for it to take effect."
-                                             if p.applied.get("restart") else ""), "accent4"))
+                                          f"(was {p.applied.get('previous')}). "
+                                          + _took_effect(p.applied) + " Backup: "
+                                          f"{p.applied.get('backup') or 'none needed'}.", "accent4"))
+                reverted = p.applied.get("reverted")
+                if isinstance(reverted, dict):
+                    blocks.append(("Rolled back", f"{p.applied.get('setting')} restored to "
+                                                  f"{reverted.get('restored')}. "
+                                                  + _took_effect(reverted)
+                                                  + (" The whole file was restored from the backup."
+                                                     if reverted.get("whole_file_restored") else
+                                                     " Only that key was restored: the file had "
+                                                     "been edited since, and those edits were kept."),
+                                   "accent4"))
             if p.measured:
                 from ..evolution.reporter import _vitals
                 for label in ("before", "after"):
@@ -650,11 +701,15 @@ class EvolutionScreen(Screen):
 
         if section == "settings":
             from ..evolution.changes import TUNABLES
-            return [("These apply now, for this session",
-                     "SAVE on the SETTINGS screen writes them to config.toml. WHILE HIDDEN "
-                     "takes effect when Earth OS is next started.", "accent5"),
+            return [("When these take effect",
+                     "At once, all four — the background timer is replaced on the press. "
+                     "They last for this session: SAVE on the SETTINGS screen writes them "
+                     "to config.toml. Each row says whether it is saved.", "accent5"),
                     ("What the center may change, once you approve it",
-                     "\n".join(f"[{t.section}] {t.key} — {t.what}" for t in TUNABLES.values()),
+                     "\n".join(f"[{t.section}] {t.key} — {t.what}"
+                               + ("  (needs a restart)" if t.restart else "")
+                               for t in TUNABLES.values())
+                     + "\nEverything not marked takes effect the moment it is applied.",
                      "text"),
                     ("What it may never do",
                      "Install a package. Run a command. Edit source code. Delete anything. "
@@ -834,8 +889,7 @@ class EvolutionScreen(Screen):
             self._after(str(exc))
             return
         if proposal.applied:
-            restart = " Restart Earth OS for it to take effect." if proposal.applied.get("restart") else ""
-            self._after(f"{pid}: setting changed, backup taken.{restart}")
+            self._after(f"{pid}: setting changed, backup taken. {_took_effect(proposal.applied)}")
         else:
             self._after(f"{pid}: in development. The work is yours; nothing was changed.")
 

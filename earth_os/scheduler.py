@@ -443,6 +443,10 @@ class Background:
         self._jobs: Dict[str, Handle] = {}
         self.ran: Dict[str, int] = {}
         self.changed: Dict[str, int] = {}
+        #: Each running job's interval in seconds, as it was actually armed.
+        #: What a setting says and what the timer does can differ — the
+        #: setting may have changed since — so this is the one to report.
+        self.intervals: Dict[str, float] = {}
 
     def add(self, name: str, seconds: float,
             job: Callable[[], Optional[bool]]) -> None:
@@ -465,8 +469,10 @@ class Background:
             return True
 
         self._jobs[name] = self.timers.every(max(seconds, 0.01), run)
+        self.intervals[name] = max(float(seconds), 0.01)
 
     def remove(self, name: str) -> None:
+        self.intervals.pop(name, None)
         handle = self._jobs.pop(name, None)
         if handle is not None:
             try:

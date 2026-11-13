@@ -310,7 +310,7 @@ DEFAULTS: Dict[str, Any] = {
         "process_interval": 5.0,
         # While it is not on screen: one trend sample this often, from
         # readings the shell already holds. 0 = nothing at all while hidden.
-        # Read when Earth OS starts.
+        # A change applies at once: the running timer is replaced.
         "background_interval": 60.0,
         # Samples kept for behaviour over time, in memory only.
         "history": 360,

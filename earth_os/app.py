@@ -204,8 +204,50 @@ class EarthWindow(Gtk.ApplicationWindow):
         # have been doing. Published as a callable so reading it is the
         # reader's cost, paid only when something asks.
         shell.render_stats = self.render_stats
+        # A setting the window owns, changed while running, is applied here
+        # rather than waiting for a restart: see :meth:`apply_setting`.
+        shell.settings_hook = self.apply_setting
         self._start_background(shell)
         self.frames.request_frame()
+
+    #: Settings this window reads, and so can apply while running.
+    FRAME_SETTINGS = ("fps", "idle_fps", "adaptive", "interaction_grace")
+    JOB_SETTINGS = (("shell", "telemetry_interval"), ("shell", "tick_interval"),
+                    ("windows", "poll_interval"), ("evolution", "background_interval"),
+                    ("evolution", "enabled"))
+
+    def apply_setting(self, section: str, key: str) -> bool:
+        """Put a changed setting into effect now. True if this window did.
+
+        Until this existed every one of these was read once, at
+        :meth:`attach`, so changing one meant restarting Earth OS — and the
+        System Evolution Center's SETTINGS said a change applied "now" while
+        the timer it governed went on at its old rate. Each branch uses a
+        path that already exists for exactly this: the scheduler's own
+        ``reconfigure``, which cancels the old timer before arming the new,
+        and ``Background.add``, which replaces a job rather than adding a
+        second one. Only the interface thread touches timers.
+        """
+        shell = self.shell
+        if shell is None:
+            return False
+        config = shell.config
+        if section == "shell" and key in self.FRAME_SETTINGS:
+            self.frames.reconfigure(
+                fps=max(int(config.get("shell", "fps", 30)), 5),
+                idle_fps=float(config.get("shell", "idle_fps", 0) or 0),
+                grace=float(config.get("shell", "interaction_grace", 0.45)),
+                enabled=bool(config.get("shell", "adaptive", True)))
+        elif (section, key) == ("shell", "frame_cache"):
+            self._cache_enabled = bool(config.get("shell", "frame_cache", True))
+        elif (section, key) == ("shell", "phosphor"):
+            pass                        # read on every draw; a frame shows it
+        elif (section, key) in self.JOB_SETTINGS:
+            self._start_background(shell)
+        else:
+            return False
+        self.frames.request_frame()
+        return True
 
     def render_stats(self) -> dict:
         """Frame and background-job statistics, measured, for the shell.
@@ -217,7 +259,8 @@ class EarthWindow(Gtk.ApplicationWindow):
         stats = dict(self.frames.stats())
         stats["frame_cache"] = bool(self._cache_enabled)
         stats["jobs"] = {name: {"ran": self.jobs.ran.get(name, 0),
-                                "changed": self.jobs.changed.get(name, 0)}
+                                "changed": self.jobs.changed.get(name, 0),
+                                "every": self.jobs.intervals.get(name, 0.0)}
                          for name in self.jobs.names}
         return stats
 
@@ -229,6 +272,10 @@ class EarthWindow(Gtk.ApplicationWindow):
         often the machine looked for a new window to how smoothly it drew —
         two unrelated things. Each job returns True when it changed
         something a person would see, and only then is a frame asked for.
+
+        Safe to call again while running: a job whose interval is unchanged
+        is left alone, one whose interval changed is replaced, and the
+        System Evolution Center's job is removed when its interval is 0.
         """
         config = shell.config
         poll = max(float(config.get("windows", "poll_interval", 1.2)), 0.2)
@@ -282,11 +329,9 @@ class EarthWindow(Gtk.ApplicationWindow):
             self._publish_frame_rect()
             return False
 
-        self.jobs.add("windows", poll, windows)
-        self.jobs.add("godcore", max(poll, 1.0), godcore)
-        self.jobs.add("screenshots", 1.0, screenshots)
-        self.jobs.add("telemetry", telemetry, readings)
-        self.jobs.add("ticks", tick, ticks)
+        wanted = {"windows": (poll, windows), "godcore": (max(poll, 1.0), godcore),
+                  "screenshots": (1.0, screenshots), "telemetry": (telemetry, readings),
+                  "ticks": (tick, ticks)}
 
         # The System Evolution Center keeps a slow trend while it is not on
         # screen, so "has memory been growing" has more to go on than the
@@ -295,7 +340,13 @@ class EarthWindow(Gtk.ApplicationWindow):
         # once, and 0 switches it off.
         slow = float(config.get("evolution", "background_interval", 60.0) or 0.0)
         if slow > 0 and bool(config.get("evolution", "enabled", True)):
-            self.jobs.add("evolution", max(slow, 5.0), shell.evolution_background)
+            wanted["evolution"] = (max(slow, 5.0), shell.evolution_background)
+        else:
+            self.jobs.remove("evolution")
+
+        for name, (seconds, job) in wanted.items():
+            if self.jobs.intervals.get(name) != max(float(seconds), 0.01):
+                self.jobs.add(name, seconds, job)
 
     # ------------------------------------------------------------------
     def _on_draw(self, area, cr, width, height) -> None:

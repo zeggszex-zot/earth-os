@@ -125,6 +125,10 @@ class Shell:
         #: is no window (headless, a test, a robot), and anything that reads
         #: it says "unavailable" rather than reporting zero frames.
         self.render_stats: Optional[Callable[[], Dict[str, object]]] = None
+        #: Puts a changed setting the window owns into effect: the frame
+        #: clock, the frame cache, the background jobs' intervals. Published
+        #: by the window when it attaches; see :meth:`apply_setting`.
+        self.settings_hook: Optional[Callable[[str, str], bool]] = None
 
         self.palette = self._load_palette()
         self.strings = self._load_strings()
@@ -929,6 +933,36 @@ class Shell:
             self._evolution = None
         return self._evolution
 
+    #: Settings the running shell reads every time it uses them: a change to
+    #: one is in effect at once with nothing more to do.
+    READ_LIVE = (("evolution", "poll_interval"), ("evolution", "process_interval"),
+                 ("evolution", "explain"))
+
+    def apply_setting(self, section: str, key: str) -> bool:
+        """Put ``[section] key`` into effect now. True if it is in effect.
+
+        Called after a setting's value in :attr:`config` has changed — by a
+        button on the center's SETTINGS, or by the center's one actuator once
+        a person has approved a change. False means it is recorded but not
+        yet in effect: there is no window to apply it (a report run from a
+        terminal), voice is off, or the setting is one that genuinely needs a
+        restart. Callers say so rather than assume.
+        """
+        if (section, key) in self.READ_LIVE:
+            return True
+        if (section, key) == ("voice", "continuous"):
+            if self.voice is None:
+                return False
+            self.voice.continuous = bool(self.config.get("voice", "continuous", False))
+            return True
+        hook = self.settings_hook
+        if callable(hook):
+            try:
+                return bool(hook(section, key))
+            except Exception as exc:                  # a setting must not stop the shell
+                self.evolution_error = f"applying [{section}] {key}: {type(exc).__name__}: {exc}"
+        return False
+
     def evolution_background(self) -> bool:
         """One slow trend sample while the center is not on show.
 
@@ -941,6 +975,8 @@ class Shell:
         center = self._evolution
         if center is None:
             return False
+        if float(self.config.get("evolution", "background_interval", 60.0) or 0.0) <= 0:
+            return False                  # NEVER: a timer that outlived its setting does nothing
         if self.current == "evolution" and not self.handed_over_to:
             return False
         try:

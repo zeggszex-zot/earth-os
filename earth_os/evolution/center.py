@@ -56,7 +56,8 @@ class EvolutionCenter:
         self.health = HealthAnalyzer(self.trends)
         self.advisor = OptimizationAdvisor()
         self.registry = CapabilityRegistry()
-        self.applier = ChangeApplier(getattr(port, "config", None), self.store)
+        self.applier = ChangeApplier(getattr(port, "config", None), self.store,
+                                     on_change=getattr(port, "apply_setting", None))
         self.planner = Planner(self.store, self.applier)
 
         self.snapshot: Optional[Snapshot] = None
@@ -323,8 +324,8 @@ class EvolutionCenter:
         testing = []
         if item.restart:
             testing.append("Restart Earth OS so the setting takes effect.")
-        testing += ["Leave the center open for two minutes, then compare the readings "
-                    "recorded at implementation with the readings now.",
+        testing += ["Use Earth OS as you normally would for at least two minutes after "
+                    "the change, then read MEASURED BEFORE → AFTER on this proposal.",
                     f"Check what it costs is acceptable: {item.drawbacks}"]
         if item.change is None:
             testing = ["Carry out by hand: " + item.reason] + testing[-1:]
