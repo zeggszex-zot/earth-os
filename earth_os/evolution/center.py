@@ -178,6 +178,11 @@ class EvolutionCenter:
             "frames_drawn": render.get("frames_drawn") if isinstance(render, dict) else None,
             "draw_ms": render.get("draw_ms_mean") if isinstance(render, dict)
             and render.get("draws_timed") else None,
+            "cpu_time": snap.value("own_cpu_time"),                     # type: ignore[dict-item]
+            "draws_timed": render.get("draws_timed") if isinstance(render, dict) else None,
+            "draw_total_ms": (float(render.get("draw_ms_mean") or 0.0)
+                              * float(render.get("draws_timed") or 0))
+            if isinstance(render, dict) else None,
         }
         return Sample(at=now, wall=snap.taken, values=values, visible=visible)
 
@@ -227,24 +232,39 @@ class EvolutionCenter:
         return self._survey
 
     def vitals(self) -> Dict[str, object]:
-        """The current readings worth comparing before and after a change.
+        """The figures for the minutes up to now: what *before* a change was.
 
-        All measured, each with the number of samples and the span it rests
-        on. Kept on a proposal when it is implemented and again when it is
-        verified; the difference is the only *measured* effect the center
-        ever reports for a change.
+        Kept on a proposal when it is implemented. Every figure is measured
+        and carries its spread and how many intervals it rests on; see
+        :mod:`.compare`.
         """
-        out: Dict[str, object] = {"at": time.time(), "samples": len(self.trends),
-                                  "span_seconds": round(self.trends.span(), 1)}
-        for name in ("cpu", "memory", "own_memory", "draw_ms"):
-            stat = self.trends.stat(name, 120.0)
-            if stat is not None:
-                out[name] = {"mean": stat.mean, "low": stat.low, "high": stat.high,
-                             "samples": stat.count, "span_seconds": round(stat.span, 1)}
-        rate = self.trends.rate("frames_drawn", 120.0)
-        if rate is not None:
-            out["frames_per_second"] = rate
+        from .compare import BEFORE_SECONDS, summarize
+        now = time.time()
+        out = summarize(self.trends.between(now - BEFORE_SECONDS, now + 1.0))
+        out["at"] = now
         return out
+
+    def after_change(self, proposal) -> Dict[str, object]:
+        """The figures since *proposal*'s change settled: what *after* is.
+
+        Only samples from :data:`~.compare.SETTLE_SECONDS` after the change
+        count, so the two windows never share a sample.
+        """
+        from .compare import SETTLE_SECONDS, summarize
+        changed = (getattr(proposal, "measured", None) or {}).get("changed_at")
+        if not isinstance(changed, (int, float)):
+            return {"samples": 0, "figures": {}}
+        out = summarize(self.trends.between(float(changed) + SETTLE_SECONDS))
+        out["at"] = time.time()
+        return out
+
+    def comparison(self, proposal) -> Dict[str, object]:
+        """Before against after for *proposal*: stored once verified, live until then."""
+        from .compare import compare
+        measured = getattr(proposal, "measured", None) or {}
+        if isinstance(measured.get("comparison"), dict):
+            return measured["comparison"]
+        return compare(measured.get("before"), self.after_change(proposal))
 
     def overhead(self) -> Dict[str, float]:
         """What sampling has cost this session, measured."""
@@ -354,6 +374,7 @@ class EvolutionCenter:
             title=item.title, kind="optimization", source=f"optimization:{item.id}",
             summary=f"{item.changes} WHY: {item.why} EXPECTED ({item.benefits}) "
                     f"BASIS: {item.basis} COST: {item.drawbacks}",
+            expected=item.benefits, basis=item.basis,
             priority="HIGH" if item.state == RECOMMENDED else "NORMAL", difficulty="LOW",
             testing=testing, rung=0, restart=item.restart, reverse=item.reverse,
             change=item.change)

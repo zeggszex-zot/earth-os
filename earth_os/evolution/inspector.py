@@ -20,6 +20,7 @@ snapshot with half of it unavailable rather than an exception.
 from __future__ import annotations
 
 import os
+import time
 from typing import List, Optional
 
 from .model import Reading, Snapshot
@@ -80,6 +81,12 @@ class Inspector:
         """
         snap = Snapshot()
         put = snap.put
+
+        # Earth OS's own processor seconds so far, every thread included.
+        # Not a reading of the machine — this process's own clock, the way
+        # the center already times its own samples — and the one figure
+        # that says directly what an optimization of Earth OS did.
+        put(Reading("own_cpu_time", time.process_time()))
 
         self._from_monitor(snap, "cpu", "cpu", lambda m: float(m.cpu()))
 

@@ -98,8 +98,15 @@ class Proposal:
     events: List[Dict[str, object]] = field(default_factory=list)
     #: What :mod:`.changes` recorded when the change was applied.
     applied: Optional[Dict[str, object]] = None
-    #: Readings taken at application and at verification, when there are any.
+    #: What was measured: ``before`` (the minutes up to implementation),
+    #: ``changed_at`` (when the change took place: the APPLY press for a
+    #: setting, the start of TESTING for work done by hand), ``after`` and
+    #: ``comparison`` (once verified). See :mod:`.compare`.
     measured: Dict[str, object] = field(default_factory=dict)
+    #: The estimate the proposal arrived with, kept apart from the summary
+    #: so that it is never shown beside a measurement without its label.
+    expected: str = ""
+    basis: str = ""
 
     @property
     def open(self) -> bool:
@@ -205,7 +212,8 @@ class Planner:
                  dependencies: Optional[List[str]] = None,
                  testing: Optional[List[str]] = None, rung: int = 0,
                  restart: bool = False, reverse: str = "",
-                 change: Optional[Dict[str, object]] = None) -> Tuple[Proposal, bool]:
+                 change: Optional[Dict[str, object]] = None,
+                 expected: str = "", basis: str = "") -> Tuple[Proposal, bool]:
         """Write down that something was noticed. Returns ``(proposal, created)``.
 
         Noticing again what is already on the roadmap creates nothing, in any
@@ -221,7 +229,8 @@ class Planner:
             difficulty=difficulty if difficulty in DIFFICULTIES else "MODERATE",
             dependencies=list(dependencies or []), testing=list(testing or []),
             rung=int(rung), restart=bool(restart), reverse=reverse,
-            change=dict(change) if isinstance(change, dict) else None)
+            change=dict(change) if isinstance(change, dict) else None,
+            expected=str(expected or ""), basis=str(basis or ""))
         self._next += 1
         self.proposals[proposal.id] = proposal
         self._record(proposal, DISCOVERED, by="engine", note="noticed by the center")
@@ -334,6 +343,9 @@ class Planner:
                 raise Refused(str(exc)) from exc
         if before:
             proposal.measured["before"] = dict(before)
+        if proposal.automatic:
+            # The setting changed on this press: after-figures start here.
+            proposal.measured["changed_at"] = time.time()
         self._move(proposal, IN_DEVELOPMENT, by,
                    note or ("setting changed; backup taken" if proposal.automatic
                             else "work started"))
@@ -343,6 +355,10 @@ class Planner:
         proposal = self.get(pid)
         self._person(by)
         self._move(proposal, TESTING, by, note or "testing")
+        # Work done by hand is in place by the time it is tested: after-
+        # figures start here. A setting's change time is already recorded.
+        proposal.measured.setdefault("changed_at", time.time())
+        self.save()
         return proposal
 
     def complete(self, pid: str, by: str, note: str = "",
@@ -350,8 +366,13 @@ class Planner:
         """Verification: the testing requirements were met, on *by*'s word."""
         proposal = self.get(pid)
         self._person(by)
+        if proposal.status != TESTING:
+            raise Refused(f"{proposal.id} is {proposal.status}: only work in TESTING "
+                          "can be verified")
         if after:
+            from .compare import compare
             proposal.measured["after"] = dict(after)
+            proposal.measured["comparison"] = compare(proposal.measured.get("before"), after)
         self._move(proposal, COMPLETED, by, note or "verified", only_from=(TESTING,))
         return proposal
 

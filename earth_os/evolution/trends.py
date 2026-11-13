@@ -17,7 +17,11 @@ from typing import Deque, Dict, List, Optional
 #: The fields a sample may carry. A field a sample has no value for is None,
 #: and is left out of every figure rather than counted as zero.
 FIELDS = ("cpu", "memory", "memory_used", "swap_used", "disk", "temperature",
-          "processes", "own_memory", "frames_drawn", "draw_ms")
+          "processes", "own_memory", "frames_drawn", "draw_ms",
+          # Running totals, for before-and-after comparisons (compare.py):
+          # Earth OS's processor seconds, frames timed, and milliseconds
+          # spent drawing them. A window's figure is the change in each.
+          "cpu_time", "draws_timed", "draw_total_ms")
 
 
 @dataclass(frozen=True)
@@ -93,6 +97,15 @@ class Trends:
             return list(self._samples)
         cutoff = self._samples[-1].at - seconds
         return [s for s in self._samples if s.at >= cutoff]
+
+    def between(self, since: float = float("-inf"),
+                until: float = float("inf")) -> List[Sample]:
+        """The samples taken at wall-clock times in ``[since, until)``.
+
+        Wall time, not monotonic, because a comparison's edges are moments
+        stored on a proposal — the time a change was applied.
+        """
+        return [s for s in self._samples if since <= s.wall < until]
 
     def latest(self) -> Optional[Sample]:
         return self._samples[-1] if self._samples else None

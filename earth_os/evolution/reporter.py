@@ -18,7 +18,10 @@ from typing import Dict, List, Tuple
 
 from ..capability_corpus import rank_memory
 from .health import counts, worst
-from .model import CATEGORIES, STATUSES, Snapshot, human_bytes, human_span
+from .model import (
+    CATEGORIES, COMPLETED, IN_DEVELOPMENT, ROLLED_BACK, STATUSES, TESTING, Snapshot,
+    human_bytes, human_span,
+)
 
 KINDS: Dict[str, str] = {
     "health": "System health report",
@@ -277,9 +280,22 @@ class Reporter:
                 rows.append(("Applied", f"{p.applied.get('setting')} = {p.applied.get('value')} "
                                         f"(was {p.applied.get('previous')}); "
                                         f"backup {p.applied.get('backup') or 'none needed'}"))
+            if p.expected:
+                rows.append(("Expected — an ESTIMATE, not a measurement",
+                             p.expected + (f" Basis: {p.basis}" if p.basis else "")))
             for label in ("before", "after"):
                 if label in p.measured:
                     rows.append((f"Measured {label}", _vitals(p.measured[label])))
+            if "before" in p.measured and p.status in (IN_DEVELOPMENT, TESTING, COMPLETED,
+                                                       ROLLED_BACK):
+                comparison = self.center.comparison(p)
+                verified = isinstance(p.measured.get("comparison"), dict)
+                heading = ("MEASURED before → after" if verified
+                           else "MEASURED before → after, so far (not yet verified)")
+                for row in comparison.get("rows") or []:
+                    rows.append((f"{heading}: {row['label']}", _comparison_row(row)))
+                for note in comparison.get("notes") or []:
+                    rows.append((f"{heading}: note", note))
             history = [f"{time.strftime('%Y-%m-%d %H:%M', time.localtime(e.get('at', 0)))}  "
                        f"{e.get('status')}  by {e.get('by')}  — {e.get('note')}"
                        for e in p.events]
@@ -313,9 +329,27 @@ class Reporter:
         return "\n".join(out)
 
 
+def _comparison_row(row: Dict[str, object]) -> str:
+    from .compare import format_figure
+    change = float(row["delta"])
+    sign = "+" if change >= 0 else "−"
+    percent = row.get("percent")
+    rel = f", {sign}{abs(float(percent)):.0f}%" if isinstance(percent, (int, float)) else ""
+    return (f"{format_figure(row, 'before')} → {format_figure(row, 'after')} "
+            f"({sign}{format_figure({**row, 'delta': abs(change)}, 'delta')}{rel}) — "
+            f"{row['verdict']} ({row['n_before']} and {row['n_after']} intervals)")
+
+
 def _vitals(vitals: object) -> str:
     if not isinstance(vitals, dict):
         return "none"
+    if "figures" in vitals:                         # the current format: compare.summarize
+        span = human_span(float(vitals.get("span_seconds") or 0.0))
+        on = vitals.get("center_on_screen")
+        where = f", center on screen {float(on):.0%} of the time" if isinstance(on, (int, float)) else ""
+        if not vitals.get("samples"):
+            return "no samples in that window"
+        return f"{vitals.get('samples')} samples over {span}{where}"
     parts = []
     for name, label, pct in (("cpu", "processor", True), ("memory", "memory", True),
                              ("draw_ms", "draw", False)):

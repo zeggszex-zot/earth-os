@@ -1379,12 +1379,14 @@ class TestNothingChangesWithoutApproval(unittest.TestCase):
         proposal = self.optimization(APPROVED)
         self.planner.implement(proposal.id, by="operator", before=self.center.vitals())
         self.planner.begin_testing(proposal.id, by="operator")
-        self.planner.complete(proposal.id, by="operator", after=self.center.vitals())
+        self.planner.complete(proposal.id, by="operator",
+                              after=self.center.after_change(proposal))
         self.assertEqual(proposal.status, COMPLETED)
-        self.assertEqual(set(proposal.measured), {"before", "after"})
+        self.assertEqual(set(proposal.measured), {"before", "changed_at", "after", "comparison"})
         text = Reporter.as_text(self.center.report("progress"))
         self.assertIn("Measured before", text)
         self.assertIn("Measured after", text)
+        self.assertIn("an ESTIMATE, not a measurement", text)
 
     def test_work_for_a_person_changes_no_file_at_all(self):
         entry = next(e for e in self.center.capabilities() if e.id == "service-state")
@@ -1817,6 +1819,140 @@ class TestItIsCheap(unittest.TestCase):
         source = (ROOT / "earth_os" / "app.py").read_text(encoding="utf-8")
         self.assertIn('config.get("evolution", "background_interval", 60.0)', source)
         self.assertIn("slow > 0", source)
+
+
+class TestBeforeAndAfter(unittest.TestCase):
+    """What an approved change measurably did, kept apart from what was expected."""
+
+    def series(self, start_wall, count, step=1.0, cpu_per_s=0.02, fps=1.0, ms=10.0,
+               memory=100.0, visible=True, jitter=0.0):
+        """Samples whose running totals grow at known rates."""
+        from earth_os.evolution.trends import Sample
+        out, cpu, frames, drawn = [], 0.0, 0.0, 0.0
+        for i in range(count):
+            wobble = jitter * (1 if i % 2 else -1)
+            out.append(Sample(at=start_wall + i * step, wall=start_wall + i * step, visible=visible,
+                              values={"cpu_time": cpu, "frames_drawn": frames,
+                                      "draws_timed": frames, "draw_total_ms": drawn,
+                                      "own_memory": memory * 1024 * 1024, "cpu": 0.2, "memory": 0.5}))
+            cpu += (cpu_per_s + wobble) * step
+            frames += fps * step
+            drawn += fps * step * ms
+        return out
+
+    def test_a_window_is_worked_out_from_its_own_counters(self):
+        from earth_os.evolution.compare import summarize
+        figures = summarize(self.series(1000.0, 11, cpu_per_s=0.03, fps=2.0, ms=12.5))["figures"]
+        self.assertAlmostEqual(figures["own_cpu"]["mean"], 3.0)            # % of one core
+        self.assertAlmostEqual(figures["frames_per_second"]["mean"], 2.0)
+        self.assertAlmostEqual(figures["draw_ms"]["mean"], 12.5)
+        self.assertAlmostEqual(figures["own_memory"]["mean"], 100.0)
+        self.assertEqual(figures["own_cpu"]["n"], 10)
+
+    def test_the_time_to_draw_a_frame_is_this_windows_not_the_sessions(self):
+        """The window's own frames, not the mean since the window opened:
+        that mean would dilute an after-figure with every frame before it."""
+        from earth_os.evolution.compare import summarize
+        before = self.series(1000.0, 6, ms=20.0)
+        after = self.series(2000.0, 6, ms=5.0)
+        # Continue the totals across the change, as a real session would.
+        offset = before[-1].values
+        for sample in after:
+            for key in ("cpu_time", "frames_drawn", "draws_timed", "draw_total_ms"):
+                sample.values[key] += offset[key]
+        self.assertAlmostEqual(summarize(after)["figures"]["draw_ms"]["mean"], 5.0)
+
+    def test_a_clear_change_is_called_measured_and_noise_is_not(self):
+        from earth_os.evolution.compare import MEASURED, TOO_FEW, WITHIN, compare, summarize
+        before = summarize(self.series(0.0, 20, cpu_per_s=0.05, jitter=0.005))
+        lower = summarize(self.series(100.0, 20, cpu_per_s=0.02, jitter=0.005))
+        same = summarize(self.series(100.0, 20, cpu_per_s=0.0505, jitter=0.005))
+        few = summarize(self.series(100.0, 3, cpu_per_s=0.02))
+        row = lambda c: next(r for r in c["rows"] if r["key"] == "own_cpu")
+        self.assertEqual(row(compare(before, lower))["verdict"], MEASURED)
+        self.assertAlmostEqual(row(compare(before, lower))["delta"], -3.0)
+        self.assertEqual(row(compare(before, same))["verdict"], WITHIN)
+        self.assertEqual(row(compare(before, few))["verdict"], TOO_FEW)
+
+    def test_not_like_for_like_is_said(self):
+        from earth_os.evolution.compare import compare, summarize
+        result = compare(summarize(self.series(0.0, 10, visible=True)),
+                         summarize(self.series(100.0, 10, visible=False)))
+        self.assertTrue(any("Not like for like" in n for n in result["notes"]))
+        self.assertTrue(any("context, not the effect" in n for n in result["notes"]))
+
+    def test_nothing_recorded_or_nothing_since_says_so(self):
+        from earth_os.evolution.compare import compare, summarize
+        self.assertEqual(compare(None, summarize(self.series(0.0, 5)))["rows"], [])
+        self.assertIn("Nothing has been sampled since",
+                      compare(summarize(self.series(0.0, 5)), {"samples": 0})["notes"][0])
+        # A record from before comparisons existed is not misread.
+        old = {"cpu": {"mean": 0.2, "samples": 3}, "at": 1.0}
+        self.assertIn("No before-figures", compare(old, summarize(self.series(0.0, 5)))["notes"][0])
+
+    def test_earth_os_own_processor_time_agrees_with_the_kernel(self):
+        """The new reading, against /proc/self/stat (utime + stime)."""
+        shell, center = make_shell()
+        ticks = os.sysconf("SC_CLK_TCK")
+        snap = center.inspector.snapshot()
+        fields = Path("/proc/self/stat").read_text().rsplit(")", 1)[1].split()
+        kernel = (int(fields[11]) + int(fields[12])) / ticks
+        self.assertAlmostEqual(snap.value("own_cpu_time"), kernel, delta=0.05)
+
+    def test_after_never_shares_a_sample_with_before(self):
+        shell, center = make_shell()
+        for _ in range(4):
+            center.sample(visible=True, force=True)
+        proposal = center.propose_from("optimization", "phosphor-off", by="operator")
+        center.planner.approve(proposal.id, by="operator")
+        center.planner.implement(proposal.id, by="operator", before=center.vitals())
+        changed = proposal.measured["changed_at"]
+        self.assertEqual(proposal.measured["before"]["samples"], 4)
+        self.assertLessEqual(proposal.measured["before"]["to"], changed)
+        # Samples taken now fall inside the settling time and are left out.
+        center.sample(visible=True, force=True)
+        self.assertEqual(center.after_change(proposal)["samples"], 0)
+
+    def test_a_real_change_in_load_is_measured(self):
+        """End to end on this process: sample while idle, record a change,
+        then make the process busy, and the comparison must see it — as a
+        measured difference, on Earth OS's own processor time."""
+        from earth_os.evolution import compare as compare_module
+        shell, center = make_shell()
+        proposal = center.propose_from("optimization", "phosphor-off", by="operator")
+        center.planner.approve(proposal.id, by="operator")
+        for _ in range(8):
+            center.sample(visible=True, force=True)
+            time.sleep(0.05)
+        real_settle = compare_module.SETTLE_SECONDS
+        compare_module.SETTLE_SECONDS = 0.0
+        try:
+            center.planner.implement(proposal.id, by="operator", before=center.vitals())
+            for _ in range(8):
+                end = time.perf_counter() + 0.05
+                while time.perf_counter() < end:
+                    pass                                       # busy: the "after"
+                center.sample(visible=True, force=True)
+            center.planner.begin_testing(proposal.id, by="operator")
+            center.planner.complete(proposal.id, by="operator",
+                                    after=center.after_change(proposal))
+        finally:
+            compare_module.SETTLE_SECONDS = real_settle
+        row = next(r for r in proposal.measured["comparison"]["rows"] if r["key"] == "own_cpu")
+        self.assertGreater(row["after"], row["before"] + 30.0)
+        self.assertEqual(row["verdict"], compare_module.MEASURED)
+
+    def test_the_estimate_is_kept_apart_and_labelled(self):
+        shell, center = make_shell()
+        proposal = center.propose_from("optimization", "phosphor-off", by="operator")
+        self.assertTrue(proposal.expected.startswith("ESTIMATE:"))
+        screen = shell.screens["evolution"]
+        shell.go("evolution")
+        screen._go_section("roadmap")
+        screen.picked["roadmap"] = proposal.id
+        headings = [b[0] for b in screen._blocks()]
+        self.assertIn("Expected — an ESTIMATE, not a measurement", headings)
+        self.assertFalse(any(h.startswith("MEASURED") for h in headings))   # nothing measured yet
 
 
 class TestItHoldsLittle(unittest.TestCase):
