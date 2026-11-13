@@ -1,8 +1,10 @@
 # System Evolution Center
 
-*First functional version. The plan it was built to is
-[`SEC_ARCHITECTURE.md`](SEC_ARCHITECTURE.md), written before any file was
-touched; this is what was built, how to use it, and what testing found.*
+*First functional version, then audited (Phase 2, §10). The plan it was
+built to is [`SEC_ARCHITECTURE.md`](SEC_ARCHITECTURE.md), written before any
+file was touched; this is what was built, how to use it, and what testing
+found. §5 is the first version's results; §10 is the audit's, with every
+before-and-after measurement.*
 
 The System Evolution Center is where Earth OS looks at itself. It answers
 five questions, each from readings rather than from guesses:
@@ -84,6 +86,22 @@ every move from approval onward — and every rejection — takes a person's nam
 Approve, reject, postpone, resume and re-prioritise are buttons, and each is
 recorded with the operator's name.
 
+Once a proposal is under way its detail shows two things, kept apart:
+
+* **Expected — an ESTIMATE, not a measurement**: what the optimization said it
+  would do, and what that estimate rests on.
+* **MEASURED before → after**: Earth OS's own processor time, frames per
+  second, time to draw one frame and memory, in the five minutes before the
+  change against the time since it settled — with the whole machine's load as
+  labelled context. Each figure is called a MEASURED DIFFERENCE, WITHIN THE
+  VARIATION MEASURED, or TOO FEW SAMPLES, and a figure that was already moving
+  before the change is flagged rather than credited to it. Live while IN
+  DEVELOPMENT or TESTING; fixed when VERIFIED. How it is worked out: §10.4.
+
+The result of the last press stays in its section as **Last action — DONE,
+REFUSED or FAILED**: REFUSED when a rule said no, FAILED when the machine did,
+and either way what was left as it was.
+
 **DIAGNOSTICS** — the seven reports, built on screen and exportable as text or
 JSON into the center's `reports/` folder.
 
@@ -91,15 +109,25 @@ JSON into the center's `reports/` folder.
 is append-only.
 
 **SETTINGS** — how often it samples, and whether a model may reword findings.
-These apply for the session; SAVE on the SETTINGS screen writes them.
+All four take effect on the press — the background timer is replaced, not
+left running at its old rate. Each row says **IN EFFECT NOW** and whether the
+value is **SAVED** in `config.toml`; SAVE on the SETTINGS screen keeps them.
 
 ## 3. What it may change, and what it may never do
 
 Once a proposal that carries a setting change is APPROVED, pressing *APPLY
-CHANGE* copies `config.toml` into `backups/`, changes that one line, and
-records what changed, from what, on whose press, and how to put it back.
+CHANGE* copies `config.toml` into `backups/`, changes that one line, puts the
+new value into effect in the running Earth OS, and records what changed, from
+what, on whose press, whether it is in effect now, and how to put it back.
 *ROLL BACK* restores it — the whole file if nobody has edited it since, and
-otherwise only that one key, so nobody else's edit is undone.
+otherwise only that one key, so nobody else's edit is undone — and puts the
+old value back into effect.
+
+Every setting below takes effect at once except `[companion] keep_alive`,
+which is read when the model client is built and needs a restart. "At once"
+is a claim the suite checks in a real window for each of the twelve (§10.2).
+The record says what actually happened: with no window running (a report from
+a terminal) the change is made and recorded, and says it is not yet in effect.
 
 The settings are these and no others (`earth_os/evolution/changes.py`):
 
@@ -135,6 +163,7 @@ enabled             = true
 poll_interval       = 2.0      # seconds between samples while it is on screen
 process_interval    = 5.0      # seconds between reads of the full process list
 background_interval = 60.0     # one trend sample this often while hidden; 0 = none
+                               # (applied at once: the running timer is replaced)
 history             = 360      # samples kept in memory for trends
 explain             = true     # a model may reword findings; it is never their source
 ```
@@ -242,7 +271,10 @@ What that says:
   4.5–5.2 ms with it, and the list is only read for the three sections that
   show it.
 * **Memory: 8–13 MB** over the home screen once the engine has been loaded
-  (155.5–160.5 MB against 147.4), and nothing before that.
+  (155.5–160.5 MB against 147.4), and nothing before that. *Corrected in the
+  audit (§10.3): most of that is a one-time cost paid by whichever screen is
+  drawn second — PROGRAMS pays it too. The center's own share was about
+  4.5 MB, 3.5 of it OpenSSL, and is now about 1 MB.*
 * **Hidden, at its fastest setting**, the home screen measured 3.00, 2.95 and
   2.60% across three runs against 2.55, 2.65 and 2.45% with the center never
   opened — about 0.3 of a percentage point, at twelve times the default rate.
@@ -383,9 +415,15 @@ model says is parsed for a command, becomes a finding, or reaches a report.
 * **No GPU and no sway session.** Costs were measured with software rendering
   under Xvfb; a real display will differ, in either direction.
 * **Handing work to the built-in agent** was tested against a stand-in agent.
-  Claude Code is not installed on this machine.
+  *Correction:* the first version of this document said Claude Code was not
+  installed here. A `claude` command is on this machine's PATH, and in the
+  audit one scripted press of HAND TO CLAUDE reached the real agent (§10.6).
+  The agent's own gate was not exercised end to end.
 * **Trends last one session.** The history of samples is in memory, so a slow
   leak that takes days cannot be seen yet. It is listed under CAPABILITIES.
+  For the same reason a before-and-after comparison across a restart has only
+  the samples taken since the restart for its *after* — which is correct, but
+  needs Earth OS left running for a few minutes before VERIFIED.
 * **Not measurable at all, and said so on screen:** the state of system
   services, system logs, processor time per program, and storage beyond the
   system volume. The catalogue has no reading for them. They are listed under
@@ -419,3 +457,217 @@ measurable before the next:
    gate can verify.
 4. Run the center against a real model and a real display, and record those
    measurements here beside these.
+
+---
+
+## 10. Phase 2 — audit and resource optimization
+
+The first version was audited in place: every file under
+`earth_os/evolution/`, the screen, the configuration and scheduler wiring, the
+tests and this document. Nothing was rebuilt or replaced. The list of settings
+the center may change is the same thirteen. CDOS, the LCARS frame and
+everything below the platform boundary are untouched.
+
+Every figure below was measured on the same machine as §5, against the first
+version as committed (`d55a793`) — measured again at the start of the audit,
+not copied from §5.
+
+### 10.1 What the audit found
+
+| # | Found | Kind | Fixed by |
+|---|---|---|---|
+| 1 | `background_interval` was read once, when the window opened. Choosing NEVER left the job running; choosing a value after NEVER started none. The screen said changes applied "now". | defect | §10.2 |
+| 2 | Seven more of the thirteen settings were also read only at start, and all but `keep_alive` were marked restart-required — including `phosphor`, which is read on every frame. | inconsistency | §10.2 |
+| 3 | The optimizer kept its own hand-written copy of every restart flag, apart from the actuator's table. | duplication | §10.2 |
+| 4 | *Before* and *after* were each "the last two minutes", so an *after* taken soon after the change held *before* samples. The frame cost was the session's running mean, diluted by every frame before the change. Nothing compared the two. | defect | §10.4 |
+| 5 | Importing the engine cost 3.9–4.1 MB, nearly all of it OpenSSL, loaded by `hashlib` for a digest needed only on APPLY and ROLL BACK. | memory | §10.3 |
+| 6 | Showing HISTORY read the whole append-only file — at 50,000 lines, 18 MB of transient memory and 35 ms on each visit. | memory, grows forever | §10.3 |
+| 7 | After a visit, about 270 KB was kept that nothing used while hidden. | memory | §10.3 |
+| 8 | A failed APPLY or export showed a raw OS error (`[Errno 17] File exists`); the agent declining over unverified changes was reported as "it is busy"; every result vanished after four seconds. | usability | §10.5 |
+| 9 | Two exports of the same report within one second overwrote each other. | defect | §10.5 |
+| 10 | §5.4 attributed 8–13 MB to the center; most of it is not the center's. §7 said Claude Code was not installed here; it is. | documentation | §10.3, §7 |
+
+### 10.2 Settings take effect when they say they do
+
+The window now has one entry point, `EarthWindow.apply_setting`, that puts a
+changed setting into effect using paths that already existed for it: the
+scheduler's own `reconfigure()` for the frame clock (it cancels the old timer
+before arming the new), the cache flag, and a background-job setup that can
+be run again and replaces only a job whose interval changed. `Shell.apply_setting`
+is what the center's SETTINGS buttons and its actuator call; voice
+`continuous` is set on the live engine.
+
+| Setting | Before | Now |
+|---|---|---|
+| `shell.fps`, `idle_fps`, `adaptive` | read at start; marked restart | at once |
+| `shell.frame_cache` | read at start; marked restart | at once |
+| `shell.phosphor` | read every frame; *marked restart* | at once (and marked so) |
+| `shell.telemetry_interval`, `tick_interval` | read at start; marked restart | at once |
+| `windows.poll_interval` | partly — the gate was live, the timer was not | at once |
+| `voice.continuous` | a button could; the actuator could not | at once, if voice is on |
+| `companion.keep_alive` | restart | restart — read when the model client is built |
+| `evolution.poll_interval`, `process_interval`, `explain` | at once | at once |
+| `evolution.background_interval` | read at start; *the screen said "now"* | at once; 0 removes the job |
+
+Each change record now holds `in_effect_now` from what happened rather than
+from the table, and the screen reports that: "In effect now", "Restart Earth
+OS for it to take effect", or — with no window — "Recorded, not yet in
+effect". The SETTINGS rows say IN EFFECT NOW and SAVED or NOT SAVED.
+
+**Tested in a real window:** each of the twelve no-restart settings is
+changed through the actuator and the running value read back from the
+window, the scheduler or the center; a rollback is read back the same way;
+NEVER removes the timer and 30 s re-arms it at 30 s without touching the
+other jobs; a timer that fires just after NEVER takes no sample.
+
+### 10.3 Memory: each change measured first
+
+| What | Before | After |
+|---|---:|---:|
+| Importing the engine (RSS, 3 runs each) | +3.9 to +4.1 MB | +0.4 MB |
+| Process with the center on screen, by section | 157.1–161.4 MB | 153.4–157.6 MB |
+| Process with the center hidden | 157.1 MB | 153.6 MB |
+| HISTORY, last 200 of 3,000 lines | 3.6 ms, 1,086 KB peak | 2.7 ms, 218 KB peak |
+| HISTORY, last 200 of 50,000 lines | 34.6 ms, 18,110 KB peak | 2.8 ms, 218 KB peak |
+| HISTORY held while on screen | 184 KB | 50 KB |
+| Held after leaving the center | ~270 KB | ~11 KB |
+
+* **OpenSSL.** `hashlib` is imported where the digest is taken. The suite
+  checks, in a fresh interpreter, that importing the engine does not load it.
+* **History.** Only the end of the file is read, backwards in blocks; the
+  result is identical to reading it all, torn last line included. The screen
+  keeps the 200 lines it shows, not 200 decoded records it re-formatted on
+  every frame.
+* **Hidden.** Leaving releases the history, the report text, the last process
+  list (69 KB) and the derived caches. A hidden sample keeps Earth OS's memory
+  figure for the leak trend and not the list it came from. Opening the center
+  takes a full sample first, so nothing shown is stale.
+
+**The 8–13 MB in §5.4, corrected.** Stepping through a process: whichever
+screen is drawn second costs about 8 MB the first time — PROGRAMS as much as
+the center (8.0 MB vs 8.2 MB, either order). It is the toolkit and
+allocator's first-use cost, and the home-screen row in the benchmark never
+pays it. The center's own share is the engine import and about 0.5 MB of
+drawing.
+
+**Looked at, measured, and left alone:**
+
+| Idea | Measured | Why left |
+|---|---|---|
+| Fewer distinct text sizes (the center adds 18) | 8.1 MB vs 8.2 MB drawing all sections | no difference |
+| Release the phosphor scratch pool when phosphor is turned off | 3.1 MB pool; RSS moved 0.0 MB | no difference |
+| Pack trend samples into tuples | 329 KB → 203 KB at a full buffer | under 0.1% of the process, and a wide change |
+| The process benchmark's per-sample costs (e.g. 3.94 → 6.08 ms) | 60 timed samples per kind, 3 runs, both trees: medians 3.7–4.1 ms on each | noise in the benchmark, not a regression |
+| Draw cost per section | 3 runs, both trees: the same section varies 2–4 ms between runs on either | no consistent difference |
+
+Processor cost is unchanged within the noise: 0.35–1.50% of a core across
+the sections now, 0.40–1.45% before; the home screen with the center hidden
+2.75% against 2.65%.
+
+### 10.4 Before and after an approved optimization
+
+`earth_os/evolution/compare.py` is arithmetic on samples the center already
+takes; it reads nothing and costs nothing until somebody looks.
+
+* **Windows that cannot overlap.** *Before* is the five minutes up to the
+  change. *After* starts 5 s after it. The change time is the APPLY press for
+  a setting, or the start of TESTING for work done by hand.
+* **Earth OS's own cost, from running totals.** Each sample now carries
+  Earth OS's processor seconds (`time.process_time()` — this process's own
+  clock, checked against `/proc/self/stat` in the suite), frames drawn and
+  milliseconds spent drawing them. A window's figure is the change in the
+  total over the change in time.
+* **A difference must beat the noise.** Each figure is also worked out
+  interval by interval. A difference is called MEASURED only when it exceeds
+  twice the standard error of the two windows; otherwise it is WITHIN THE
+  VARIATION MEASURED, or TOO FEW SAMPLES under four intervals a side.
+* **A difference is not a cause.** A figure that was already moving the same
+  way, by a comparable amount, within the *before* window is flagged *already
+  moving before the change*. The first real-application trial needed this: it
+  called Earth OS warming up after start a +5 MB measured effect.
+* **Like for like.** If the center was on screen for very different shares of
+  the two windows, the comparison says so: looking at it costs something.
+* **The estimate stays separate**, stored on the proposal as `expected` and
+  `basis` and shown as *Expected — an ESTIMATE, not a measurement*.
+
+**Checked against an independent measurement.** `tools/evolution_bench.py
+--before-after phosphor-off` runs the real application on the home screen,
+lets start-up settle for 20 s, then carries the optimization through the
+center's own approval line and measures the same two windows from outside
+through `/proc`. 90 s each side, center hidden:
+
+| Figure | The center reports | `/proc`, same windows |
+|---|---|---|
+| Earth OS processor time | 2.78% → 1.99% of a core, −28% — MEASURED | 2.72% → 1.97% |
+| Time to draw one frame | 7.33 → 4.68 ms, −36% — MEASURED | not visible from outside |
+| Frames drawn | 1.24 → 1.33 /s — WITHIN THE VARIATION | — |
+| Earth OS memory | 153.6 → 157.4 MB — MEASURED | 153.8 → 157.4 MB |
+| Whole machine, memory | 6.43% → 6.37% — flagged *already moving* | — |
+
+The rollback that followed restored `config.toml` byte for byte and took
+effect at once.
+
+The memory rise after switching phosphor off is real by both measurements,
+with a flat *before* window. It was not reproduced headless (switching off,
+then dropping the effect's 3.1 MB scratch pool, moved RSS by 0.0 MB), so its
+cause is on the toolkit side and was not identified. It is reported as
+measured, which is what the comparison is for: the estimate for this
+optimization spoke of processor time, and the measurement found a memory
+cost the estimate did not mention.
+
+### 10.5 Controls and failures
+
+Every section, every row's detail and every roadmap button was driven by a
+script, including the failure paths: a configuration that cannot be written,
+a reports folder blocked by a file, a proposal applied before approval, and
+an agent that declines.
+
+| Case | Before | Now |
+|---|---|---|
+| APPLY, config cannot be written | `cannot write /…: [Errno 2] No such file or directory: '/…'` | *Not applied: Could not write the configuration: the folder does not exist (/…). config.toml and the running setting are unchanged; P-0002 is still APPROVED.* |
+| EXPORT, a file in the way | `Unable to export: [Errno 17] File exists: '/…/reports'` | *Not saved: Something that is not a folder is in the way (/…/reports). Nothing was written.* |
+| Agent declines, unverified changes in its workspace | *The agent did not take the request: it is busy.* | the agent's own words, then *P-0003 is still APPROVED; nothing was handed over.* |
+| Any result | a toast for four seconds | also kept in the section as *Last action — DONE / REFUSED / FAILED* for five minutes |
+| ROLL BACK | *P-0001: ROLLED BACK* | what was restored, whether the whole file or only the key, and whether it is in effect |
+| Two exports in one second | the second overwrote the first | two files |
+
+Checked by the same script: approve, reject, postpone, resume, priority up
+and down, apply, testing, verified, roll back and reconsider each move the
+proposal as they should; each optimization's state and current value match
+the configuration; every expected benefit is marked ESTIMATE; backups are
+taken before every change and the rolled-back file matches the original.
+
+### 10.6 One thing that happened while testing
+
+The first version of the button sweep ran with the real built-in agent in
+place, and pressed HAND TO CLAUDE. A `claude` command exists on this machine,
+so the agent accepted the brief and wrote its settings into the test
+machine's own home folder. The script ended before a session could run;
+nothing in the repository changed, no agent process remained, and the files
+were removed. The sweep now stubs the agent and isolates its home folder, as
+the suite already did. It is recorded here because it is what the button is
+for: a press does reach the agent.
+
+### 10.7 Results
+
+```
+/usr/bin/python3.12 -m unittest discover -s tests -q
+Ran 1217 tests — OK (skipped=31)            no display
+xvfb-run -a /usr/bin/python3.12 -m unittest discover -s tests
+Ran 1217 tests — OK (skipped=3)             with a display; the 3 need cdos binaries
+```
+
+1188 tests before the audit; the 29 new ones are all in
+`tests/test_evolution.py` (now 171), and none of the earlier ones were weakened.
+One was changed: it asserted a verified proposal records exactly `before` and
+`after`, and it now also records `changed_at` and the `comparison`.
+
+`tools/bootcheck.py`, three runs on each tree: one window throughout, the
+frame before the shell, the shell arriving at 1010, 1015 and 1126 ms before
+and 1071, 1059 and 1097 ms after. `earth-os --evolution-report` still prints
+every kind, as text and JSON, and writes nothing.
+
+**Not tested in the audit:** a real language model, a real thermal sensor or
+battery, a GPU or a sway session (as §7), and the agent's gate end to end. The
+before-and-after comparison was checked against `/proc` for one optimization,
+`phosphor-off`; the others use the same arithmetic.

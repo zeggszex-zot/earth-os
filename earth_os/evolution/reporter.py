@@ -72,7 +72,8 @@ class Reporter:
             "system": snap.value("distro", "unknown"),
             "earth_os": snap.value("version", "unknown"),
             "note": "Every figure is a reading taken from this machine through the "
-                    "capability layer. Anything marked ESTIMATE is an expectation, "
+                    "capability layer, except Earth OS's own processor time, which is "
+                    "this process's own clock. Anything marked ESTIMATE is an expectation, "
                     "not a measurement.",
             "sections": sections,
         }
