@@ -128,11 +128,32 @@ class EvolutionCenter:
         self._last_sample = now
         self._findings = self._advice = self._survey = None
         self.trends.add(self._as_sample(snap, now, visible))
+        if not visible:
+            # Hidden, the list was read for one figure — Earth OS's own
+            # memory, the leak trend — and that is in the sample now.
+            # Nothing will look at the list before the center is opened
+            # again, and opening it reads a fresh one.
+            self.release()
         spent = time.perf_counter() - started
         self.samples_taken += 1
         self.sample_seconds += spent
         self.sample_last = spent
         return True
+
+    def release(self) -> None:
+        """Let go of what only an open center needs. Kept: trends, records.
+
+        Called when the screen is left and after every hidden sample. The
+        process list is the large part; the findings, advice and survey are
+        derived from the snapshot and rebuilt on demand. Opening the center
+        takes a full sample first, so nothing shown is ever stale.
+        """
+        self._processes = None
+        self._findings = self._advice = self._survey = None
+        snap = self.snapshot
+        if snap is not None and snap.get("processes").ok:
+            snap.put(Reading.missing("processes",
+                                     "not kept while the center is hidden; read when it is opened"))
 
     def ensure(self, panel: str = "") -> Snapshot:
         """A snapshot, taking one now if there is none yet."""

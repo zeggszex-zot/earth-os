@@ -1819,6 +1819,110 @@ class TestItIsCheap(unittest.TestCase):
         self.assertIn("slow > 0", source)
 
 
+class TestItHoldsLittle(unittest.TestCase):
+    """Memory: what the center reads, and what it keeps when nobody is looking."""
+
+    def setUp(self):
+        self.shell, self.center = make_shell()
+        self.screen = self.shell.screens["evolution"]
+
+    def write_history(self, count, torn=False):
+        store = self.center.store
+        store.history_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(store.history_path, "w", encoding="utf-8") as fh:
+            for i in range(count):
+                fh.write(json.dumps({"at": float(i), "event": "status", "proposal": f"P-{i:05d}",
+                                     "title": "t" * (i % 97), "by": "operator"}) + "\n")
+            if torn:
+                fh.write('{"at": 1.0, "event": "sta')
+        return store
+
+    def test_the_end_of_the_history_is_the_same_as_reading_all_of_it(self):
+        """Read backwards in blocks; checked against the whole file, at sizes
+        either side of a block and with a final line a crash cut short."""
+        from earth_os.evolution import store as store_module
+        for count, limit, torn in ((0, 200, False), (5, 200, False), (300, 200, False),
+                                   (3000, 200, False), (3000, 200, True), (40, 1, True)):
+            store = self.write_history(count, torn)
+            lines = store.history_path.read_text().splitlines()
+            # What the full read always returned: the last *limit* lines,
+            # with any that do not parse (a torn final line) skipped.
+            expected = []
+            for line in lines[-limit:]:
+                try:
+                    expected.append(json.loads(line))
+                except ValueError:
+                    pass
+            self.assertEqual(store.read_history(limit=limit), expected, (count, limit, torn))
+            for block in (7, 64, 4096):
+                self.assertEqual(store_module._tail_lines(store.history_path, limit, block=block),
+                                 lines[-limit:], (count, limit, torn, block))
+
+    def test_showing_history_reads_only_the_end_of_a_long_file(self):
+        import tracemalloc
+        store = self.write_history(20000)
+        size = store.history_path.stat().st_size
+        tracemalloc.start()
+        rows = store.read_history(limit=200)
+        peak = tracemalloc.get_traced_memory()[1]
+        tracemalloc.stop()
+        self.assertEqual(len(rows), 200)
+        self.assertEqual(rows[-1]["proposal"], "P-19999")
+        self.assertLess(peak, size / 4, "the whole file was read to show its end")
+
+    def test_history_is_kept_as_the_lines_shown(self):
+        self.write_history(500)
+        self.shell.go("evolution")
+        self.screen._go_section("history")
+        self.assertEqual(len(self.screen._history), 200)
+        self.assertTrue(all(isinstance(line, str) for line in self.screen._history))
+        self.assertIn("P-00499", self.screen._history[0])        # newest first
+
+    def test_leaving_lets_go_and_coming_back_restores_it(self):
+        self.write_history(50)
+        self.shell.go("evolution")
+        self.screen._go_section("health")
+        self.assertTrue(self.center.snapshot.get("processes").ok)
+        self.screen._go_section("diagnostics")
+        self.assertTrue(self.screen._report_text)
+        self.screen._go_section("history")
+        self.assertTrue(self.screen._history)
+        trends = len(self.center.trends)
+
+        self.shell.go("main")
+        self.assertEqual(self.screen._history, [])
+        self.assertEqual(self.screen._report_text, "")
+        self.assertIsNone(self.center._processes)
+        self.assertFalse(self.center.snapshot.get("processes").ok)
+        self.assertEqual(len(self.center.trends), trends)             # the trend is kept
+
+        self.shell.go("evolution")
+        self.screen._go_section("health")
+        self.assertTrue(self.center.snapshot.get("processes").ok)
+        self.screen._go_section("history")
+        self.assertEqual(len(self.screen._history), 50)
+
+    def test_a_hidden_sample_keeps_its_figure_and_not_the_list(self):
+        """Hidden, the list is read for Earth OS's own memory — the leak
+        trend. The figure goes into the sample; the list is not kept."""
+        self.center.sample(visible=False)
+        self.assertIsNotNone(self.center.trends.latest().get("own_memory"))
+        self.assertIsNone(self.center._processes)
+        self.assertFalse(self.center.snapshot.get("processes").ok)
+
+    def test_the_engine_does_not_load_openssl_until_a_change_is_made(self):
+        """hashlib loads OpenSSL: measured 3.5–4.5 MB resident, most of what
+        importing the engine cost. It is wanted only on APPLY and ROLL BACK."""
+        code = ("import sys; sys.path.insert(0, %r)\n"
+                "import earth_os.app, earth_os.core, earth_os.screens\n"
+                "had = 'hashlib' in sys.modules\n"
+                "import earth_os.evolution, earth_os.evolution.center, earth_os.evolution.reporter\n"
+                "print(had, 'hashlib' in sys.modules)") % str(ROOT)
+        out = subprocess.run([sys.executable, "-I", "-c", code], capture_output=True,
+                             text=True, timeout=60)
+        self.assertEqual(out.stdout.split(), ["False", "False"], out.stderr[-500:])
+
+
 class TestRenderingStatistics(unittest.TestCase):
 
     def test_the_scheduler_reports_what_drawing_cost(self):

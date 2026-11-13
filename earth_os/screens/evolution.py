@@ -125,6 +125,24 @@ class Rows(Element):
 
 
 
+
+def _history_line(e: Dict[str, object]) -> str:
+    """One history record as the line HISTORY shows."""
+    what = e.get("event")
+    if what == "change-applied":
+        text = (f"CHANGE APPLIED  {e.get('proposal')}  {e.get('setting')} = "
+                f"{e.get('value')} (was {e.get('previous')})  — by "
+                f"{e.get('by') or 'not recorded'}  backup {e.get('backup') or '-'}"
+                + ("  · in effect at once" if e.get("in_effect_now") else ""))
+    elif what == "change-rolled-back":
+        text = (f"CHANGE ROLLED BACK  {e.get('proposal')}  {e.get('setting')} "
+                f"restored to {e.get('restored')}  — by {e.get('by') or 'not recorded'}"
+                + ("  · in effect at once" if e.get("in_effect_now") else ""))
+    else:
+        text = (f"{e.get('status')}  {e.get('proposal')}  {e.get('title')}  "
+                f"— by {e.get('by')}: {e.get('note')}")
+    return f"{_stamp(e.get('at'))}  {text}"
+
 def _took_effect(record: Dict[str, object]) -> str:
     """Whether an applied or rolled-back change is in effect, in a sentence.
 
@@ -157,7 +175,10 @@ class EvolutionScreen(Screen):
         self._report_kind = "health"
         self._report_text = ""
         self._exported = ""
-        self._history: List[dict] = []
+        #: The HISTORY section's lines, newest first, formatted once when
+        #: loaded. The decoded records were ten times the size and were
+        #: formatted again on every frame.
+        self._history: List[str] = []
 
     # -- the engine --------------------------------------------------------------
     def center(self):
@@ -176,6 +197,19 @@ class EvolutionScreen(Screen):
         return bool(getattr(self.app, "handed_over_to", ""))
 
     # -- lifecycle ---------------------------------------------------------------
+    def on_leave(self) -> None:
+        """Keep nothing that opening the center again would rebuild anyway.
+
+        Measured: after a visit, the screen and engine held about 270 KB
+        that nothing used while hidden — the decoded history, the report
+        text and the last process list. Trends and records stay.
+        """
+        self._history = []
+        self._report_text = ""
+        center = self.center()
+        if center is not None:
+            center.release()
+
     def on_enter(self) -> None:
         center = self.center()
         if center is not None:
@@ -267,7 +301,8 @@ class EvolutionScreen(Screen):
             self._report_kind = self._chosen() or "health"
             self._build_report()
         elif self.section == "history":
-            self._history = list(reversed(center.store.read_history(limit=200)))
+            self._history = [_history_line(e) for e in
+                             reversed(center.store.read_history(limit=200))]
         self._signature = self._current_signature()
 
     def _build_report(self) -> None:
@@ -681,23 +716,8 @@ class EvolutionScreen(Screen):
                 return [("Evolution history", "Nothing has been decided or changed yet. Every "
                                               "decision and every approved change is recorded "
                                               "here, and never edited.", "accent5")]
-            lines = []
-            for e in self._history:
-                what = e.get("event")
-                if what == "change-applied":
-                    text = (f"CHANGE APPLIED  {e.get('proposal')}  {e.get('setting')} = "
-                            f"{e.get('value')} (was {e.get('previous')})  — by "
-                            f"{e.get('by') or 'not recorded'}  backup {e.get('backup') or '-'}")
-                elif what == "change-rolled-back":
-                    text = (f"CHANGE ROLLED BACK  {e.get('proposal')}  {e.get('setting')} "
-                            f"restored to {e.get('restored')}  — by "
-                            f"{e.get('by') or 'not recorded'}")
-                else:
-                    text = (f"{e.get('status')}  {e.get('proposal')}  {e.get('title')}  "
-                            f"— by {e.get('by')}: {e.get('note')}")
-                lines.append(f"{_stamp(e.get('at'))}  {text}")
             return [(f"Newest first · {len(self._history)} entries · {center.store.history_path}",
-                     "\n".join(lines), "text")]
+                     "\n".join(self._history), "text")]
 
         if section == "settings":
             from ..evolution.changes import TUNABLES
