@@ -179,6 +179,10 @@ class EvolutionScreen(Screen):
         #: loaded. The decoded records were ten times the size and were
         #: formatted again on every frame.
         self._history: List[str] = []
+        #: The last press's result, kept on screen in the section it came
+        #: from: ``(section, outcome, text, when)``. A toast lasts four
+        #: seconds, and a failure is the message a person most needs to read.
+        self._notice: Optional[Tuple[str, str, str, float]] = None
 
     # -- the engine --------------------------------------------------------------
     def center(self):
@@ -598,7 +602,15 @@ class EvolutionScreen(Screen):
         if center is None:
             return []
         section, chosen = self.section, self._chosen()
+        notice: List[Block] = []
+        if self._notice is not None and self._notice[0] == section \
+                and time.monotonic() - self._notice[3] < 300.0:
+            _s, outcome, text, _when = self._notice
+            notice = [(f"Last action — {outcome}", text,
+                       {"DONE": "accent5", "REFUSED": "accent4"}.get(outcome, "alert"))]
+        return notice + self._section_blocks(center, section, chosen)
 
+    def _section_blocks(self, center, section: str, chosen) -> List[Block]:
         if section == "health":
             blocks: List[Block] = []
             found = next((f for f in center.findings() if f.id == chosen), None)
@@ -847,11 +859,38 @@ class EvolutionScreen(Screen):
                                       label=label, label_align="center", color=color,
                                       on_click=callback))
 
-    def _after(self, message: str = "") -> None:
+    def _after(self, message: str = "", outcome: str = "DONE") -> None:
         if message:
             self.app.toast(message)
+            self._notice = (self.section, outcome, message, time.monotonic())
         self._refresh_section()
         self.invalidate()
+
+    def _failed(self, exc: BaseException, what: str, unchanged: str) -> None:
+        """A press that did not do what it said: why, and what is as it was.
+
+        REFUSED is a rule saying no — not approved, wrong status, not a
+        setting the center may change. FAILED is the machine saying no — a
+        file that could not be written. Either way the message ends with
+        what was left alone, because that is the next thing a person asks.
+        """
+        cause: Optional[BaseException] = exc
+        failed = False
+        while cause is not None:
+            if isinstance(cause, OSError):
+                failed = True
+            cause = cause.__cause__
+        from ..evolution.model import plain_os_error
+        reason = plain_os_error(exc).rstrip(".")
+        reason = reason[:1].upper() + reason[1:]
+        self._after(f"{what}: {reason}. {unchanged}", "FAILED" if failed else "REFUSED")
+
+    def _status_of(self, pid: str) -> str:
+        center = self.center()
+        try:
+            return center.planner.get(pid).status if center is not None else "unchanged"
+        except Exception:
+            return "unchanged"
 
     def _refresh_now(self) -> None:
         center = self.center()
@@ -903,18 +942,26 @@ class EvolutionScreen(Screen):
         center = self.center()
         try:
             proposal = getattr(center.planner, method)(pid, by=self.operator(), **kw)
-            self._after(f"{proposal.id}: {proposal.status}"
-                        + (" (postponed)" if proposal.postponed else "")
-                        + (f", priority {proposal.priority}" if method == "prioritize" else ""))
         except Exception as exc:
-            self._after(str(exc))
+            what = {"roll_back": "Not rolled back"}.get(method, "Not done")
+            self._failed(exc, what, f"Nothing was changed; {pid} is still {self._status_of(pid)}.")
+            return
+        message = (f"{proposal.id}: {proposal.status}"
+                   + (" (postponed)" if proposal.postponed else "")
+                   + (f", priority {proposal.priority}" if method == "prioritize" else ""))
+        reverted = (proposal.applied or {}).get("reverted") if method == "roll_back" else None
+        if isinstance(reverted, dict):
+            message += (f". {proposal.applied.get('setting')} restored to "
+                        f"{reverted.get('restored')}. {_took_effect(reverted)}")
+        self._after(message)
 
     def _implement(self, pid: str) -> None:
         center = self.center()
         try:
             proposal = center.planner.implement(pid, by=self.operator(), before=center.vitals())
         except Exception as exc:
-            self._after(str(exc))
+            self._failed(exc, "Not applied", "config.toml and the running setting are unchanged; "
+                                             f"{pid} is still {self._status_of(pid)}.")
             return
         if proposal.applied:
             self._after(f"{pid}: setting changed, backup taken. {_took_effect(proposal.applied)}")
@@ -926,9 +973,9 @@ class EvolutionScreen(Screen):
         try:
             center.planner.complete(pid, by=self.operator(), after=center.after_change(
                 center.planner.get(pid)))
-            self._after(f"{pid}: COMPLETED.")
+            self._after(f"{pid}: COMPLETED. The measured before → after is kept on it.")
         except Exception as exc:
-            self._after(str(exc))
+            self._failed(exc, "Not verified", f"{pid} is still {self._status_of(pid)}.")
 
     def _hand_over(self, pid: str) -> None:
         """Give an approved, verifiable proposal to the built-in agent.
@@ -950,7 +997,9 @@ class EvolutionScreen(Screen):
         hand = getattr(self.app, "hand_to_agent", None)
         ok, message = hand(brief) if callable(hand) else (False, "The built-in agent is not available.")
         if not ok:
-            self._after(message or "The agent did not take the request.")
+            self._after((message or "The agent did not take the request.")
+                        + f" {pid} is still {self._status_of(pid)}; nothing was handed over.",
+                        "REFUSED")
             return
         try:
             center.planner.implement(pid, by=self.operator(), note="handed to the built-in agent",
@@ -977,9 +1026,9 @@ class EvolutionScreen(Screen):
         try:
             path = center.export(self._report_kind, fmt)
             self._exported = str(path)
-            self._after(f"Report saved: {path.name}")
+            self._after(f"Report saved: {path}")
         except Exception as exc:
-            self._after(f"Unable to export: {exc}")
+            self._failed(exc, "Not saved", "Nothing was written.")
 
     def _reload_history(self) -> None:
         self._after()

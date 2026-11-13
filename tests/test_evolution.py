@@ -1974,6 +1974,103 @@ class TestBeforeAndAfter(unittest.TestCase):
         self.assertFalse(any(h.startswith("MEASURED") for h in headings))   # nothing measured yet
 
 
+class TestFailuresAreUnderstandable(unittest.TestCase):
+    """A press that fails says why in plain words, and what was left alone."""
+
+    def setUp(self):
+        self.shell, self.center = make_shell()
+        self.shell.agent = None                 # never the real agent
+        self.toasts = []
+        self.shell.toast = lambda text, seconds=4.0: self.toasts.append(text)
+        self.screen = self.shell.screens["evolution"]
+        self.shell.go("evolution")
+
+    def notice(self):
+        blocks = self.screen._blocks()
+        return blocks[0] if blocks and blocks[0][0].startswith("Last action") else None
+
+    def approved(self):
+        p = self.center.propose_from("optimization", "phosphor-off", by="operator")
+        self.center.planner.approve(p.id, by="operator")
+        self.screen._go_section("roadmap")
+        self.screen.picked["roadmap"] = p.id
+        return p
+
+    def test_operating_system_errors_are_put_plainly(self):
+        import errno
+        from earth_os.evolution.model import plain_os_error
+        said = plain_os_error(FileExistsError(errno.EEXIST, "File exists", "/x/reports"))
+        self.assertEqual(said, "something that is not a folder is in the way (/x/reports)")
+        self.assertEqual(plain_os_error(OSError(errno.ENOSPC, "No space left on device")),
+                         "the disk is full")
+        self.assertNotIn("Errno", plain_os_error(PermissionError(errno.EACCES, "denied", "/f")))
+
+    def test_a_failed_apply_says_nothing_changed_and_stays_on_screen(self):
+        proposal = self.approved()
+        before = self.shell.config.get("shell", "phosphor")
+        self.shell.config.path = Path("/proc/no-such-dir/config.toml")      # cannot be written
+        self.screen._implement(proposal.id)
+        heading, text, _slot = self.notice()
+        self.assertEqual(heading, "Last action — FAILED")
+        self.assertIn("the folder does not exist", text)
+        self.assertIn("unchanged", text)
+        self.assertIn(f"{proposal.id} is still APPROVED", text)
+        self.assertNotIn("Errno", text)
+        self.assertEqual(proposal.status, "APPROVED")
+        self.assertEqual(self.shell.config.get("shell", "phosphor"), before)
+
+    def test_a_rule_saying_no_is_refused_not_failed(self):
+        proposal = self.center.propose_from("optimization", "phosphor-off", by="operator")
+        self.screen._go_section("roadmap")
+        self.screen._implement(proposal.id)                 # not approved
+        heading, text, _slot = self.notice()
+        self.assertEqual(heading, "Last action — REFUSED")
+        self.assertIn("not APPROVED", text)
+        self.assertIn(f"{proposal.id} is still PROPOSED", text)
+
+    def test_the_notice_belongs_to_its_section(self):
+        proposal = self.center.propose_from("optimization", "phosphor-off", by="operator")
+        self.screen._go_section("roadmap")
+        self.screen._implement(proposal.id)
+        self.assertIsNotNone(self.notice())
+        self.screen._go_section("health")
+        self.assertIsNone(self.notice())
+
+    def test_a_failed_export_says_nothing_was_written(self):
+        self.screen._go_section("diagnostics")
+        reports = self.center.store.reports
+        reports.parent.mkdir(parents=True, exist_ok=True)
+        reports.write_text("a file where the folder should be")
+        self.screen._export("text")
+        heading, text, _slot = self.notice()
+        self.assertEqual(heading, "Last action — FAILED")
+        self.assertIn("not a folder is in the way", text)
+        self.assertIn("Nothing was written", text)
+
+    def test_two_exports_in_one_second_are_two_files(self):
+        first = self.center.export("health", "text")
+        second = self.center.export("health", "text")
+        self.assertNotEqual(first, second)
+        self.assertTrue(first.is_file() and second.is_file())
+
+    def test_the_agent_is_quoted_when_it_declines(self):
+        """Its reason is in its own transcript; "it is busy" was a guess."""
+        class Agent:
+            problem = ""
+            def __init__(self):
+                self.lines = [("info", "an earlier line")]
+            def snapshot(self):
+                return list(self.lines)
+            def ask(self, brief):
+                self.lines.append(("error", "The workspace has changes nobody has verified."))
+                return False
+        self.shell.agent = Agent()
+        ok, why = self.shell.hand_to_agent("do the thing")
+        self.assertFalse(ok)
+        self.assertIn("changes nobody has verified", why)
+        self.assertNotIn("busy", why)
+
+
 class TestItHoldsLittle(unittest.TestCase):
     """Memory: what the center reads, and what it keeps when nobody is looking."""
 

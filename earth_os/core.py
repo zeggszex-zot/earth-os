@@ -1051,13 +1051,22 @@ class Shell:
         agent = self.agent
         if agent is None:
             return False, "The built-in agent is not available."
+        heard = getattr(agent, "snapshot", None)
+        before = len(heard()) if callable(heard) else 0
         try:
             taken = bool(agent.ask(brief))
         except Exception as exc:
             return False, f"The agent could not be asked: {type(exc).__name__}: {exc}"
         if not taken:
-            why = str(getattr(agent, "problem", "") or "it is busy")
-            return False, f"The agent did not take the request: {why}."
+            # The agent says why in its own transcript — a workspace with
+            # unverified changes, a session still running, no CLI installed
+            # — and only some of those reasons set ``problem``. "It is busy"
+            # was the guess for all the others, and usually wrong.
+            said = heard()[before:] if callable(heard) else []
+            errors = [text for kind, text in said if kind == "error" and text.strip()]
+            why = " ".join(errors) or str(getattr(agent, "problem", "") or "") \
+                or "it gave no reason; see the CLAUDE CODE screen"
+            return False, f"The agent did not take the request: {why.rstrip('.')}."
         self.go("claude")
         return True, ""
 

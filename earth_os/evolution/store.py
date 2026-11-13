@@ -177,7 +177,12 @@ class Store:
         self.reports.mkdir(parents=True, exist_ok=True)
         stamp = time.strftime("%Y%m%d-%H%M%S")
         safe = "".join(c if c.isalnum() or c in "-_" else "-" for c in name)[:48]
-        target = self._inside(self.reports / f"{safe}-{stamp}.{extension.lstrip('.')}")
+        extension = extension.lstrip(".")
+        target = self._inside(self.reports / f"{safe}-{stamp}.{extension}")
+        n = 2
+        while target.exists():          # two exports in one second: keep both
+            target = self._inside(self.reports / f"{safe}-{stamp}-{n}.{extension}")
+            n += 1
         target.write_text(text, encoding="utf-8")
         return target
 

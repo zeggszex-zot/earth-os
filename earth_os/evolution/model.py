@@ -182,3 +182,30 @@ def human_span(seconds: float) -> str:
     if hours < 48:
         return f"{hours} h {minutes:02d} min"
     return f"{hours // 24} d {hours % 24} h"
+
+
+def plain_os_error(exc: BaseException) -> str:
+    """An operating-system error as a person would put it, with the path.
+
+    ``[Errno 17] File exists: '/…/reports'`` is the system's account of why
+    an export failed; *"something that is not a folder is in the way at
+    /…/reports"* is the reason. Unrecognised errors keep the system's words.
+    """
+    import errno
+    if not isinstance(exc, OSError):
+        return str(exc)
+    where = f" ({exc.filename})" if getattr(exc, "filename", None) else ""
+    reasons = {
+        errno.EEXIST: "something that is not a folder is in the way",
+        errno.ENOTDIR: "part of the path is a file, not a folder",
+        errno.EISDIR: "a folder is where the file should be",
+        errno.EACCES: "permission denied",
+        errno.EPERM: "permission denied",
+        errno.ENOSPC: "the disk is full",
+        errno.EROFS: "the file system is read-only",
+        errno.ENOENT: "the folder does not exist",
+        errno.EDQUOT: "the disk quota is used up",
+    }
+    reason = reasons.get(exc.errno or -1)
+    return f"{reason}{where}" if reason else f"{exc.strerror or exc}{where}"
+

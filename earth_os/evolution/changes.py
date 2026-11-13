@@ -35,7 +35,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Dict, Optional, Tuple
 
-from .model import APPROVED
+from .model import APPROVED, plain_os_error
 from .store import Store
 
 
@@ -270,17 +270,18 @@ class ChangeApplier:
         try:
             text = path.read_text(encoding="utf-8") if path.exists() else ""
         except OSError as exc:
-            raise ChangeRefused(f"cannot read {path}: {exc}") from exc
+            raise ChangeRefused(f"could not read the configuration: {plain_os_error(exc)}") from exc
         try:
             backup = self.store.back_up(path, f"{proposal.id}-{tunable.name}")
         except OSError as exc:
-            raise ChangeRefused(f"could not back up {path}, so it was left alone: {exc}") from exc
+            raise ChangeRefused("could not take a backup, so the configuration was left alone: "
+                                f"{plain_os_error(exc)}") from exc
         written = set_value(text, tunable.section, tunable.key, value)
         try:
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(written, encoding="utf-8")
         except OSError as exc:
-            raise ChangeRefused(f"cannot write {path}: {exc}") from exc
+            raise ChangeRefused(f"could not write the configuration: {plain_os_error(exc)}") from exc
         self.config.values.setdefault(tunable.section, {})[tunable.key] = value
         live = self._take_effect(tunable)
 
@@ -334,7 +335,7 @@ class ChangeApplier:
                 text = remove_value(text, tunable.section, tunable.key)
             path.write_text(text, encoding="utf-8")
         except OSError as exc:
-            raise ChangeRefused(f"could not roll back {path}: {exc}") from exc
+            raise ChangeRefused(f"could not roll back the configuration: {plain_os_error(exc)}") from exc
         # The live value goes back to what it was, whether that came from
         # the file or from a default.
         self.config.values.setdefault(tunable.section, {})[tunable.key] = applied.get("previous")
