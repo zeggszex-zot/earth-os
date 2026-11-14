@@ -98,6 +98,10 @@ DEFAULTS: Dict[str, Any] = {
         # What a freshly learned relationship starts at — deliberately below
         # the execution threshold, so its first uses are questions.
         "seed_confidence": 0.55,
+        # ESI phase 1: read a question by meaning ("which app is hogging my
+        # RAM") when no phrase matches it as written. Questions only; an act
+        # is never reached this way. docs/ESI_ARCHITECTURE.md.
+        "lexical": True,
     },
     "whisper": {
         "binary": "whisper-cli",

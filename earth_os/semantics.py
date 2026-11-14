@@ -342,9 +342,20 @@ class SemanticStore:
                                     f"{rule.then_canonical}",
                     )
 
-            # 3. fuzzy against learned terms, confidence scaled by closeness
+            # 3. fuzzy against learned terms, confidence scaled by closeness.
+            #
+            # Fuzzy matching is for typos: "rebot" is "reboot" mistyped. It
+            # is not for a real word that happens to be spelled like a
+            # learned one — "getting" is not "settings" mistyped, and reading
+            # it that way had "you're getting tired" proposing to open the
+            # parameters screen. So a word the dictionary knows is never
+            # fuzzed. If the word list is not installed the answer is "cannot
+            # tell", and the old behaviour stands rather than none at all.
+            from .lexical import is_english
             known = list(self.aliases)
             for term in terms:
+                if is_english(term):
+                    continue
                 close = difflib.get_close_matches(term, known, n=1,
                                                   cutoff=fuzzy_cutoff)
                 if not close:

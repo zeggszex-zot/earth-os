@@ -450,6 +450,17 @@ READINGS: frozenset = frozenset({
 })
 
 
+#: The readings a sentence may reach by meaning rather than by its exact
+#: phrase. All of ``READINGS`` but the screenshot, which writes a file: it
+#: touches nothing that matters, but it does leave something behind, and a
+#: looser match should only ever look.
+MEANING_READINGS: frozenset = READINGS - {"display.screenshot"}
+
+#: "not", "never", "cannot", and every "n't" (which ``normalise`` leaves as a
+#: separate "t").
+_NEGATED = re.compile(r"(?:^|\s)(?:not|never|cannot|dont|\w+n t)(?:\s|$)")
+
+
 def _bytes(count: object) -> str:
     """A byte figure a person can hear without counting zeroes."""
     try:
@@ -481,6 +492,12 @@ class CapabilityIntent:
     #: Set when this is a question about readings rather than one reading:
     #: the name of an entry in :data:`ANALYSES`, run by ``Shell.run_analysis``.
     analysis: str = ""
+    #: "phrase" when a phrasing was found as written; "lexical" when the
+    #: sentence was read by meaning (``earth_os/lexical.py``). A lexical
+    #: reading is only ever a reading or an analysis, never an act.
+    via: str = "phrase"
+    #: For a lexical reading, the phrasebook phrase it was read as meaning.
+    like: str = ""
 
     @property
     def effectful(self) -> bool:
@@ -496,8 +513,9 @@ class CapabilityCorpus:
     model's guess about it, and it costs nothing to ask.
     """
 
-    def __init__(self, registry=None):
+    def __init__(self, registry=None, lexical: bool = True):
         self.registry = registry
+        self.lexical = lexical
         self._ordered = sorted(
             ((phrase, capability)
              for capability, phrases in PHRASEBOOK.items()
@@ -510,17 +528,146 @@ class CapabilityCorpus:
              for name, phrases in ANALYSIS_PHRASES.items()
              for phrase in phrases),
             key=lambda pair: len(pair[0]), reverse=True)
+        self._lexicon = None
+        self._meanings: List[Tuple[frozenset, str, str]] = []
+        self.ambiguous: Dict[frozenset, Tuple[str, ...]] = {}
+        if lexical:
+            self._build_meanings()
 
     # ------------------------------------------------------------------
+    def _build_meanings(self) -> None:
+        """Every phrase that may be read by meaning, as the concepts it needs.
+
+        Only questions qualify: analyses, and parameterless readings. An act
+        is reached only by a phrase as written, because a reading by meaning
+        is a looser match, and a looser match must not be able to do things.
+        A set of concepts that two different questions both reduce to means
+        nothing on its own, so it is left out and recorded in ``ambiguous``
+        — the exact phrases still work, and the suite reports the collision.
+        """
+        from .lexical import MACHINE, Lexicon
+
+        words = [p for phrases in PHRASEBOOK.values() for p in phrases]
+        words += [p for phrases in ANALYSIS_PHRASES.values() for p in phrases]
+        self._lexicon = Lexicon(words)
+        seen: Dict[frozenset, Dict[str, str]] = {}
+        for phrase, name in self._analyses:
+            seen.setdefault(self._lexicon.key(phrase), {}).setdefault(name, phrase)
+        for phrase, capability in self._ordered:
+            if capability not in MEANING_READINGS:
+                continue
+            spec = CATALOGUE.get(capability)
+            if spec is None or spec.params or spec.effectful:
+                continue
+            seen.setdefault(self._lexicon.key(phrase), {}).setdefault(capability, phrase)
+        meanings = []
+        for key, targets in seen.items():
+            if not key & MACHINE:
+                continue
+            if len(targets) > 1:
+                self.ambiguous[key] = tuple(sorted(targets))
+                continue
+            (target, phrase), = targets.items()
+            meanings.append((key, target, phrase))
+        # Most concepts first: the more a phrase requires, the more specific
+        # it is. Analyses before readings at equal size, as with phrases.
+        meanings.sort(key=lambda m: (-len(m[0]), m[1] not in ANALYSES, m[1]))
+        self._meanings = meanings
+
     def resolve(self, text: str) -> Optional[CapabilityIntent]:
-        """The best reading of *text*, or None if it names nothing."""
+        """The best reading of *text*, or None if it names nothing.
+
+        Phrases as written are tried first, exactly as before. Then the
+        sentence is read by meaning, and that reading wins only if it
+        accounts for *more* of what was said than the phrase did — "which app
+        is eating the most memory" is a question about programs, not the
+        bare "memory" a phrase found in it.
+        """
         cleaned = normalise(text)
         if not cleaned:
             return None
-        return (self._as_adjustment(cleaned)
-                or self._as_percentage(cleaned)
-                or self._as_analysis(cleaned)
-                or self._as_phrase(cleaned))
+        adjusted = self._as_adjustment(cleaned) or self._as_percentage(cleaned)
+        if adjusted is not None:
+            return None if self._forbidden(cleaned, adjusted) else adjusted
+        found = self._as_analysis(cleaned) or self._as_phrase(cleaned)
+        if found is not None and self._forbidden(cleaned, found):
+            found = None
+        meant = self._as_meaning(cleaned)
+        if meant is None:
+            return found
+        if found is None:
+            # A phrase for an act that needs an argument ("forget the wifi
+            # network") is left to the shell's vocabulary, which knows names
+            # and paths. It was still said, so meaning must not reread the
+            # sentence as a question about something else.
+            named = self._named_act(cleaned)
+            if named is not None and not self._refines(meant, named):
+                return None
+            return meant
+        return meant if self._refines(meant, found) else found
+
+    def _named_act(self, cleaned: str) -> Optional[CapabilityIntent]:
+        """The longest act phrase in *cleaned*, including ones needing arguments."""
+        for phrase, capability in self._ordered:
+            if capability not in MEANING_READINGS and self._mentions(cleaned, phrase):
+                return CapabilityIntent(capability=capability, phrase=phrase)
+        return None
+
+    def _refines(self, meant: CapabilityIntent, found: CapabilityIntent) -> bool:
+        """Whether a reading by meaning should replace a phrase found as written.
+
+        Only if it says everything the phrase said and more. "Which app is
+        eating the most memory" found "memory"; read by meaning it is
+        {use, most, memory}, which contains it — a refinement. "What's the
+        cpu temperature" found "temperature"; by meaning it also fits "what
+        cpu", which does not contain temperature — a contradiction, so the
+        phrase stands. Meaning may sharpen what was found, never overrule it.
+        """
+        have = self._lexicon.key(found.phrase)
+        want = self._lexicon.key(meant.like)
+        return have < want
+
+    def _forbidden(self, cleaned: str, intent: CapabilityIntent) -> bool:
+        """A sentence that says *not* to do something never does it.
+
+        "Don't lock the screen" contains "lock the screen", and until this
+        check it locked the screen. A screenshot counts as an act here: it
+        leaves a file behind. Questions are still answered — "why
+        isn't the wifi connecting" is a fair thing to read the wifi for —
+        but an act is refused, and the sentence goes on to be talked about.
+        """
+        if intent.analysis or intent.capability in MEANING_READINGS:
+            return False
+        if not _NEGATED.search(cleaned):
+            return False
+        return True
+
+    def _as_meaning(self, cleaned: str) -> Optional[CapabilityIntent]:
+        """The sentence read as concepts, against every question's concepts."""
+        if self._lexicon is None or not self._meanings:
+            return None
+        reading = self._lexicon.read(cleaned)
+        if reading.negated:
+            return None
+        have = reading.concepts
+        for key, target, phrase in self._meanings:
+            if not key <= have:
+                continue
+            renamed = [f"{said} as {meant}" for said, meant in reading.renamed()
+                       if meant in key]
+            span = reading.span(key) or phrase
+            note = f"read by meaning, like {phrase!r}"
+            if renamed:
+                note += "; " + ", ".join(renamed)
+            if target in ANALYSES:
+                analysis = ANALYSES[target]
+                return CapabilityIntent(capability=analysis.reads[-1],
+                                        phrase=span, explanation=note,
+                                        analysis=target, via="lexical",
+                                        like=phrase)
+            return CapabilityIntent(capability=target, phrase=span,
+                                    explanation=note, via="lexical", like=phrase)
+        return None
 
     def resolve_analysis(self, text: str) -> Optional[CapabilityIntent]:
         """Only the analysis reading of *text*, or None.
@@ -530,7 +677,14 @@ class CapabilityCorpus:
         should give the same answer as the voice to the same question.
         """
         cleaned = normalise(text)
-        return self._as_analysis(cleaned) if cleaned else None
+        if not cleaned:
+            return None
+        found = self._as_analysis(cleaned)
+        meant = self._as_meaning(cleaned)
+        if meant is not None and meant.analysis:
+            if found is None or self._refines(meant, found):
+                return meant
+        return found
 
     # ------------------------------------------------------------------
     def _as_adjustment(self, cleaned: str) -> Optional[CapabilityIntent]:

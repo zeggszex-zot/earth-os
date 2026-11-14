@@ -67,7 +67,9 @@ class Shell:
         #: to call those things. Kept apart because they are different kinds
         #: of knowledge — one changes when the machine changes, the other when
         #: the language does — and kept in step by a test rather than by care.
-        self.capability_corpus = CapabilityCorpus(self.capabilities)
+        self.capability_corpus = CapabilityCorpus(
+            self.capabilities,
+            lexical=bool(self.config.get("semantics", "lexical", True)))
 
         #: Named sequences of capabilities — "movie mode", "status report".
         #:
