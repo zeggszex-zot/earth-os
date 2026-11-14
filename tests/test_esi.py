@@ -123,12 +123,77 @@ class TestReadingASentence(unittest.TestCase):
         self.assertNotIn("use", self.lexicon.read("biggest memory hogs").concepts)
 
     def test_show_me_is_not_about_the_user(self):
-        self.assertNotIn("user", self.lexicon.read("show me memory use").concepts)
-        self.assertIn("user", self.lexicon.read("how full is my disk").concepts)
+        """Phase 3A: "my" now says *what* is the person's ("user>disk")
+        instead of a free-standing "user"; "show me" still says nothing."""
+        self.assertFalse(any(c.startswith("user") for c in
+                             self.lexicon.read("show me memory use").concepts))
+        self.assertIn("user>disk", self.lexicon.read("how full is my disk").concepts)
 
     def test_the_span_is_what_was_said(self):
         reading = self.lexicon.read("Which app is eating the most RAM?")
         self.assertEqual(reading.span({"use", "most", "memory"}), "eating the most ram")
+
+
+class TestPossessivesAttach(unittest.TestCase):
+    """Phase 3A. "My" belongs to the noun after it, not to the sentence.
+
+    The failure that started this: "My computer is struggling because
+    several programs are consuming memory" matched "taking up *my* memory"
+    because the "my" of "my computer" floated free and satisfied it.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.corpus = CapabilityCorpus()
+        cls.lexicon = cls.corpus._lexicon
+
+    def _attached(self, text):
+        return set(self.lexicon.read(text).attachments)
+
+    def test_the_sentence_that_found_it(self):
+        text = "My computer is struggling because several programs are consuming memory."
+        self.assertEqual(self._attached(text), {"user>computer"})
+        intent = self.corpus.resolve(text)
+        self.assertNotIn("my memory", (intent.like if intent else ""))
+        self.assertNotEqual(label(intent), "top_memory")
+
+    def test_the_same_word_attaches_where_it_is(self):
+        self.assertEqual(self._attached("programs are consuming my memory"), {"user>memory"})
+        self.assertEqual(label(self.corpus.resolve("programs are consuming my memory")),
+                         "top_memory")
+
+    def test_mine_and_yours_stay_apart(self):
+        self.assertEqual(self._attached("what is my name"), {"user>call"})
+        self.assertEqual(self._attached("what is your name"), {"computer>call"})
+        self.assertEqual(label(self.corpus.resolve("what is my name")), "user.identity")
+        self.assertEqual(label(self.corpus.resolve("what is your name")), "system.hostname")
+
+    def test_a_modifier_is_skipped_to_find_the_noun(self):
+        self.assertEqual(self._attached("my free memory is low"), {"user>memory"})
+        self.assertEqual(self._attached("my hard drive is full"), {"user>disk"})
+
+    def test_each_possessive_finds_its_own_noun(self):
+        self.assertEqual(self._attached("my computer and my phone are both slow"),
+                         {"user>computer", "user>phone"})
+
+    def test_with_nothing_after_it_a_possessive_stays_as_it_was(self):
+        self.assertEqual(self._attached("that is my"), set())
+        self.assertIn("user", self.lexicon.read("that is my").concepts)
+
+    def test_no_other_word_changes_meaning(self):
+        """Only possessives move: every other word keeps the concept phase 1
+        gave it ("avoid changing existing synonym behaviour")."""
+        from unittest import mock
+        texts = [l["text"] for name in ("esi_dev.jsonl", "esi_heldout.jsonl",
+                                        "esi_context.jsonl")
+                 for l in map(json.loads, (ROOT / "tests" / name).read_text().splitlines())]
+        with mock.patch.object(Lexicon, "_attach", staticmethod(lambda reading: None)):
+            before = {t: [(w.surface, w.concept) for w in self.lexicon.read(t).words]
+                      for t in texts}
+        for text in texts:
+            after = [(w.surface, w.concept) for w in self.lexicon.read(text).words]
+            self.assertEqual(after, [p for p in before[text] if p[0] not in lexical.POSSESSIVE],
+                             text)
 
 
 class TestMeaningOnlyEverLooks(unittest.TestCase):
@@ -267,6 +332,31 @@ class TestItIsMeasured(unittest.TestCase):
         """What the phrasebook scores alone, so the gain is a measured one."""
         s = self._score("esi_heldout.jsonl", lexical=False)
         self.assertEqual((s["positives_right"], s["positives_wrong"]), (27, 5))
+
+    def test_context_three_outcomes(self):
+        """Phase 3A/3B, on tests/esi_context.jsonl (developer-labelled).
+
+        Before 3A: recognition 35/44, attachment 0/19, interpretation 19/44.
+        Attachment is what 3A fixed. Recognition and interpretation are left
+        where they were on purpose: their misses are missing words and
+        missing phrases, which 3A was not for.
+        """
+        s = esi_measure.context_summary(esi_measure.measure_context(
+            ROOT / "tests" / "esi_context.jsonl"))["all"]
+        self.assertEqual((s["attachment"], s["attachment_lines"]), (19, 19))
+        self.assertGreaterEqual(s["recognition"], 35)
+        self.assertGreaterEqual(s["interpretation"], 19)
+
+    def test_the_independent_set_is_well_formed_if_it_exists(self):
+        """Phase 3C (docs/ESI_INDEPENDENT_SET.md). Shape only — no score is
+        held for it, because a floor would invite tuning against it."""
+        path = ROOT / "tests" / "esi_independent.jsonl"
+        if not path.is_file():
+            self.skipTest("no independent set collected yet")
+        rows = esi_measure.read_rows(path)          # refuses unknown labels
+        for row in rows:
+            for key in ("text", "expect", "written_by", "labelled_by"):
+                self.assertTrue(str(row.get(key, "")).strip(), (key, row))
 
     def test_development(self):
         s = self._score("esi_dev.jsonl")

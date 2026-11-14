@@ -120,6 +120,23 @@ MACHINE: FrozenSet[str] = PARTS | frozenset({
     "interface",
 })
 
+#: Possessives, and whose they say a thing is. "My memory" is the person's
+#: memory; "your memory" is the computer's. Each attaches to the noun after
+#: it rather than floating free in the sentence (phase 3A, docs §8).
+POSSESSIVE: Dict[str, str] = {"my": "user", "your": "computer"}
+
+#: Words that may stand between a possessive and its noun — "my *free*
+#: memory", "your *whole* disk". Skipped when looking for the noun, unless
+#: nothing else follows.
+MODIFIERS: FrozenSet[str] = frozenset("""
+    free full empty whole entire own current main new old poor little
+    internal external available total used spare local primary default
+    wireless big small entire
+""".split())
+
+#: How far after a possessive its noun may be.
+_ATTACH_WINDOW = 3
+
 #: Forms of the three auxiliaries, which no suffix rule reduces.
 AUXILIARY: Dict[str, str] = {
     "am": "be", "is": "be", "are": "be", "was": "be", "were": "be",
@@ -189,9 +206,21 @@ class Reading:
     negated: bool = False
     implied: FrozenSet[str] = frozenset()       # wholes implied by parts
 
+    #: "owner>thing" for each possessive, e.g. "user>memory" for "my memory".
+    attachments: FrozenSet[str] = frozenset()
+
     @property
     def concepts(self) -> FrozenSet[str]:
-        return frozenset(w.concept for w in self.words) | self.implied
+        """What the sentence means, as a set: its concepts, the wholes its
+        parts imply, and whose each possessed thing is ("user>memory").
+
+        A possessive that found its noun contributes only the attachment,
+        not a free-standing "user": "my computer is struggling because
+        programs are consuming memory" says the computer is the person's,
+        and must not satisfy a phrase about the person's memory.
+        """
+        return (frozenset(w.concept for w in self.words) | self.implied
+                | self.attachments)
 
     def span(self, concepts: Iterable[str]) -> str:
         """The part of the sentence that said *concepts*, for display and
@@ -438,17 +467,47 @@ class Lexicon:
                     continue
                 reading.words.append(Word(self.concept(base), surface, start, end))
 
+        self._attach(reading)
         present = {w.concept for w in reading.words}
         if present & PARTS:
             reading.implied = frozenset({"computer"}) - present
         return reading
 
+    @staticmethod
+    def _attach(reading: Reading) -> None:
+        """Bind each "my"/"your" to the noun after it.
+
+        The noun is the next word that is not a modifier, within a few
+        words; failing that, the next word at all. A possessive with nothing
+        after it ("is it mine") stays as it was. Only possessives move:
+        every other word keeps exactly the concept phase 1 gave it.
+        """
+        words = reading.words
+        keep: List[Word] = []
+        attachments = set()
+        for i, word in enumerate(words):
+            owner = POSSESSIVE.get(word.surface)
+            if owner is None:
+                keep.append(word)
+                continue
+            following = [w for w in words[i + 1:i + 1 + _ATTACH_WINDOW]
+                         if w.surface not in POSSESSIVE]
+            noun = next((w for w in following if w.surface not in MODIFIERS),
+                        following[0] if following else None)
+            if noun is None:
+                keep.append(word)
+                continue
+            attachments.add(f"{owner}>{noun.concept}")
+        reading.words = keep
+        reading.attachments = frozenset(attachments)
+
     def key(self, phrase: str) -> FrozenSet[str]:
-        """A phrase as the set of concepts it requires.
+        """A phrase as the set of concepts it requires, attachments included.
 
         No part-implies-whole here: a phrase requires exactly what it says.
         """
-        return frozenset(w.concept for w in self.read(phrase).words)
+        reading = self.read(phrase)
+        return frozenset(w.concept for w in reading.words) | reading.attachments
 
 
 #: "not", "never", "cannot", and every "n't" (which ``normalise`` leaves as a
