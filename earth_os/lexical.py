@@ -48,6 +48,10 @@ from pathlib import Path
 from typing import Dict, FrozenSet, Iterable, List, Optional, Sequence, Tuple
 
 ASSET = Path(__file__).resolve().parent / "assets" / "lexicon" / "english.words.gz"
+#: Words a person approved from the CDOS Dictionary Bridge (phase 2). Small,
+#: hand-reviewable JSON; ``tools/esi_bridge.py`` is the only thing that writes
+#: it, and only on a named person's say-so. See docs/ESI_ARCHITECTURE.md §7.
+APPROVED = ASSET.parent / "approved.json"
 
 _PUNCT = re.compile(r"[^\w\s%]")
 _WS = re.compile(r"\s+")
@@ -249,6 +253,82 @@ def _candidates(word: str) -> List[str]:
     return out
 
 
+# --------------------------------------------------------------------------
+# Approved additions (phase 2)
+# --------------------------------------------------------------------------
+
+@dataclass
+class Approved:
+    """Words a person has approved, as this module will use them."""
+
+    words: Dict[str, str] = field(default_factory=dict)              # word -> concept
+    phrases: Dict[Tuple[str, ...], str] = field(default_factory=dict)  # normalised words -> concept
+    problems: List[str] = field(default_factory=list)                # entries refused, and why
+
+
+def usable_addition(word: str, concept: str) -> str:
+    """Why *word* may not join *concept*, or "" if it may.
+
+    The same rules apply when a word is proposed, when it is approved and
+    every time the approved file is read, so a hand edit to the file is held
+    to exactly what the bridge would have been.
+    """
+    norm = normalise(word)
+    if concept not in CONCEPTS:
+        return f"no concept called {concept!r}"
+    if not norm or not all(t.isalpha() for t in norm.split()):
+        return "not plain words"
+    if any(len(t) < 2 for t in norm.split()):
+        return "has a single letter in it (an abbreviation with its dots removed)"
+    if len(norm.split()) > 3:
+        return "more than three words"
+    if norm in STOP or norm in NEGATION or norm in AUXILIARY or norm in IRREGULAR \
+            or norm in _CONTRACTED or norm in _CONTRACTED_NOT:
+        return "a function word"
+    for other, words in CONCEPTS.items():
+        if norm in words:
+            return ("already one of its words" if other == concept
+                    else f"already a word for {other!r}")
+    return ""
+
+
+def load_approved(path: Optional[Path] = None) -> Approved:
+    """The approved additions, each re-checked; a bad entry is skipped and named."""
+    import json
+
+    out = Approved()
+    path = Path(path) if path is not None else APPROVED
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return out
+    except (OSError, ValueError) as exc:
+        out.problems.append(f"{path.name}: unreadable ({exc})")
+        return out
+    for entry in raw.get("approved", []) if isinstance(raw, dict) else []:
+        try:
+            word, concept = str(entry["word"]), str(entry["concept"])
+            by = str(entry["approved_by"]).strip()
+        except (KeyError, TypeError):
+            out.problems.append(f"an entry without word, concept and approved_by: {entry!r}")
+            continue
+        if not by:
+            out.problems.append(f"{word!r}: nobody approved it")
+            continue
+        why = usable_addition(word, concept)
+        norm = normalise(word)
+        if not why and (norm in out.words or tuple(norm.split()) in out.phrases):
+            why = "approved twice"
+        if why:
+            out.problems.append(f"{word!r} → {concept}: {why}")
+            continue
+        if " " in norm:
+            out.phrases[tuple(norm.split())] = concept
+        else:
+            out.words[norm] = concept
+    return out
+
+
 class Lexicon:
     """Reads sentences as concepts.
 
@@ -260,18 +340,29 @@ class Lexicon:
     be leftover either way.
     """
 
-    def __init__(self, vocabulary: Iterable[str] = ()):
+    def __init__(self, vocabulary: Iterable[str] = (),
+                 approved: Optional[Approved] = None):
+        """*approved* is the phase 2 additions; None reads ``approved.json``.
+        Pass ``Approved()`` for the hand-written tables alone."""
+        self.approved = load_approved() if approved is None else approved
         self._synonym: Dict[str, str] = {}
         for concept, words in CONCEPTS.items():
             for word in words:
                 self._synonym[word] = concept
+        self._synonym.update(self.approved.words)
         known = set(self._synonym) | set(CONCEPTS) | set(AUXILIARY.values())
-        for words in MULTIWORD:
+        for words in list(MULTIWORD) + list(self.approved.phrases):
             known.update(words)
         for text in vocabulary:
             known.update(normalise(text).split())
         self._known = frozenset(known)
         self._cache: Dict[str, str] = {}
+        # Multi-word concepts keyed by reduced words, so "disk drives" meets an
+        # approved "disk drive" the way "taking up" meets "take up".
+        self._multiword: Dict[Tuple[str, ...], str] = dict(MULTIWORD)
+        for words, concept in self.approved.phrases.items():
+            self._multiword.setdefault(tuple(self.base(w) for w in words), concept)
+        self._longest = max((len(k) for k in self._multiword), default=1)
 
     # ------------------------------------------------------------------
     def base(self, word: str) -> str:
@@ -329,14 +420,13 @@ class Lexicon:
             i += 1
 
         # Multi-word concepts, longest first, then single words.
-        longest = max((len(k) for k in MULTIWORD), default=1)
         i = 0
         while i < len(expanded):
-            for size in range(longest, 1, -1):
+            for size in range(self._longest, 1, -1):
                 key = tuple(item[0] for item in expanded[i:i + size])
-                if len(key) == size and key in MULTIWORD:
+                if len(key) == size and key in self._multiword:
                     surface = norm[expanded[i][1]:expanded[i + size - 1][2]]
-                    reading.words.append(Word(MULTIWORD[key], surface,
+                    reading.words.append(Word(self._multiword[key], surface,
                                               expanded[i][1],
                                               expanded[i + size - 1][2]))
                     i += size

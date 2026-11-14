@@ -510,9 +510,12 @@ class CapabilityCorpus:
     model's guess about it, and it costs nothing to ask.
     """
 
-    def __init__(self, registry=None, lexical: bool = True):
+    def __init__(self, registry=None, lexical: bool = True, approved=None):
+        """*approved*: the ESI phase 2 additions (``lexical.Approved``); None
+        reads the approved file, ``Approved()`` uses the hand tables alone."""
         self.registry = registry
         self.lexical = lexical
+        self._approved = approved
         self._ordered = sorted(
             ((phrase, capability)
              for capability, phrases in PHRASEBOOK.items()
@@ -546,7 +549,7 @@ class CapabilityCorpus:
 
         words = [p for phrases in PHRASEBOOK.values() for p in phrases]
         words += [p for phrases in ANALYSIS_PHRASES.values() for p in phrases]
-        self._lexicon = Lexicon(words)
+        self._lexicon = Lexicon(words, approved=self._approved)
         seen: Dict[frozenset, Dict[str, str]] = {}
         for phrase, name in self._analyses:
             seen.setdefault(self._lexicon.key(phrase), {}).setdefault(name, phrase)
