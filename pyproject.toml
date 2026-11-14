@@ -53,6 +53,7 @@ earth_os = [
     "assets/fonts/*.txt",
     "assets/palettes/*.lxcp",
     "assets/lang/*.lng",
+    "assets/lexicon/*",
     "assets/sounds/*.wav",
     "mind/personalities/*.json",
     "mind/worlds/*.json",
