@@ -471,3 +471,68 @@ No model call is added anywhere; no reading is taken to decide a route.
 As instructed, nothing below the boundary has been touched. P4 (per-process
 CPU in the Linux adapter) is next, as its own change, with its overhead
 measured; then P5 and P6.
+
+---
+
+## 11. P4: processor time per process, measured
+
+*Approved on its own, after P1–P3 were reviewed: "establish that CPU
+measurements are accurate before building intelligence on top of them". Below
+the capability boundary; `capability_corpus.py` is not touched in this change
+(`AGENTS.md` §7.3). The Evolution Center had already filed this gap as
+`per-process-cpu`, with requirements — keep the previous sample in the
+adapter and report the difference; never report zero; conformance must show
+no capability disagreeing. P4 is built to those and to the review's seven
+safeguards.*
+
+### What changed
+
+| File | Change |
+|---|---|
+| `earth_os/platform/linux_adapter.py` | Each listing reads every process's clock ticks (utime + stime) and start time from `/proc/<pid>/stat`; the figure is the difference from the previous listing, as a percentage of one core, over the time between them. The first baseline is taken when the adapter is made. A process is measured only if it was in the baseline **with the same start time**. Listings closer than 0.25 s repeat the last figures. Nothing sleeps. Thread-safe |
+| `earth_os/platform/api.py` | `ProcessInfo.cpu_percent` is `Optional[float]` — **None when not measured; zero means measured and idle** — and `cpu_window` (seconds the figure covers) is added at the end, so every existing construction still works |
+| `earth_os/platform/robot_stub.py` | its queued jobs report None, not 0.0: the stub measures nothing either |
+| `earth_os/evolution/health.py`, `registry.py` | "not reported" now means *no figure*, not *zero*: on an idle machine every program measures 0.0, which is a reading |
+| `tests/test_evolution.py` | the helper's default `cpu=0.0` meant "no figure" while the adapter wrote 0.0; it is `None` now, and a test holds that a measured zero is reported |
+| `tests/test_process_cpu.py` | 20 tests, below |
+| `docs/EVOLUTION_CENTER.md` | processor time per program removed from "not measurable" |
+
+### Found on the way
+
+The adapter split `/proc/<pid>/stat` on spaces. A program's name is the
+second field, in parentheses, and may contain spaces — "(Web Content)" — so
+for such a program the state was read as "Content)" and every later field
+was shifted. The stat line is now split after the *last* ")", by position.
+
+### The seven safeguards
+
+| Safeguard | Held by |
+|---|---|
+| 1 real measurements from /proc | two samples of `/proc/<pid>/stat`; `TestOnRealProcesses` |
+| 2 unavailable is None, never zero | `ProcessInfo` contract; `test_no_figure_is_ever_the_old_placeholder`; no clock rate → no figure |
+| 3 processes that end during sampling | not listed, no error; a new process or a reused pid → None (the start time differs) |
+| 4 no blocking | no sleep anywhere in `LinuxProcess` (checked by reading the code's syntax tree); two listings in < 0.5 s |
+| 5 overhead measured | below |
+| 6 a known CPU-heavy process | a busy loop reads > 60 % (measured 98.7–99.2 %), a sleeping one < 5 % (0.0) |
+| 7 interface preserved | same record, one field added at the end with a default; old positional and keyword constructions still work |
+
+### Measured
+
+| | Before | After |
+|---|---|---|
+| Building the process adapter | 0.00 ms | 0.8 ms (the baseline, 68 processes) |
+| One listing | 2.6 ms | 2.5 ms (each stat file is now read once) |
+| Memory the adapter holds | 5–9 KB | 26–29 KB |
+| Conformance | — | 68 capabilities compared, 0 disagree (one machine measured twice, as the tool says: not a proof) |
+| Performance report, a busy loop running | no busiest-program line, ever, on Linux | "*… is using the most processor time, about 99 percent of one core*" (`TestTheGapItClosed`) |
+| Evolution Center | "[INFORMATIONAL] Processor time per program is not reported" | gone |
+
+### What P5 has to decide
+
+P4 gives figures and the window they cover; it does not decide whether a
+figure is fresh enough to answer "what is using the CPU *now*". After a long
+idle the window can be minutes long — a true average, but not *now*. P5's
+ranking should, when the window is long or the figures are None, list again
+after a short wait **on a worker thread** (the routes that answer system
+questions run on the terminal's thread today), and say the window it
+measured.

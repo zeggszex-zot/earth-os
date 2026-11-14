@@ -92,7 +92,9 @@ def make_shell(settings=None):
     return shell, center
 
 
-def process(pid, name, memory, state="S", cpu=0.0, command=""):
+def process(pid, name, memory, state="S", cpu=None, command=""):
+    # cpu=None: no processor figure. It was 0.0 while the Linux adapter wrote
+    # 0.0 for every process; since routing P4 a zero is a measurement.
     return SimpleNamespace(pid=pid, name=name, command=command or name, state=state,
                            cpu_percent=cpu, memory_bytes=memory)
 
@@ -987,6 +989,15 @@ class TestCapabilityRegistry(unittest.TestCase):
                 return True
         entries = CapabilityRegistry().survey(Facts(SimpleNamespace(capabilities=Registry())))
         self.assertNotIn("service-state", {e.id for e in entries})
+
+    def test_a_measured_zero_is_reported_not_unreported(self):
+        """Routing P4: on an idle machine every program reads 0.0, and that is
+        a measurement. Only a missing figure is 'not reported'."""
+        idle = [process(1, "a", 1024 ** 2, cpu=0.0), process(2, "b", 1024 ** 2, cpu=0.0)]
+        found = by_id(HealthAnalyzer(None).analyze(snapshot(processes=idle)))
+        self.assertNotIn("processes.cpu-unreported", found)
+        facts = Facts(SimpleNamespace(), snapshot(processes=idle))
+        self.assertNotIn("per-process-cpu", {e.id for e in CapabilityRegistry().survey(facts)})
 
     def test_processor_time_per_program_is_detected_from_the_reading(self):
         with_figures = Facts(SimpleNamespace(), snapshot(processes=[process(1, "a", 1, cpu=12.0)]))

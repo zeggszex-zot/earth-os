@@ -115,7 +115,7 @@ class RobotProcess(Process):
 
     def list_processes(self) -> List[ProcessInfo]:
         return [ProcessInfo(pid=task.pid, name=task.label, command=task.label,
-                            state="queued", cpu_percent=0.0, memory_bytes=0)
+                            state="queued", cpu_percent=None, memory_bytes=0)
                 for task in self.robot.queue]
 
     def inspect(self, pid: int) -> Optional[ProcessInfo]:

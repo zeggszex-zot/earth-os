@@ -19,13 +19,21 @@ class PlatformError(Exception):
 
 @dataclass
 class ProcessInfo:
-    """Information about a running process."""
+    """Information about a running process.
+
+    ``cpu_percent`` is processor time as a percentage of one core, measured
+    over the last ``cpu_window`` seconds — so a busy program on a four-core
+    machine can read up to 400. It is **None when it was not measured**: a
+    process too new to have two samples, or a platform that cannot take them.
+    None is not zero. Zero means the process was measured and did not run.
+    """
     pid: int
     name: str
     command: str
     state: str                             # "running", "stopped", etc.
-    cpu_percent: float
+    cpu_percent: Optional[float]
     memory_bytes: int
+    cpu_window: Optional[float] = None     # seconds the cpu figure covers
 
 
 class ProcessHandle(ABC):

@@ -250,11 +250,120 @@ class LinuxSystem(System):
         return (False, f"{argv[0]}: {detail}")
 
 
+#: A processor figure is a difference between two samples of a process's
+#: clock ticks. Closer together than this, it is noise at the kernel's tick
+#: rate (100 a second on most machines), so the previous figures are given
+#: again rather than a new, noisier one.
+CPU_MIN_WINDOW = 0.25
+
+
+def _read_stat(pid: int) -> Optional[Tuple[str, str, int, int]]:
+    """``(name, state, ticks, starttime)`` from ``/proc/<pid>/stat``, or None.
+
+    The name is the second field, in parentheses, and may itself contain
+    spaces and parentheses ("(Web Content)"); everything after the *last*
+    ")" is split by position. Splitting the whole line on spaces, as this
+    adapter did until per-process CPU was measured, shifts every later field
+    for such a program — its state read as "Content)".
+    """
+    try:
+        text = Path(f"/proc/{pid}/stat").read_text()
+    except OSError:
+        return None
+    return _parse_stat(text)
+
+
+def _parse_stat(text: str) -> Optional[Tuple[str, str, int, int]]:
+    """The parsing half of :func:`_read_stat`, for any stat line."""
+    open_at, close_at = text.find("("), text.rfind(")")
+    if open_at < 0 or close_at < open_at:
+        return None
+    rest = text[close_at + 2:].split()
+    try:
+        # After the name: state is field 3; utime 14, stime 15, starttime 22.
+        return (text[open_at + 1:close_at], rest[0],
+                int(rest[11]) + int(rest[12]), int(rest[19]))
+    except (IndexError, ValueError):
+        return None
+
+
 class LinuxProcess(Process):
-    """Process management on Linux."""
+    """Process management on Linux.
+
+    Processor time per process is measured, not estimated: each listing
+    reads every process's clock ticks, and the figure is the difference from
+    the previous listing over the time between them. The first baseline is
+    taken here, when the adapter is made (about 9 µs a process), so the first
+    question already has something to measure against. Nothing here sleeps
+    or waits for a second sample: a caller that wants a fresh, short window
+    lists twice, on its own thread.
+    """
+
+    def __init__(self):
+        self._cpu_lock = threading.Lock()
+        try:
+            self._hz: Optional[float] = float(os.sysconf("SC_CLK_TCK")) or None
+        except (AttributeError, ValueError, OSError):
+            self._hz = None                  # no clock rate: no figure, never a guess
+        #: pid -> (starttime, ticks) at the baseline, and when it was taken.
+        self._baseline: Dict[int, Tuple[int, int]] = {}
+        self._baseline_at: Optional[float] = None
+        #: The last figures given, for a listing too soon after it.
+        self._last: Dict[int, Tuple[int, float]] = {}
+        self._last_window: Optional[float] = None
+        self._take_baseline()
 
     def available(self) -> bool:
         return True
+
+    def _take_baseline(self) -> None:
+        sample: Dict[int, Tuple[int, int]] = {}
+        try:
+            entries = os.listdir("/proc")
+        except OSError:
+            return
+        for entry in entries:
+            if entry.isdigit():
+                stat = _read_stat(int(entry))
+                if stat is not None:
+                    sample[int(entry)] = (stat[3], stat[2])
+        with self._cpu_lock:
+            self._baseline, self._baseline_at = sample, time.monotonic()
+
+    def _cpu_figures(self, samples: Dict[int, Tuple[int, int]], now: float,
+                     advance: bool) -> Tuple[Dict[int, float], Optional[float]]:
+        """Percent of one core per pid, and the window, against the baseline.
+
+        A pid is measured only if it was in the baseline *with the same start
+        time*: a process newer than the baseline, or a pid the kernel has
+        handed to a new process since, has no figure. *advance* makes these
+        samples the next baseline (a listing does; inspecting one process
+        does not).
+        """
+        with self._cpu_lock:
+            if self._hz is None or self._baseline_at is None:
+                if advance:
+                    self._baseline, self._baseline_at = dict(samples), now
+                return {}, None
+            window = now - self._baseline_at
+            if window < CPU_MIN_WINDOW:
+                if self._last_window is None:
+                    return {}, None
+                figures = {pid: pct for pid, (start, pct) in self._last.items()
+                           if pid in samples and samples[pid][0] == start}
+                return figures, self._last_window
+            figures: Dict[int, float] = {}
+            for pid, (start, ticks) in samples.items():
+                before = self._baseline.get(pid)
+                if before is None or before[0] != start:
+                    continue
+                used = max(ticks - before[1], 0)
+                figures[pid] = round(100.0 * used / self._hz / window, 1)
+            if advance:
+                self._baseline, self._baseline_at = dict(samples), now
+                self._last = {pid: (samples[pid][0], pct) for pid, pct in figures.items()}
+                self._last_window = window
+            return figures, window
 
     def launch(self, argv: List[str], name: str = "", detached: bool = True,
                capture_stderr: bool = True) -> LinuxProcessHandle:
@@ -296,26 +405,42 @@ class LinuxProcess(Process):
             return False
 
     def list_processes(self) -> List[ProcessInfo]:
-        """List running processes using /proc."""
-        processes = []
+        """List running processes using /proc, each with its processor time.
+
+        A process that exits while the list is being read is simply not in
+        it. The processor figure is None for any process that cannot be
+        measured against the previous listing (see ``ProcessInfo``).
+        """
+        read: List[Tuple[ProcessInfo, int, int]] = []
         try:
-            for entry in os.listdir("/proc"):
-                if not entry.isdigit():
-                    continue
-                try:
-                    pid = int(entry)
-                    info = self._read_process_info(pid)
-                    if info:
-                        processes.append(info)
-                except (OSError, ValueError):
-                    continue
+            entries = os.listdir("/proc")
         except OSError:
-            pass
-        return processes
+            entries = []
+        for entry in entries:
+            if not entry.isdigit():
+                continue
+            found = self._read_process(int(entry))
+            if found is not None:
+                read.append(found)
+        now = time.monotonic()
+        samples = {info.pid: (start, ticks) for info, ticks, start in read}
+        figures, window = self._cpu_figures(samples, now, advance=True)
+        for info, _ticks, _start in read:
+            if info.pid in figures:
+                info.cpu_percent, info.cpu_window = figures[info.pid], window
+        return [info for info, _t, _s in read]
 
     def inspect(self, pid: int) -> Optional[ProcessInfo]:
-        """Get info on a specific process."""
-        return self._read_process_info(pid)
+        """Get info on a specific process, measured against the last listing."""
+        found = self._read_process(pid)
+        if found is None:
+            return None
+        info, ticks, start = found
+        figures, window = self._cpu_figures({pid: (start, ticks)}, time.monotonic(),
+                                            advance=False)
+        if pid in figures:
+            info.cpu_percent, info.cpu_window = figures[pid], window
+        return info
 
     def wait_for_exit(self, pid: int, timeout: Optional[float] = None) -> int:
         """Wait for a process to exit."""
@@ -326,43 +451,33 @@ class LinuxProcess(Process):
             return -1
 
     def _read_process_info(self, pid: int) -> Optional[ProcessInfo]:
-        """Read process info from /proc/[pid]/stat and /proc/[pid]/status."""
+        """One process, without a processor figure (that needs a baseline)."""
+        found = self._read_process(pid)
+        return found[0] if found is not None else None
+
+    def _read_process(self, pid: int) -> Optional[Tuple[ProcessInfo, int, int]]:
+        """``(info, ticks, starttime)`` from /proc/[pid]/stat and status.
+
+        The info carries no processor figure; the caller measures it.
+        """
+        stat = _read_stat(pid)
+        if stat is None:
+            return None                      # gone, or unreadable: not listed
+        name, state, ticks, start = stat
+        memory_bytes = 0
         try:
-            stat_path = Path(f"/proc/{pid}/stat")
-            status_path = Path(f"/proc/{pid}/status")
-
-            if not stat_path.exists():
-                return None
-
-            # Parse /proc/[pid]/stat
-            stat_line = stat_path.read_text().split()
-            name = stat_line[1].strip("()")
-            state = stat_line[2]
-
-            # Parse /proc/[pid]/status for memory
-            memory_bytes = 0
-            if status_path.exists():
-                for line in status_path.read_text().splitlines():
-                    if line.startswith("VmRSS:"):
-                        try:
-                            memory_bytes = int(line.split()[1]) * 1024  # KB to bytes
-                        except (ValueError, IndexError):
-                            pass
-                        break
-
-            # Estimate CPU percent (simplified; real implementation needs history)
-            cpu_percent = 0.0
-
-            return ProcessInfo(
-                pid=pid,
-                name=name,
-                command=self._read_command_line(pid),
-                state=state,
-                cpu_percent=cpu_percent,
-                memory_bytes=memory_bytes,
-            )
-        except (OSError, ValueError, IndexError):
-            return None
+            for line in Path(f"/proc/{pid}/status").read_text().splitlines():
+                if line.startswith("VmRSS:"):
+                    try:
+                        memory_bytes = int(line.split()[1]) * 1024  # KB to bytes
+                    except (ValueError, IndexError):
+                        pass
+                    break
+        except OSError:
+            pass
+        info = ProcessInfo(pid=pid, name=name, command=self._read_command_line(pid),
+                           state=state, cpu_percent=None, memory_bytes=memory_bytes)
+        return info, ticks, start
 
     def _read_command_line(self, pid: int) -> str:
         """Read the command line from /proc/[pid]/cmdline."""

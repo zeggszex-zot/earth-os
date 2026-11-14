@@ -425,9 +425,12 @@ model says is parsed for a command, becomes a finding, or reaches a report.
   the samples taken since the restart for its *after* — which is correct, but
   needs Earth OS left running for a few minutes before VERIFIED.
 * **Not measurable at all, and said so on screen:** the state of system
-  services, system logs, processor time per program, and storage beyond the
-  system volume. The catalogue has no reading for them. They are listed under
-  CAPABILITIES as power a person would have to grant.
+  services, system logs, and storage beyond the system volume. The catalogue
+  has no reading for them. They are listed under CAPABILITIES as power a
+  person would have to grant. *Processor time per program* was on this list
+  until routing P4: `process.list` existed but the Linux adapter wrote 0.0
+  for every process; it is now measured, and the Center's finding and
+  CAPABILITIES entry clear themselves (`docs/EARTH_MIND_ROUTING_AUDIT.md` §11).
 * **`make conformance` was not run**: nothing below the boundary changed.
 
 ## 8. Where the build differs from the plan

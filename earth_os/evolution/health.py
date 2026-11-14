@@ -292,7 +292,9 @@ class HealthAnalyzer:
 
         # Per-process processor time. On a platform that does not report it,
         # that is the finding: naming a "busiest program" would be inventing one.
-        timed = [p for p in listed if float(getattr(p, "cpu_percent", 0.0) or 0.0) > 0.0]
+        # A figure of zero is a measurement (the program did not run); only a
+        # missing figure is unreported.
+        timed = [p for p in listed if getattr(p, "cpu_percent", None) is not None]
         if not timed:
             findings.append(Finding(
                 "processes.cpu-unreported", "processes", INFORMATIONAL,

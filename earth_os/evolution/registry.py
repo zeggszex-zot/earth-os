@@ -282,7 +282,8 @@ def _per_process_cpu(f: Facts) -> Optional[CapabilityEntry]:
     processes = f.snap.value("processes")
     if not isinstance(processes, list) or not processes:
         return None
-    timed = sum(1 for p in processes if float(getattr(p, "cpu_percent", 0.0) or 0.0) > 0.0)
+    # Zero is a measurement; only a missing figure means none was taken.
+    timed = sum(1 for p in processes if getattr(p, "cpu_percent", None) is not None)
     if timed:
         return None
     return CapabilityEntry(
