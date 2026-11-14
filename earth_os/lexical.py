@@ -58,7 +58,7 @@ _WS = re.compile(r"\s+")
 
 #: Concept -> the words that mean it, in this machine's world.  The concept's
 #: own name is always one of its words.  Keep every group one meaning wide:
-#: a word in two groups is a test failure (``test_lexical.py``).
+#: a word in two groups is a test failure (``tests/test_esi.py``).
 CONCEPTS: Dict[str, Tuple[str, ...]] = {
     # the machine and its parts
     "computer": ("computer", "machine", "pc", "laptop", "desktop", "system",

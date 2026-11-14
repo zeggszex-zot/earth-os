@@ -3,7 +3,7 @@
 *Baseline: branch `sec/phase-2-audit` at `3012e53`. In the build environment
 the suite ran 1217 tests with 9 failures, all environmental (no GTK 4
 typelib, the install harness, the OpenSSL-loading check) — the same 9
-before and after this work. `tests/test_lexical.py` adds 41, all passing.*
+before and after this work. `tests/test_esi.py` adds 41, all passing.*
 
 ESI was proposed as a dictionary-based language-understanding engine for the
 AI terminal: WordNet, a semantic network, FastText embeddings, a small
@@ -81,7 +81,7 @@ the change is inside `CapabilityCorpus.resolve`, so the voice path, the
 terminal (`resolve_analysis`) and Earth Mind (`mind/system.py`) all get it
 from the one place.
 
-Five rules, each a test in `tests/test_lexical.py`:
+Five rules, each a test in `tests/test_esi.py`:
 
 1. **Meaning reaches questions, never acts.** Only analyses and parameterless,
    non-effectful readings are indexed, and not the screenshot, which leaves a
@@ -197,7 +197,7 @@ Add a word to `CONCEPTS` (or a phrase to `MULTIWORD`) in `earth_os/lexical.py`,
 then:
 
 ```bash
-/usr/bin/python3.12 -m unittest tests.test_lexical tests.test_corpus -q
+/usr/bin/python3.12 -m unittest tests.test_esi tests.test_corpus -q
 python3 tools/esi_measure.py tests/esi_dev.jsonl --show
 python3 tools/esi_measure.py tests/esi_heldout.jsonl
 ```
