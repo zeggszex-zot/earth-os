@@ -1,10 +1,11 @@
-# Earth Semantic Intelligence — assessment, phase 1, and the phase 2 bridge
+# Earth Semantic Intelligence — assessment, phase 1, the phase 2 bridge, phase 3A–C
 
 *Baseline: branch `sec/phase-2-audit` at `3012e53`. In the build environment
 the suite ran 1217 tests with 9 failures, all environmental (no GTK 4
 typelib, the install harness, the OpenSSL-loading check) — the same 9
 before and after this work. `tests/test_esi.py` adds 41 (phase 1) and
-`tests/test_esi_bridge.py` 27 (phase 2), all passing.*
+`tests/test_esi_bridge.py` 27 (phase 2); phase 3 adds 9 more to
+`tests/test_esi.py`. All passing.*
 
 ESI was proposed as a dictionary-based language-understanding engine for the
 AI terminal: WordNet, a semantic network, FastText embeddings, a small
@@ -336,3 +337,95 @@ the page is the part that cannot be automated honestly.
   no sense two of their words share. They stay hand-written.
 * **Context resolution and sentence structure** remain unbuilt for the
   reason in §5: no measured failure yet calls for them.
+
+---
+
+## 8. Phase 3A–3C: possessives, three outcomes, and an independent set
+
+Phase 3 is to earn its complexity through demonstrated failures. This
+section is the first failure, the fix scoped to it, and the measurement that
+says what to do next.
+
+### The failure
+
+*"My computer is struggling because several programs are consuming
+memory"* answered **top_memory** — by matching the phrase "taking up **my**
+memory", using the "my" of "**my** computer". Phase 1 reads a sentence as an
+unordered set of concepts, so a possessive belonged to the whole sentence
+rather than to its noun. The answer happened to be reasonable; the reason
+was wrong, and the same mechanism will produce wrong answers.
+
+### 3A: a possessive attaches to its noun
+
+"My" and "your" now bind to the noun after them (skipping a modifier —
+"my *free* memory" — within three words). A reading carries
+`user>computer` or `computer>call` instead of a free-floating `user` or
+`computer`, and phrase keys carry the same, so "taking up my memory"
+requires `user>memory`. Nothing else moved: every other word keeps exactly
+the concept phase 1 gave it, which a test checks word by word across all
+three sets. All 356 phrasebook phrases resolve as before; both earlier sets
+score as before; the collision list is unchanged.
+
+### 3B: three outcomes, on a developer-labelled set
+
+`tests/esi_context.jsonl` — 44 sentences in six categories, committed
+(`72f3c8e`) before any code changed. Each is scored three ways so a
+vocabulary problem is not mistaken for a grammar problem:
+`python3 tools/esi_measure.py tests/esi_context.jsonl --show`.
+
+| | Recognition | Attachment | Interpretation |
+|---|---|---|---|
+| Phrasebook alone | — | — | 11 / 44 |
+| Before 3A | 35 / 44 | 0 / 19 | 19 / 44 |
+| **After 3A** | **35 / 44** | **19 / 19** | **19 / 44** |
+
+Interpretation did not move, and that is the honest result: the two
+sentences that were answered for the wrong reason ("my computer is
+struggling…", "my laptop is taking up a lot of memory") are now not
+answered for that reason, and fall to the plain "memory" reading. They were
+wrong before by their labels and are wrong now — but now for a reason that
+can be seen and fixed.
+
+One correction is on the record: the first baseline scored recognition
+44/44, because for slang the labels named only concepts ESI already had. Nine
+labels were corrected (`812c778`) before any code changed, and the figures
+above are after that correction.
+
+**Why the 25 remaining interpretations miss** — every miss assigned one
+cause:
+
+| Cause | Misses | Example | Needs |
+|---|---|---|---|
+| Vocabulary — a word not recognised | 9 | "my pc is bogged down", "how much juice is left" | words, through the table or the bridge |
+| A phrase that does not exist | 6 | "which program is using the most processor" | phrases |
+| Several resources, one diagnosis | 3 | "the cpu is busy and the memory is full" | structure |
+| Clause scope — *but*, *not*, *tell me* | 3 | "it's not the memory, the cpu is slow" | structure |
+| A bare phrasebook word with another meaning | 3 | "my memory is terrible", "how hot is it outside" | the phrasebook, not ESI |
+| Word order | 1 | "what is using the most cpu" → *what cpu* | structure |
+
+Seven of 25 need structure; fifteen need words or phrases. On this set,
+**vocabulary is the larger problem, not grammar** — so 3D is not yet
+earned. The structural seven are recorded here as its evidence when it is.
+
+This set was written and labelled by the developer. It guards against
+regressions and against tuning; it does not measure generalisation.
+`TestItIsMeasured.test_context_three_outcomes` holds the figures as floors.
+
+### 3C: the independent set
+
+[`docs/ESI_INDEPENDENT_SET.md`](ESI_INDEPENDENT_SET.md) is the protocol: a
+brief to hand to a writer who has not seen ESI (and nothing else), the file
+format, labelling from what the writer *wanted*, and the rules — commit the
+labels before the first run, run once, never tune against it, retire it when
+it has been used to decide too much. `tools/esi_measure.py --labels` lists
+every label, generated from the catalogue; the measurement refuses a file
+with a label that does not exist. A test checks the file's shape when it
+exists, and holds no score for it on purpose.
+
+### 3D: not started
+
+When the independent set exists, the table above is re-made from it. If
+structure is still the smaller share, the next work is vocabulary — the
+bridge's queue, and slang the bridge cannot find. Clause scope is the first
+structural candidate either way: three sentences here, and the shell-level
+"not means not" rule (§3) is already a whole-sentence version of it.

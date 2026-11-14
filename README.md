@@ -301,7 +301,8 @@ nothing else is touched. Full detail in [docs/INSTALL.md](docs/INSTALL.md).
 - **[docs/ESI_ARCHITECTURE.md](docs/ESI_ARCHITECTURE.md)** — Earth Semantic
   Intelligence: the proposal checked against the code, phase 1 (questions read
   by meaning; "don't lock the screen" no longer locks it), and its measured
-  held-out score
+  held-out score; **[docs/ESI_INDEPENDENT_SET.md](docs/ESI_INDEPENDENT_SET.md)**
+  is how to collect sentences from someone who has not seen it
 - **[docs/RENDERING.md](docs/RENDERING.md)** — why the shell used to spend a
   third of a core drawing the same picture, the measurements that showed it,
   the adaptive engine that replaced the frame clock, and how to roll back
