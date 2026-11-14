@@ -364,3 +364,110 @@ A routing *mistake* cannot be counted automatically — if it could, it would
 not be made. That is what the labelled sets measure; the Center should show
 their last scores beside the live counts, and never present the counts as
 accuracy.
+
+---
+
+## 10. P1–P3: implemented and measured
+
+*Approved by the owner after review: P1–P3 as one language-routing change,
+with automated response validation; stop before P4. The labelled set and its
+scorer were committed first (`47309c8`), before any code changed.*
+
+### What changed
+
+| File | Change |
+|---|---|
+| `earth_os/lexical.py` | **P1.** "which" reads as "what"; a question word binds to its noun (`what>cpu`), passing over "kind of", "model" and possessives, and into a compound's last noun ("screen *resolution*"). **P2.** `Frame`: what a sentence asks for — definition, comparison, *elsewhere* (another thing's quantity), identity, measurement, ranking — and whether it points at this machine |
+| `earth_os/capability_corpus.py` | **P2.** `resolve_why`: a reading or analysis is answered only if it is the kind of information asked for; otherwise `Declined`, with the reason, and `world=True` for word knowledge's questions. Each reading's kind (`IDENTITY_READINGS`, `MEASUREMENT_READINGS`, the rest statuses) and subject. **P3.** `unreadable`: a question naming a part of this machine that no reading answers, said honestly, with the nearest readings that *can* be taken. Acts and adjustments are not checked here |
+| `earth_os/mind/system.py` | `UNREADABLE` intent; a world question returns nothing, so the router gives it to CDOS |
+| `earth_os/mind/router.py` | an unreadable question routes to the system subsystem, never to word knowledge; never priority, so the terminal's translator still gets its turn |
+| `earth_os/mind/mind.py` | the unreadable reply: no reading taken, no model asked, source `no reading answers this` |
+| `tools/esi_measure.py` | `--raw` is the phrasebook alone *and* unvalidated, so the historical figures still reproduce; possessive scoring ignores question-word attachments (scored by the routing set) |
+| `tests/test_mind_routing.py` | 22 tests: the review's validation table row by row, P1, P2, P3, the labelled set, and the five failures typed into the terminal |
+| `tests/test_esi.py` | two assertions widened from "possessives move" to "possessives and question words move"; a teardown race fixed (below) |
+
+### Results
+
+| On `tests/mind_routing.jsonl` | Before | After |
+|---|---|---|
+| Routed correctly | 28 / 45 | **42 / 45** |
+| Answered correctly | 28 / 45 | **42 / 45** |
+| Answers of the wrong kind | **9** | **0** |
+| Follow-ups (deferred step) | 0 / 2 | 0 / 2 |
+
+The five terminal failures, typed into the terminal, no model:
+
+| | Now |
+|---|---|
+| A | `earth mind → system · no reading answers this` — *"I understood a question about programs, but none of this computer's readings answers it. I can tell you which programs are holding the most memory."* |
+| B | `answered from live system readings` — *"What processor this is: Intel(R) Xeon(R) Processor @ 2.30GHz."* |
+| C | `no reading answers this` — *"…about processes and the processor… I can tell you which programs are holding the most memory and how busy the processor is."* Nothing is read in its place |
+| D | `earth mind → cdos` — *"Ram is a kind of volatile storage."* No reading taken |
+| E | `answered from live system readings` — *"How many processor cores: 2 cores."* Right route; the wording is P6's |
+
+A and C are now honest, not answered: ranking by CPU cannot exist until P4
+measures it and P5 ranks it.
+
+**The ESI sets:** dev 34/36 and context 35/19/19 unchanged; false positives
+unchanged (3/7, all the phrasebook's bare words). Held-out rose 50 → 51/58:
+"which cpu is this" now reads as "what cpu". That came from fixing B, not from
+looking at the held-out set — but it was written by the same developer, so
+it is reported, not claimed. The bridge's 175 proposals regenerated with no
+status change.
+
+**Validation, automated.** The review's table — CPU utilisation answered
+with the model, a RAM definition with a reading, disk capacity with memory,
+a process ranking with the model: reject; the CPU model for the CPU model:
+accept — is `TestTheValidationTable.test_the_table`, row by row, with six
+more rows from the audit. The scorer keeps its own copy of the
+identity/measurement table, and a test fails if the two part.
+
+### Cost
+
+Same 120 questions, best of runs, before → after:
+
+| | Before | After |
+|---|---|---|
+| Building the corpus | 3.0 ms, 176–178 KB | 3.1–3.9 ms, 178–179 KB |
+| `CapabilityCorpus.resolve` | 0.78–0.80 ms | 0.82–0.97 ms |
+| `EarthMind.route` | 0.96–0.98 ms | 1.00–1.09 ms |
+| Peak process memory | 39 MB | 39–40 MB |
+
+No model call is added anywhere; no reading is taken to decide a route.
+
+### Found on the way
+
+* **Identity was too wide.** The first list of things whose identity can be
+  asked included memory, disk and battery, so "what is my ram" was refused
+  as an identity question answered with a measurement. No reading names a
+  memory module; "what ram do I have" is answered by how much. The list is
+  now only what the catalogue can identify: processor, machine, kernel,
+  distribution, hardware.
+* **"You" is not a part.** The first P3 claimed *"could you tell me a little
+  about what you are able to do, please?"* as a machine question nothing
+  reads, because "you" reads as the computer. `test_acceptance`'s
+  personalities test caught it: that sentence must reach the model. P3 now
+  needs a named part — processor, memory, programs, storage — not a pronoun
+  or "the computer".
+* **A compound is asked about by its last noun.** "What is the screen
+  resolution" first bound to *screen* and was refused as an identity
+  question; the development set caught it.
+* **A flaky test from ESI phase 1.** `TestThroughTheShell` deleted its data
+  directory while the conversation thread could still be writing; it failed
+  about half the time with other modules — on the unchanged code too. It
+  now waits for the shell to finish thinking.
+
+### Still missing
+
+| Sentence | Now | Needs |
+|---|---|---|
+| how much of the cpu is being used | honest decline | vocabulary: "used" with the processor is its load |
+| how much storage is left | honest decline (offers "how full the disk is") | vocabulary: "left" with storage is capacity |
+| my memory is terrible | memory reading | the phrasebook's bare "memory" (§4.1, out of scope here) |
+| and the cpu? / what about the disk | conversation / honest decline | follow-up context (deferred) |
+
+### Stopped here
+
+As instructed, nothing below the boundary has been touched. P4 (per-process
+CPU in the Linux adapter) is next, as its own change, with its overhead
+measured; then P5 and P6.

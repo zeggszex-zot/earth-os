@@ -445,3 +445,26 @@ structure is still the smaller share, the next work is vocabulary — the
 bridge's queue, and slang the bridge cannot find. Clause scope is the first
 structural candidate either way: three sentences here, and the shell-level
 "not means not" rule (§3) is already a whole-sentence version of it.
+
+---
+
+## 9. Routing P1–P2 extended ESI
+
+The Earth Mind routing audit ([EARTH_MIND_ROUTING_AUDIT.md](EARTH_MIND_ROUTING_AUDIT.md))
+found that two of its five terminal failures were ESI phase 1 regressions:
+reading a phrase as an unordered set lost that "what processor" asks *which
+processor*, and reading by meaning answered "what is ram" with a memory
+reading. Two additions to `lexical.py` fix them, both built on 3A's
+attachment:
+
+* **question words attach** — "what"/"which" bind to their noun
+  (`what>cpu`), so "what processes are using the most cpu" no longer carries
+  what "what processor" requires;
+* **a sentence has a frame** — what it asks for (definition, comparison,
+  another thing's quantity, identity, measurement, ranking) and whether it
+  points at this machine. The corpus answers only with the kind of
+  information asked for.
+
+Every ESI figure held: dev 34/36, context 35/19/19, false positives 3/7;
+held-out rose to 51/58 (see the audit §10 for why that is reported, not
+claimed).

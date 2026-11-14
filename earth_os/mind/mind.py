@@ -62,7 +62,11 @@ from .models import DEFAULT_ENVIRONMENT, ModelManager
 from .personas import OS, Personality, PersonalityRegistry
 from .redact import redact
 from .router import Route, Router
-from .system import ANALYSIS, DIAGNOSIS, SystemSubsystem
+from .system import ANALYSIS, DIAGNOSIS, UNREADABLE, SystemSubsystem
+
+#: The source of a reply that says no reading answers the question (routing
+#: audit P3). Shown on the terminal status line as it stands.
+NO_READING = "no reading answers this"
 
 DEFAULT_PERSONA = "companion"
 #: Kept exchanges put back into working memory when a conversation resumes.
@@ -312,6 +316,14 @@ class EarthMind:
         if not person.may("system.read"):
             return Response(f"{who} has no access to system readings.", route=route.kind,
                             subsystems=(env.SYSTEM,), source="fixed", ok=False, persona=who)
+
+        if intent.kind == UNREADABLE:
+            # About this machine, and nothing reads it (routing audit P3): say
+            # so, and what can be read instead. No reading is taken, no model
+            # is asked, and nothing else is offered in its place.
+            return Response(intent.summary, route=route.kind, subsystems=(env.SYSTEM,),
+                            source=NO_READING, ok=False, persona=who,
+                            extra={"kind": UNREADABLE})
 
         answer = self.system.answer(intent, table=(interface == "terminal" and intent.kind == ANALYSIS))
         if not answer.ok:

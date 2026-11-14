@@ -458,6 +458,86 @@ MEANING_READINGS: frozenset = READINGS - {"display.screenshot"}
 
 
 
+#: What kind of information each reading is, for checking it answers the
+#: question asked (routing audit P2). Every reading is one of these, or a
+#: status (a list, a state); ``tests/test_mind_routing.py`` keeps the three in
+#: step with ``READINGS``. Analyses are rankings, or diagnoses when explained.
+IDENTITY_READINGS: frozenset = frozenset({
+    "hardware.cpu_model", "system.hostname", "system.kernel", "system.distro",
+    "hardware.enumerate", "user.identity", "user.full_name",
+})
+MEASUREMENT_READINGS: frozenset = frozenset({
+    "hardware.memory", "hardware.swap", "hardware.disk", "hardware.cpu_load",
+    "hardware.cpu_load_per_core", "hardware.load_average", "hardware.temperature",
+    "hardware.battery", "hardware.uptime", "hardware.processes", "hardware.net_rate",
+    "hardware.cpu_count", "audio.get_volume", "display.get_brightness",
+    "display.get_resolution",
+})
+
+#: Which resource a reading is about, where a question could name another.
+READING_SUBJECT: Dict[str, str] = {
+    "hardware.memory": "memory", "hardware.swap": "memory", "hardware.disk": "disk",
+    "hardware.cpu_load": "cpu", "hardware.cpu_load_per_core": "cpu",
+    "hardware.cpu_model": "cpu", "hardware.cpu_count": "cpu",
+}
+_RESOURCES = frozenset(READING_SUBJECT.values())
+
+#: The reading to offer first for a thing a question named, when no reading
+#: answered it: the nearest true answer this machine *can* give.
+_OFFER_FIRST: Dict[str, str] = {
+    "cpu": "hardware.cpu_load", "memory": "hardware.memory", "disk": "hardware.disk",
+    "program": "top_memory", "process": "top_memory", "temperature": "hardware.temperature",
+    "battery": "hardware.battery", "network": "network.status", "wifi": "network.wireless",
+    "swap": "hardware.swap",
+}
+
+#: Words that point at this machine without naming any part of it.
+_POINTERS = frozenset({"you", "your", "yours", "yourself", "it", "its", "this", "system",
+                       "box", "machine", "computer", "pc", "laptop", "desktop"})
+
+#: How a concept is said back to a person in a refusal.
+_SAID_AS: Dict[str, str] = {
+    "cpu": "the processor", "memory": "memory", "disk": "storage", "program": "programs",
+    "process": "processes", "computer": "this computer", "screen": "the screen",
+    "battery": "the battery", "network": "the network", "wifi": "wifi",
+    "temperature": "temperature", "swap": "swap",
+}
+
+
+def answer_kind(target: str) -> str:
+    """identity | measurement | ranking | diagnosis | status."""
+    if target in ANALYSES:
+        return "diagnosis" if ANALYSES[target].explained else "ranking"
+    if target in IDENTITY_READINGS:
+        return "identity"
+    if target in MEASUREMENT_READINGS:
+        return "measurement"
+    return "status"
+
+
+@dataclass(frozen=True)
+class Declined:
+    """Why the corpus would not answer a sentence it recognised.
+
+    ``world`` is True when the sentence asks about the world — what something
+    is, a comparison, another thing's quantity — and word knowledge should
+    answer it. Otherwise it was a question about this machine that the
+    matched reading does not answer, and saying so is the answer.
+    """
+
+    reason: str
+    world: bool = False
+    target: str = ""
+
+
+@dataclass(frozen=True)
+class Unreadable:
+    """A question about this machine that no reading answers (routing audit P3)."""
+
+    text: str
+    phrase: str = ""
+
+
 def _bytes(count: object) -> str:
     """A byte figure a person can hear without counting zeroes."""
     try:
@@ -510,11 +590,15 @@ class CapabilityCorpus:
     model's guess about it, and it costs nothing to ask.
     """
 
-    def __init__(self, registry=None, lexical: bool = True, approved=None):
+    def __init__(self, registry=None, lexical: bool = True, approved=None,
+                 validate: bool = True):
         """*approved*: the ESI phase 2 additions (``lexical.Approved``); None
-        reads the approved file, ``Approved()`` uses the hand tables alone."""
+        reads the approved file, ``Approved()`` uses the hand tables alone.
+        *validate*: check that an answer is the kind of information asked for
+        (routing audit P2); off only to reproduce the phrasebook's old figures."""
         self.registry = registry
         self.lexical = lexical
+        self.validate = validate
         self._approved = approved
         self._ordered = sorted(
             ((phrase, capability)
@@ -533,6 +617,13 @@ class CapabilityCorpus:
         self.ambiguous: Dict[frozenset, Tuple[str, ...]] = {}
         if lexical:
             self._build_meanings()
+        #: Reads a sentence's frame even with matching by meaning switched off.
+        self._reader = self._lexicon
+        if self._reader is None and validate:
+            from .lexical import Lexicon
+            words = [p for phrases in PHRASEBOOK.values() for p in phrases]
+            words += [p for phrases in ANALYSIS_PHRASES.values() for p in phrases]
+            self._reader = Lexicon(words, approved=self._approved)
 
     # ------------------------------------------------------------------
     def _build_meanings(self) -> None:
@@ -575,14 +666,133 @@ class CapabilityCorpus:
         self._meanings = meanings
 
     def resolve(self, text: str) -> Optional[CapabilityIntent]:
-        """The best reading of *text*, or None if it names nothing.
+        """The best reading of *text*, or None if it names nothing — or if what
+        it names is not the kind of information asked for (see
+        :meth:`resolve_why`)."""
+        return self.resolve_why(text)[0]
 
-        Phrases as written are tried first, exactly as before. Then the
-        sentence is read by meaning, and that reading wins only if it
-        accounts for *more* of what was said than the phrase did — "which app
-        is eating the most memory" is a question about programs, not the
-        bare "memory" a phrase found in it.
+    def resolve_why(self, text: str) -> Tuple[Optional[CapabilityIntent], Optional[Declined]]:
+        """The reading of *text*, and why the corpus declined one if it did.
+
+        A reading or analysis is answered only if it is the kind of
+        information the sentence asks for (routing audit P2). "What is a cpu"
+        names the processor and asks what one *is*: the processor model is
+        the wrong kind of answer, and the sentence is word knowledge's.
+        "What processes are using the most cpu" asks for a ranking: a model
+        or a total is the wrong kind. Acts are not checked here; they keep
+        their own gate.
         """
+        found = self._resolve(text)
+        if found is None or not self.validate or self._reader is None:
+            return found, None
+        target = found.analysis or found.capability
+        if not found.analysis and target not in MEANING_READINGS:
+            return found, None                       # an act, or an adjustment
+        why = self._mismatch(normalise(text), target)
+        return (None, why) if why is not None else (found, None)
+
+    def _mismatch(self, cleaned: str, target: str) -> Optional[Declined]:
+        reading = self._reader.read(cleaned)
+        frame = self._reader.frame(cleaned, reading)
+        if frame.about_the_world:
+            return Declined(f"it {frame.why}", world=True, target=target)
+        kind = answer_kind(target)
+        if frame.asks == "measurement" and kind == "identity":
+            return Declined("you asked how it is doing, and the only reading that matched "
+                            "says what it is", target=target)
+        if frame.asks == "identity" and kind == "measurement":
+            return Declined("you asked which one it is, and the only reading that matched "
+                            "is a measurement", target=target)
+        if frame.asks == "ranking" and kind not in ("ranking", "diagnosis"):
+            return Declined("you asked what is using it, and nothing here ranks programs "
+                            "by that", target=target)
+        subject = READING_SUBJECT.get(target)
+        named = ({w.concept for w in reading.words}
+                 | {a.split(">", 1)[1] for a in reading.attachments}) & _RESOURCES
+        if subject and named and subject not in named:
+            asked = " or ".join(_SAID_AS.get(c, c) for c in sorted(named))
+            return Declined(f"the only reading that matched is about "
+                            f"{_SAID_AS.get(subject, subject)}, not {asked}", target=target)
+        return None
+
+    def unreadable(self, text: str, declined: Optional[Declined] = None) -> Optional[Unreadable]:
+        """A question about this machine that no reading answers, put honestly.
+
+        Routing audit P3. Without this, a question the corpus did not
+        recognise fell through to word knowledge, which answered about the
+        *word* — "which processor does this computer have" got the senses of
+        *processor*. Taken only for a question (asking which one, how it is
+        doing, or what is using it) that names something this machine has;
+        never for a question about the world, a negation, or talk.
+        """
+        if self._reader is None:
+            return None
+        cleaned = normalise(text)
+        if not cleaned or (declined is not None and declined.world):
+            return None
+        reading = self._reader.read(cleaned)
+        frame = self._reader.frame(cleaned, reading)
+        if reading.negated or frame.about_the_world:
+            return None
+        from .lexical import MACHINE, POSSESSIVE
+        # A thing this machine has, named — not a pronoun. "You" and "it"
+        # point at the machine but name nothing a reading could take: "could
+        # you tell me what you are able to do" is talk, not a missing reading.
+        machine = [w for w in reading.words
+                   if w.concept in MACHINE and w.surface not in _POINTERS]
+        if declined is None and (not machine or frame.asks not in
+                                 ("measurement", "identity", "ranking")):
+            return None
+        topics: List[str] = []
+        for word in machine:
+            said = _SAID_AS.get(word.concept, word.surface)
+            if said not in topics:
+                topics.append(said)
+        about = (" and ".join(topics[:3]) if topics else "this computer")
+        text_out = f"I understood a question about {about}, but none of this computer's " \
+                   f"readings answers it"
+        text_out += f": {declined.reason}." if declined is not None else "."
+        offers = self._nearest([w.concept for w in machine],
+                               exclude=declined.target if declined else "",
+                               ranking=frame.asks == "ranking")
+        if offers:
+            text_out += " I can tell you " + _listed(offers) + "."
+        span = reading.span({w.concept for w in machine}) or cleaned
+        return Unreadable(text_out, phrase=span)
+
+    def _nearest(self, concepts: List[str], exclude: str = "", ranking: bool = False,
+                 limit: int = 3) -> List[str]:
+        """What this machine *can* say about *concepts*, in its own words.
+
+        For a question asking what is using something, the rankings that do
+        exist come first — the nearest true answer to "which applications use
+        the most resources" is which hold the most memory.
+        """
+        targets: List[str] = []
+        for concept in concepts:
+            first = _OFFER_FIRST.get(concept)
+            if first is None:
+                first = next((t for key, t, _p in self._meanings if concept in key), None)
+            if first is not None and first not in targets:
+                targets.append(first)
+        if ranking and "top_memory" not in targets:
+            targets.append("top_memory")         # the ranking that does exist
+        out: List[str] = []
+        for target in targets:
+            if target == exclude or len(out) >= limit:
+                continue
+            spec = CATALOGUE.get(target)
+            said = ANALYSES[target].summary if target in ANALYSES else (
+                spec.summary if spec is not None else "")
+            if said and said not in out:
+                out.append(said)
+        return out
+
+    def _resolve(self, text: str) -> Optional[CapabilityIntent]:
+        """Phrases as written first, exactly as before; then by meaning, which
+        wins only if it accounts for *more* of what was said than the phrase
+        did — "which app is eating the most memory" is a question about
+        programs, not the bare "memory" a phrase found in it."""
         cleaned = normalise(text)
         if not cleaned:
             return None
@@ -682,7 +892,10 @@ class CapabilityCorpus:
         meant = self._as_meaning(cleaned)
         if meant is not None and meant.analysis:
             if found is None or self._refines(meant, found):
-                return meant
+                found = meant
+        if found is not None and self.validate and self._reader is not None \
+                and self._mismatch(cleaned, found.analysis) is not None:
+            return None
         return found
 
     # ------------------------------------------------------------------

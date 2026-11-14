@@ -43,6 +43,9 @@ from ..capability_corpus import ANALYSES, READINGS
 from .envelope import Proposal
 
 READING, ANALYSIS, DIAGNOSIS, ACTION, PROGRAM = "reading", "analysis", "diagnosis", "action", "program"
+#: A question about this machine that no reading answers. Said as such, never
+#: passed to word knowledge, which would answer about the word (routing audit P3).
+UNREADABLE = "unreadable"
 
 _LAUNCH = re.compile(
     r"^(?:please\s+)?(?:can you\s+|could you\s+)?(?:open|launch|start|run|bring up)\s+"
@@ -52,7 +55,7 @@ _LAUNCH = re.compile(
 
 @dataclass
 class SystemIntent:
-    kind: str                          # reading | analysis | diagnosis | action | program
+    kind: str                          # reading | analysis | diagnosis | action | program | unreadable
     capability: str = ""
     analysis: str = ""
     phrase: str = ""                   # the words that were recognised
@@ -94,7 +97,10 @@ class SystemSubsystem:
     def resolve(self, text: str) -> Optional[SystemIntent]:
         """What *text* asks of the machine, or None if it is not about the machine."""
         corpus = getattr(self.port, "capability_corpus", None)
-        intent = corpus.resolve(text) if corpus is not None and self.available else None
+        if corpus is None or not self.available:
+            return self._as_program(text)
+        resolve_why = getattr(corpus, "resolve_why", None)
+        intent, declined = resolve_why(text) if resolve_why else (corpus.resolve(text), None)
         if intent is not None:
             if intent.analysis:
                 analysis = ANALYSES.get(intent.analysis)
@@ -106,7 +112,16 @@ class SystemSubsystem:
             return SystemIntent(READING if reading else ACTION, capability=intent.capability,
                                 phrase=intent.phrase, effectful=bool(intent.effectful),
                                 summary=intent.explanation)
-        return self._as_program(text)
+        if declined is not None and declined.world:
+            return None                          # what something is: word knowledge's
+        program = self._as_program(text)
+        if program is not None:
+            return program
+        unreadable = getattr(corpus, "unreadable", None)
+        found = unreadable(text, declined) if unreadable else None
+        if found is not None:
+            return SystemIntent(UNREADABLE, phrase=found.phrase, summary=found.text)
+        return None
 
     def _as_program(self, text: str) -> Optional[SystemIntent]:
         find = getattr(self.port, "find_program", None)
@@ -122,6 +137,8 @@ class SystemSubsystem:
     # -- taking readings --------------------------------------------------------------
     def answer(self, intent: SystemIntent, table: bool = False) -> SystemAnswer:
         """Take the readings *intent* asks for. Reads only; refuses anything else."""
+        if intent.kind == UNREADABLE:
+            return SystemAnswer(False, intent.summary)
         if intent.kind == DIAGNOSIS:
             # One set of readings, said as findings: the same figures are what
             # is shown, what is explained and what the explanation is checked

@@ -137,6 +137,31 @@ MODIFIERS: FrozenSet[str] = frozenset("""
 #: How far after a possessive its noun may be.
 _ATTACH_WINDOW = 3
 
+#: Question words, and the one they all read as. "Which processor" asks what
+#: "what processor" asks (routing audit P1).
+QUESTION_WORDS: Dict[str, str] = {"what": "what", "which": "what"}
+
+#: Words a question word passes over to reach its noun: "what *kind of*
+#: processor", "what *model* is the cpu".
+QUESTION_FILLER: FrozenSet[str] = frozenset("""
+    kind kinds type types sort sorts model make brand version
+""".split())
+
+#: Words that can end a compound a question word points into: "what is
+#: the screen *resolution*" asks about the resolution, not the screen.
+_COMPOUND_HEADS: FrozenSet[str] = frozenset({
+    "load", "temperature", "resolution", "volume", "brightness", "uptime",
+    "capacity", "speed", "level", "size", "model", "usage", "network",
+})
+
+#: Concepts whose *identity* this machine can report — "which processor",
+#: "what is your name", "what hardware". Only these: "what ram do I have" is
+#: answered by how much there is, because no reading names a memory module,
+#: and treating it as an identity question would refuse the right answer.
+DEVICES: FrozenSet[str] = frozenset({
+    "cpu", "computer", "kernel", "distro", "hostname", "call", "hardware", "device",
+})
+
 #: Forms of the three auxiliaries, which no suffix rule reduces.
 AUXILIARY: Dict[str, str] = {
     "am": "be", "is": "be", "are": "be", "was": "be", "were": "be",
@@ -401,6 +426,8 @@ class Lexicon:
             return cached
         if word in AUXILIARY:
             result = AUXILIARY[word]
+        elif word in QUESTION_WORDS:
+            result = QUESTION_WORDS[word]
         elif word in IRREGULAR:
             result = IRREGULAR[word]
         elif word in self._synonym:
@@ -475,31 +502,56 @@ class Lexicon:
 
     @staticmethod
     def _attach(reading: Reading) -> None:
-        """Bind each "my"/"your" to the noun after it.
+        """Bind each "my"/"your", and each "what"/"which", to the noun after it.
 
         The noun is the next word that is not a modifier, within a few
-        words; failing that, the next word at all. A possessive with nothing
-        after it ("is it mine") stays as it was. Only possessives move:
+        words; failing that, the next word at all. A possessive or question
+        word with nothing after it stays as it was. Only these words move:
         every other word keeps exactly the concept phase 1 gave it.
+
+        Question words (routing audit P1) are what phase 1 lost by reading a
+        sentence as a set: "what processor" asks *which processor*, and as
+        {what, cpu} it was satisfied by "**what** processes are using the
+        most **cpu**". Bound, it is ``what>cpu``, and that sentence carries
+        ``what>process``. A question word passes over "kind of", "model" and
+        possessives ("what is *your* name") to reach its noun.
         """
         words = reading.words
         keep: List[Word] = []
         attachments = set()
         for i, word in enumerate(words):
             owner = POSSESSIVE.get(word.surface)
-            if owner is None:
+            asking = word.concept == "what" and word.surface in QUESTION_WORDS
+            if owner is None and not asking:
                 keep.append(word)
                 continue
+            skip = MODIFIERS | (QUESTION_FILLER if asking else frozenset())
             following = [w for w in words[i + 1:i + 1 + _ATTACH_WINDOW]
-                         if w.surface not in POSSESSIVE]
-            noun = next((w for w in following if w.surface not in MODIFIERS),
+                         if w.surface not in POSSESSIVE and w.surface not in QUESTION_WORDS]
+            noun = next((w for w in following if w.surface not in skip),
                         following[0] if following else None)
             if noun is None:
                 keep.append(word)
                 continue
-            attachments.add(f"{owner}>{noun.concept}")
+            if asking:
+                # A compound asks about its last noun: "screen resolution",
+                # "cpu usage". Followed only through machine and quantity
+                # words, so a verb ("which wifi keeps dropping") never is.
+                at = words.index(noun)
+                while at + 1 < len(words):
+                    nxt = words[at + 1]
+                    if nxt.start != words[at].end + 1 or not (
+                            nxt.concept in _COMPOUND_HEADS or nxt.concept in MACHINE):
+                        break
+                    at += 1
+                noun = words[at]
+            attachments.add(f"{owner or 'what'}>{noun.concept}")
         reading.words = keep
         reading.attachments = frozenset(attachments)
+
+    def frame(self, text: str, reading: Optional[Reading] = None) -> "Frame":
+        """What *text* asks for (see :class:`Frame`)."""
+        return _frame(self, reading if reading is not None else self.read(text))
 
     def key(self, phrase: str) -> FrozenSet[str]:
         """A phrase as the set of concepts it requires, attachments included.
@@ -508,6 +560,97 @@ class Lexicon:
         """
         reading = self.read(phrase)
         return frozenset(w.concept for w in reading.words) | reading.attachments
+
+
+# --------------------------------------------------------------------------
+# What a question asks for (routing audit P2)
+# --------------------------------------------------------------------------
+
+@dataclass(frozen=True)
+class Frame:
+    """What kind of information a sentence asks for, and about what.
+
+    ``asks`` is one of: ``definition`` (what something *is*), ``comparison``,
+    ``elsewhere`` (a quantity of something that is not this machine — "the
+    temperature *of the sun*"), ``identity`` (which one this machine has),
+    ``measurement`` (how this machine's one is doing), ``ranking`` (what is
+    using it), or ``other``. ``machine`` is True when the sentence points at
+    this computer: "my", "your", "this computer", "do you have", "right now".
+
+    Read from a handful of function words and the attachments, not from a
+    list of questions: "what is a cpu" and "what is an ssd" are the same
+    frame, and neither had to be written down.
+    """
+
+    asks: str = "other"
+    machine: bool = False
+    why: str = ""
+
+    @property
+    def about_the_world(self) -> bool:
+        """Asks what something is, or compares, or is about something else —
+        and does not point at this machine. Word knowledge answers these."""
+        return self.asks in ("definition", "comparison", "elsewhere") and not self.machine
+
+
+_HERE = re.compile(
+    r"\b(?:this|these) (?:computer|machine|pc|laptop|desktop|system|box|device|processor|"
+    r"cpu|disk|drive|screen|battery)s?\b"
+    r"|\b(?:do|does|did|have) (?:i|you|we|it|this \w+) (?:have|got|use|run|got)\b"
+    r"|\b(?:i|you|we) (?:have|got)\b|\binstalled\b|\bright now\b|\bcurrently\b"
+    r"|\bat the moment\b|\b(?:on|in) here\b|\byou\b|\byourself\b")
+_DEFINE = re.compile(
+    r"^(?:so |and |but )?what (?:is|are|s) (?:a|an) \w+"
+    r"|\bwhat (?:does|do) (?:a |an |the )?[\w ]{1,30}? (?:mean|stand for)\b"
+    r"|^(?:define|explain|describe)\b|\bwhat is meant by\b|\b(?:meaning|definition) of\b"
+    r"|\bhow (?:does|do) (?:a |an |the )?[\w ]{1,30}? work\b|\bwhat is the (?:purpose|point) of\b")
+_BARE = re.compile(r"^what (?:is|are|s) (?P<x>[a-z]+(?: [a-z]+)?)$")
+_COMPARE = re.compile(
+    r"\bdifferences? between\b|\b(?:vs|versus)\b|\bcompared? (?:to|with)\b|\bthe same as\b"
+    r"|\b(?:faster|slower|better|worse|bigger|smaller|cheaper) than\b")
+_OF_OWNER = re.compile(
+    r"\b(?:temperature|temp|speed|size|weight|age|capacity|volume|load|name|height|length|"
+    r"mass|population|usage) of (?:the |a |an )?(?P<o>[a-z]+)")
+_MEASURE = re.compile(
+    r"\bhow (?:much|many|hot|warm|full|busy|fast|slow|big|long|loud|bright|old)\b"
+    r"|\b(?:usage|utilisation|utilization|used|free|left|remaining|level|percent|percentage|"
+    r"speed|temperature|temp|load)\b")
+_RANK = re.compile(r"\b(?:most|top|biggest|heaviest|hungriest|hogging|hogs?)\b")
+
+
+def _frame(lexicon: "Lexicon", reading: Reading) -> Frame:
+    norm = reading.text
+    words = [w.concept for w in reading.words]
+    attached = set(reading.attachments)
+    machine = bool(_HERE.search(norm)) or any(
+        a.startswith(("user>", "computer>")) for a in attached)
+
+    if _COMPARE.search(norm):
+        return Frame("comparison", machine, "compares")
+    if _DEFINE.search(norm):
+        return Frame("definition", machine, "asks what something is")
+    bare = _BARE.match(norm)
+    if bare:
+        # "what is ram", "what is uptime": a bare noun, no article. Only a
+        # word for something this machine has — "what is running" is not.
+        concepts = [lexicon.concept(lexicon.base(t)) for t in bare.group("x").split()]
+        if concepts and all(c in MACHINE for c in concepts):
+            return Frame("definition", machine, "asks what something is")
+    owner = _OF_OWNER.search(norm)
+    if owner:
+        whose = lexicon.concept(lexicon.base(owner.group("o")))
+        if whose not in MACHINE and not machine and whose not in ("it", "this"):
+            return Frame("elsewhere", machine, f"about the {owner.group('o')}")
+
+    asked = {a.split(">", 1)[1] for a in attached if a.startswith("what>")}
+    if (_RANK.search(norm) and "use" in words) or "use" in asked or \
+            (asked & {"program", "process"} and "use" in words):
+        return Frame("ranking", machine, "asks what is using it")
+    if asked & DEVICES and not _MEASURE.search(norm):
+        return Frame("identity", machine, "asks which one")
+    if _MEASURE.search(norm) or (asked and not asked & DEVICES):
+        return Frame("measurement", machine, "asks how it is doing")
+    return Frame("other", machine, "")
 
 
 #: "not", "never", "cannot", and every "n't" (which ``normalise`` leaves as a

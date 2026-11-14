@@ -8,14 +8,15 @@ resolve to anything.  The corpus is built with no registry, so relative
 adjustments ("make it brighter"), which need a live reading, are out of
 scope — the sets contain none.
 
-``--raw`` turns the lexical pass off, giving the figure before ESI.
+``--raw`` turns the lexical pass and answer validation off, giving the
+phrasebook's figure before ESI.
 
 A set whose lines also carry ``concepts``, ``attach`` and ``not_attach``
 (tests/esi_context.jsonl) is scored on three outcomes, so that a vocabulary
 problem is not mistaken for a grammar problem:
 
     recognition     every concept in ``concepts`` was understood
-    attachment      the possessives attached to exactly the nouns in
+    attachment      the possessives ("my", "your") attached to exactly the nouns in
                     ``attach`` — none missing, none extra, none in
                     ``not_attach`` (lines with no possessive: n/a)
     interpretation  the sentence resolved to ``expect``
@@ -63,7 +64,7 @@ def read_rows(path: Path) -> list:
 
 
 def measure(path: Path, lexical: bool = True):
-    corpus = CapabilityCorpus(registry=None, lexical=lexical)
+    corpus = CapabilityCorpus(registry=None, lexical=lexical, validate=lexical)
     rows = read_rows(path)
     results = []
     for row in rows:
@@ -89,7 +90,7 @@ def summary(results) -> dict:
 
 def measure_context(path: Path, lexical: bool = True):
     """Three outcomes per line: (row, recognised, attached or None, got)."""
-    corpus = CapabilityCorpus(registry=None, lexical=lexical)
+    corpus = CapabilityCorpus(registry=None, lexical=lexical, validate=lexical)
     if corpus._lexicon is None:                       # the layer is off: read anyway
         from earth_os.lexical import Lexicon
         reader = Lexicon()
@@ -99,7 +100,10 @@ def measure_context(path: Path, lexical: bool = True):
     out = []
     for row in rows:
         reading = reader.read(row["text"])
-        attachments = set(getattr(reading, "attachments", ()) or ())
+        # This set labels possessives (phase 3A); question-word attachments
+        # ("what>cpu", routing P1) are scored by tests/mind_routing.jsonl.
+        attachments = {a for a in (getattr(reading, "attachments", ()) or ())
+                       if a.startswith(("user>", "computer>"))}
         recognised = set(row.get("concepts", ())) <= set(reading.concepts)
         # Exact, not "the expected ones are there": an attachment nobody
         # labelled is as wrong as a missing one. A line with no attachment

@@ -47,7 +47,7 @@ from typing import List, Optional, Tuple
 
 from ..companion.intent import Intent, classify, is_conversational, normalise
 from . import envelope as env
-from .system import ACTION, ANALYSIS, DIAGNOSIS, PROGRAM, READING, SystemIntent
+from .system import ACTION, ANALYSIS, DIAGNOSIS, PROGRAM, READING, UNREADABLE, SystemIntent
 
 _TALK = re.compile(r"^(?:i (?:want|would like|'d like|need) to |let me |can i |could i |let's )?"
                    r"(?:talk|speak|chat) (?:to|with) (.{2,60})$")
@@ -152,6 +152,13 @@ class Router:
         if found.kind != DIAGNOSIS and is_conversational(text) \
                 and len(found.phrase) < 0.6 * max(len(norm), 1):
             return None
+        if found.kind == UNREADABLE:
+            # About this machine, and nothing reads it: say so, rather than let
+            # word knowledge answer about the word (routing audit P3). Never
+            # priority: the terminal's translator may still know a command.
+            return Route(env.SYSTEM_QUERY, (env.SYSTEM,),
+                         [f"about this machine ({found.phrase!r}), but no reading answers it"],
+                         intent=intent, system=found)
         why = [f"capability corpus: {found.phrase!r} → {found.analysis or found.capability}"]
         if found.kind == DIAGNOSIS:
             return Route(env.MIXED, (env.SYSTEM, env.COMPANION), why + ["a diagnosis: readings, then explained"],

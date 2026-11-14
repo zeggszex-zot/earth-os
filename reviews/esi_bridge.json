@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "about": "Proposals from the CDOS Dictionary Bridge. Nothing here is in use until a person approves it: tools/esi_bridge.py approve WORD CONCEPT --by NAME.",
-  "generated": "2026-11-14T16:45:04Z",
+  "generated": "2026-11-14T18:05:59Z",
   "corpus": {
     "folder": "cdos-data",
     "version": "sha256:59e7c7ca7cf71159298f64903fa281fbdeba12d6217b2a70a8d214b52f07e1c7",
