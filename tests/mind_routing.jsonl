@@ -1,0 +1,47 @@
+{"text": "Which applications are using the most resources?", "route": "unreadable", "expect": "-", "asks": "ranking", "covers": [6, 7], "note": "after P4/P5: an analysis ranking by CPU and memory", "terminal": "A"}
+{"text": "Which processor does this computer have?", "route": "reading", "expect": "hardware.cpu_model", "asks": "identity", "covers": [1], "terminal": "B"}
+{"text": "What processes are using the most CPU?", "route": "unreadable", "expect": "-", "asks": "ranking", "covers": [3, 6], "note": "after P4/P5: an analysis ranking by CPU", "terminal": "C"}
+{"text": "What is the difference between RAM and storage?", "route": "knowledge", "expect": "-", "asks": "comparison", "covers": [4, 5], "terminal": "D"}
+{"text": "How many cores does this processor have?", "route": "reading", "expect": "hardware.cpu_count", "asks": "measurement", "covers": [2], "note": "P6 changes the wording, not the route", "terminal": "E"}
+{"text": "what is a cpu", "route": "knowledge", "expect": "-", "asks": "definition", "covers": [1]}
+{"text": "what is a processor", "route": "knowledge", "expect": "-", "asks": "definition", "covers": [1, 8]}
+{"text": "which cpu do i have", "route": "reading", "expect": "hardware.cpu_model", "asks": "identity", "covers": [1, 8]}
+{"text": "what processor is in this computer", "route": "reading", "expect": "hardware.cpu_model", "asks": "identity", "covers": [1, 8]}
+{"text": "what kind of processor do you have", "route": "reading", "expect": "hardware.cpu_model", "asks": "identity", "covers": [1, 8]}
+{"text": "how busy is the cpu", "route": "reading", "expect": "hardware.cpu_load", "asks": "measurement", "covers": [2, 8]}
+{"text": "what is the cpu usage", "route": "reading", "expect": "hardware.cpu_load", "asks": "measurement", "covers": [2, 8]}
+{"text": "what cpu is this", "route": "reading", "expect": "hardware.cpu_model", "asks": "identity", "covers": [2]}
+{"text": "is the processor under heavy load", "route": "reading", "expect": "hardware.cpu_load", "asks": "measurement", "covers": [2, 8]}
+{"text": "what is using my cpu", "route": "unreadable", "expect": "-", "asks": "ranking", "covers": [3], "note": "after P4/P5: an analysis ranking by CPU"}
+{"text": "how much of the cpu is being used", "route": "reading", "expect": "hardware.cpu_load", "asks": "measurement", "covers": [3]}
+{"text": "what model is the cpu", "route": "reading", "expect": "hardware.cpu_model", "asks": "identity", "covers": [3]}
+{"text": "what is ram", "route": "knowledge", "expect": "-", "asks": "definition", "covers": [4]}
+{"text": "what does ram stand for", "route": "knowledge", "expect": "-", "asks": "definition", "covers": [4]}
+{"text": "explain what memory is", "route": "knowledge", "expect": "-", "asks": "definition", "covers": [4]}
+{"text": "how much ram is free", "route": "reading", "expect": "hardware.memory", "asks": "measurement", "covers": [4, 8]}
+{"text": "how much ram do i have", "route": "reading", "expect": "hardware.memory", "asks": "measurement", "covers": [4, 8]}
+{"text": "what is an ssd", "route": "knowledge", "expect": "-", "asks": "definition", "covers": [5]}
+{"text": "what is a hard drive", "route": "knowledge", "expect": "-", "asks": "definition", "covers": [5]}
+{"text": "is an ssd faster than a hard drive", "route": "knowledge", "expect": "-", "asks": "comparison", "covers": [5]}
+{"text": "how full is my disk", "route": "reading", "expect": "hardware.disk", "asks": "measurement", "covers": [5, 8]}
+{"text": "how much storage is left", "route": "reading", "expect": "hardware.disk", "asks": "measurement", "covers": [5, 8]}
+{"text": "which program is using the most processor", "route": "unreadable", "expect": "-", "asks": "ranking", "covers": [6], "note": "after P4/P5: an analysis ranking by CPU"}
+{"text": "what's hogging the cpu", "route": "unreadable", "expect": "-", "asks": "ranking", "covers": [6], "note": "after P4/P5: an analysis ranking by CPU"}
+{"text": "what is using the most memory", "route": "analysis", "expect": "top_memory", "asks": "ranking", "covers": [7, 8]}
+{"text": "which apps are eating my ram", "route": "analysis", "expect": "top_memory", "asks": "ranking", "covers": [7, 8]}
+{"text": "what's hogging all the memory", "route": "analysis", "expect": "top_memory", "asks": "ranking", "covers": [7, 8]}
+{"text": "how hot is the processor", "route": "reading", "expect": "hardware.temperature", "asks": "measurement", "covers": [8]}
+{"text": "what's the cpu temperature", "route": "reading", "expect": "hardware.temperature", "asks": "measurement", "covers": [8]}
+{"text": "is the computer overheating", "route": "reading", "expect": "hardware.temperature", "asks": "measurement", "covers": [8]}
+{"text": "What is the temperature of the sun?", "route": "knowledge", "expect": "-", "asks": "other", "covers": [9]}
+{"text": "how hot is the sun", "route": "knowledge", "expect": "-", "asks": "other", "covers": [9]}
+{"text": "what is the speed of light", "route": "knowledge", "expect": "-", "asks": "other", "covers": [9]}
+{"text": "my memory is terrible", "route": "conversation", "expect": "-", "asks": "other", "covers": [9], "note": "the person's memory, not the machine's"}
+{"text": "tell me a story about a computer", "route": "conversation", "expect": "-", "asks": "other", "covers": [9]}
+{"text": "what is my name", "route": "reading", "expect": "user.identity", "asks": "identity", "covers": [9]}
+{"text": "what is your name", "route": "reading", "expect": "system.hostname", "asks": "identity", "covers": [9]}
+{"text": "what is the volume", "route": "reading", "expect": "audio.get_volume", "asks": "measurement", "covers": [9]}
+{"text": "what is running", "route": "reading", "expect": "process.list", "asks": "other", "covers": [9]}
+{"text": "why is my computer so slow", "route": "diagnosis", "expect": "performance_report", "asks": "diagnosis", "covers": [9]}
+{"text": "and the cpu?", "route": "reading", "expect": "hardware.cpu_load", "asks": "measurement", "covers": [10], "note": "follow-up context is a deferred step", "after": "how much memory is free"}
+{"text": "what about the disk", "route": "reading", "expect": "hardware.disk", "asks": "measurement", "covers": [10], "note": "follow-up context is a deferred step", "after": "how much memory is free"}
