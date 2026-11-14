@@ -225,6 +225,7 @@ earth_os/
   companion/       the Companion Engine: conversation (docs/COMPANION.md)
   world_model.py   what the person let the computer remember (docs/WORLD_MODEL.md)
   lexical.py       ESI: a question read by meaning, not spelling (docs/ESI_ARCHITECTURE.md)
+  dictionary_bridge.py  ESI phase 2: words proposed from the CDOS corpus, approved by a person
   agent/           Claude Code, built in (docs/CLAUDE_CODE.md)
     policy.py      what it may never touch, what runs unasked (human-only)
     gate.py        the suite decides what is kept (human-only)

@@ -1,0 +1,4026 @@
+{
+  "schema": 1,
+  "about": "Proposals from the CDOS Dictionary Bridge. Nothing here is in use until a person approves it: tools/esi_bridge.py approve WORD CONCEPT --by NAME.",
+  "generated": "2026-11-14T16:16:03Z",
+  "corpus": {
+    "folder": "cdos-data",
+    "version": "sha256:59e7c7ca7cf71159298f64903fa281fbdeba12d6217b2a70a8d214b52f07e1c7",
+    "status": "1,229,268 facts, 143,777 subjects"
+  },
+  "anchors": {
+    "computer": [
+      {
+        "concept": "computer",
+        "word": "computer",
+        "sense": "WN_n_02459358",
+        "definition": "a machine for performing calculations automatically",
+        "why": "filed under computer science"
+      },
+      {
+        "concept": "computer",
+        "word": "pc",
+        "sense": "WN_n_03292010",
+        "definition": "a small digital computer based on a microprocessor and designed to be used by one person at a time",
+        "why": "a kind of digital computer, and names computer"
+      },
+      {
+        "concept": "computer",
+        "word": "laptop",
+        "sense": "WN_n_03018031",
+        "definition": "a portable computer small enough to use in your lap",
+        "why": "a kind of portable computer, and names computer"
+      },
+      {
+        "concept": "computer",
+        "word": "system",
+        "sense": "WN_n_03749175",
+        "definition": "instrumentality that combines interrelated interacting artifacts designed to work as a coherent entity; \"he bought a new stereo system\"; \"the system consists of a motor and a small computer\"",
+        "why": "its definition says computer, and names computer"
+      }
+    ],
+    "memory": [
+      {
+        "concept": "memory",
+        "word": "memory",
+        "sense": "WN_n_03119352",
+        "definition": "an electronic memory device; \"a memory and the CPU form the central part of a computer to which peripherals are attached\"",
+        "why": "a kind of memory device"
+      },
+      {
+        "concept": "memory",
+        "word": "ram",
+        "sense": "WN_n_03426635",
+        "definition": "the most common computer memory which can be used by programs to perform necessary tasks while the computer is on; an integrated circuit memory chip allows information to be stored or accessed in any order and all storage locations are equally accessible",
+        "why": "a kind of volatile storage, and names memory"
+      }
+    ],
+    "disk": [
+      {
+        "concept": "disk",
+        "word": "disk",
+        "sense": "WN_n_03082025",
+        "definition": "(computer science) a memory device consisting of a flat disk covered with a magnetic coating on which information is stored",
+        "why": "filed under computer science"
+      },
+      {
+        "concept": "disk",
+        "word": "drive",
+        "sense": "WN_v_01227509",
+        "definition": "cause to function by supplying the force or power for or by controlling; \"The amplifier drives the tube\"; \"steam drives the engines\"; \"this device drives the disks for the computer\"",
+        "why": "its definition says computer, and names disk"
+      },
+      {
+        "concept": "disk",
+        "word": "storage",
+        "sense": "WN_n_10854226",
+        "definition": "(computer science) the process of storing information in a computer memory or on a magnetic tape or disk",
+        "why": "filed under computer science, and names disk"
+      }
+    ],
+    "cpu": [
+      {
+        "concept": "cpu",
+        "word": "cpu",
+        "sense": "WN_n_02372783",
+        "definition": "(computer science) the part of a computer (a microprocessor chip) that does most of the data processing; \"the CPU and the memory form the central part of a computer to which the peripherals are attached\"",
+        "why": "filed under computer science"
+      }
+    ],
+    "screen": [
+      {
+        "concept": "screen",
+        "word": "screen",
+        "sense": "WN_n_03526315",
+        "definition": "the display that is electronically created on the surface of the large end of a cathode-ray tube",
+        "why": "a kind of display"
+      },
+      {
+        "concept": "screen",
+        "word": "monitor",
+        "sense": "WN_n_03157621",
+        "definition": "display produced by a device that takes signals and displays them on a television screen or a computer monitor",
+        "why": "a kind of display, and names screen"
+      }
+    ],
+    "battery": [],
+    "network": [
+      {
+        "concept": "network",
+        "word": "network",
+        "sense": "WN_v_01075848",
+        "definition": "communicate with and within a group; \"You have to network if you want to get a good job\"",
+        "why": "filed under computer science"
+      },
+      {
+        "concept": "network",
+        "word": "internet",
+        "sense": "WN_n_02957199",
+        "definition": "a computer network consisting of a worldwide network of computer networks that use the TCP/IP network protocols to facilitate data transmission and exchange",
+        "why": "a kind of computer network, and names network"
+      }
+    ],
+    "wifi": [
+      {
+        "concept": "wifi",
+        "word": "wifi",
+        "sense": "WN_n_03962076",
+        "definition": "a local area network that uses high frequency radio signals to transmit and receive data over distances of a few hundred feet; uses ethernet protocol",
+        "why": "a kind of local area network"
+      }
+    ],
+    "program": [
+      {
+        "concept": "program",
+        "word": "program",
+        "sense": "WN_n_05928303",
+        "definition": "(computer science) a sequence of instructions that a computer can interpret and execute; \"the program required several hundred lines of code\"",
+        "why": "filed under computer science"
+      },
+      {
+        "concept": "program",
+        "word": "program",
+        "sense": "WN_v_01804377",
+        "definition": "write a computer program",
+        "why": "filed under computer science"
+      },
+      {
+        "concept": "program",
+        "word": "application",
+        "sense": "WN_n_05929582",
+        "definition": "a program that gives a computer instructions that provide the user with tools to accomplish a task; \"he has tried several different word processing applications\"",
+        "why": "a kind of program, and names program"
+      },
+      {
+        "concept": "program",
+        "word": "software",
+        "sense": "WN_n_05925514",
+        "definition": "(computer science) written programs or procedures or rules and associated documentation pertaining to the operation of a computer system and that are stored in read/write memory; \"the market for software is expected to expand\"",
+        "why": "filed under computer science, and names program"
+      }
+    ],
+    "temperature": [],
+    "use": [
+      {
+        "concept": "use",
+        "word": "use",
+        "sense": "WN_v_01202944",
+        "definition": "use up (resources or materials); \"this car consumes a lot of gas\"; \"We exhausted our savings\"; \"They run through 20 bottles of wine a week\"",
+        "why": "shared with consume, eat"
+      }
+    ],
+    "load": [],
+    "slow": [
+      {
+        "concept": "slow",
+        "word": "slow",
+        "sense": "WN_a_00036972",
+        "definition": "(of business) not active or brisk; \"business is dull (or slow)\"; \"a sluggish market\"",
+        "why": "shared with sluggish"
+      },
+      {
+        "concept": "slow",
+        "word": "slow",
+        "sense": "WN_r_00163052",
+        "definition": "without speed (‘slow’ is sometimes used informally for ‘slowly’); \"he spoke slowly\"; \"go easy here — the road is slippery\"; \"glaciers move tardily\"; \"please go slow so I can see the sights\"",
+        "why": "shared with slowly"
+      }
+    ],
+    "hot": [],
+    "overheat": [],
+    "call": [
+      {
+        "concept": "call",
+        "word": "call",
+        "sense": "WN_v_01071803",
+        "definition": "assign a specified (usually proper) name to; \"They named their son David\"; \"The new school was named after the famous Civil Rights leader\"",
+        "why": "shared with name"
+      }
+    ],
+    "capacity": []
+  },
+  "without_anchor": [
+    "battery",
+    "capacity",
+    "hot",
+    "load",
+    "overheat",
+    "temperature"
+  ],
+  "candidates": [
+    {
+      "word": "be known as",
+      "concept": "call",
+      "relation": "synonym",
+      "said": "be known as",
+      "anchor": "call",
+      "sense": "WN_v_01071803",
+      "definition": "assign a specified (usually proper) name to; \"They named their son David\"; \"The new school was named after the famous Civil Rights leader\"",
+      "why": "shared with name",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.8,
+      "status": "passed"
+    },
+    {
+      "word": "know as",
+      "concept": "call",
+      "relation": "synonym",
+      "said": "know as",
+      "anchor": "call",
+      "sense": "WN_v_01071803",
+      "definition": "assign a specified (usually proper) name to; \"They named their son David\"; \"The new school was named after the famous Civil Rights leader\"",
+      "why": "shared with name",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.8,
+      "status": "passed"
+    },
+    {
+      "word": "computing device",
+      "concept": "computer",
+      "relation": "synonym",
+      "said": "computing device",
+      "anchor": "computer",
+      "sense": "WN_n_02459358",
+      "definition": "a machine for performing calculations automatically",
+      "why": "filed under computer science",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.8,
+      "status": "passed"
+    },
+    {
+      "word": "computing machine",
+      "concept": "computer",
+      "relation": "synonym",
+      "said": "computing machine",
+      "anchor": "computer",
+      "sense": "WN_n_02459358",
+      "definition": "a machine for performing calculations automatically",
+      "why": "filed under computer science",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.8,
+      "status": "passed"
+    },
+    {
+      "word": "data processor",
+      "concept": "computer",
+      "relation": "synonym",
+      "said": "data processor",
+      "anchor": "computer",
+      "sense": "WN_n_02459358",
+      "definition": "a machine for performing calculations automatically",
+      "why": "filed under computer science",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.8,
+      "status": "passed"
+    },
+    {
+      "word": "electronic computer",
+      "concept": "computer",
+      "relation": "synonym",
+      "said": "electronic computer",
+      "anchor": "computer",
+      "sense": "WN_n_02459358",
+      "definition": "a machine for performing calculations automatically",
+      "why": "filed under computer science",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.8,
+      "status": "passed"
+    },
+    {
+      "word": "information processing system",
+      "concept": "computer",
+      "relation": "synonym",
+      "said": "information processing system",
+      "anchor": "computer",
+      "sense": "WN_n_02459358",
+      "definition": "a machine for performing calculations automatically",
+      "why": "filed under computer science",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.8,
+      "status": "passed"
+    },
+    {
+      "word": "laptop computer",
+      "concept": "computer",
+      "relation": "synonym",
+      "said": "laptop computer",
+      "anchor": "laptop",
+      "sense": "WN_n_03018031",
+      "definition": "a portable computer small enough to use in your lap",
+      "why": "a kind of portable computer, and names computer",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.8,
+      "status": "passed"
+    },
+    {
+      "word": "microcomputer",
+      "concept": "computer",
+      "relation": "synonym",
+      "said": "microcomputer",
+      "anchor": "pc",
+      "sense": "WN_n_03292010",
+      "definition": "a small digital computer based on a microprocessor and designed to be used by one person at a time",
+      "why": "a kind of digital computer, and names computer",
+      "own_evidence": "",
+      "senses_total": 1,
+      "senses_in_scope": 1,
+      "examples": [],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.8,
+      "status": "passed"
+    },
+    {
+      "word": "personal computer",
+      "concept": "computer",
+      "relation": "synonym",
+      "said": "personal computer",
+      "anchor": "pc",
+      "sense": "WN_n_03292010",
+      "definition": "a small digital computer based on a microprocessor and designed to be used by one person at a time",
+      "why": "a kind of digital computer, and names computer",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.8,
+      "status": "passed"
+    },
+    {
+      "word": "central processing unit",
+      "concept": "cpu",
+      "relation": "synonym",
+      "said": "central processing unit",
+      "anchor": "cpu",
+      "sense": "WN_n_02372783",
+      "definition": "(computer science) the part of a computer (a microprocessor chip) that does most of the data processing; \"the CPU and the memory form the central part of a computer to which the peripherals are attached\"",
+      "why": "filed under computer science",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.8,
+      "status": "passed"
+    },
+    {
+      "word": "central processor",
+      "concept": "cpu",
+      "relation": "synonym",
+      "said": "central processor",
+      "anchor": "cpu",
+      "sense": "WN_n_02372783",
+      "definition": "(computer science) the part of a computer (a microprocessor chip) that does most of the data processing; \"the CPU and the memory form the central part of a computer to which the peripherals are attached\"",
+      "why": "filed under computer science",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.8,
+      "status": "passed"
+    },
+    {
+      "word": "mainframe",
+      "concept": "cpu",
+      "relation": "synonym",
+      "said": "mainframe",
+      "anchor": "cpu",
+      "sense": "WN_n_02372783",
+      "definition": "(computer science) the part of a computer (a microprocessor chip) that does most of the data processing; \"the CPU and the memory form the central part of a computer to which the peripherals are attached\"",
+      "why": "filed under computer science",
+      "own_evidence": "",
+      "senses_total": 2,
+      "senses_in_scope": 2,
+      "examples": [],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.8,
+      "status": "passed"
+    },
+    {
+      "word": "magnetic disc",
+      "concept": "disk",
+      "relation": "synonym",
+      "said": "magnetic disc",
+      "anchor": "disk",
+      "sense": "WN_n_03082025",
+      "definition": "(computer science) a memory device consisting of a flat disk covered with a magnetic coating on which information is stored",
+      "why": "filed under computer science",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.8,
+      "status": "passed"
+    },
+    {
+      "word": "magnetic disk",
+      "concept": "disk",
+      "relation": "synonym",
+      "said": "magnetic disk",
+      "anchor": "disk",
+      "sense": "WN_n_03082025",
+      "definition": "(computer science) a memory device consisting of a flat disk covered with a magnetic coating on which information is stored",
+      "why": "filed under computer science",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.8,
+      "status": "passed"
+    },
+    {
+      "word": "computer memory",
+      "concept": "memory",
+      "relation": "synonym",
+      "said": "computer memory",
+      "anchor": "memory",
+      "sense": "WN_n_03119352",
+      "definition": "an electronic memory device; \"a memory and the CPU form the central part of a computer to which peripherals are attached\"",
+      "why": "a kind of memory device",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.8,
+      "status": "passed"
+    },
+    {
+      "word": "computer storage",
+      "concept": "memory",
+      "relation": "synonym",
+      "said": "computer storage",
+      "anchor": "memory",
+      "sense": "WN_n_03119352",
+      "definition": "an electronic memory device; \"a memory and the CPU form the central part of a computer to which peripherals are attached\"",
+      "why": "a kind of memory device",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.8,
+      "status": "passed"
+    },
+    {
+      "word": "memory board",
+      "concept": "memory",
+      "relation": "synonym",
+      "said": "memory board",
+      "anchor": "memory",
+      "sense": "WN_n_03119352",
+      "definition": "an electronic memory device; \"a memory and the CPU form the central part of a computer to which peripherals are attached\"",
+      "why": "a kind of memory device",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.8,
+      "status": "passed"
+    },
+    {
+      "word": "random access memory",
+      "concept": "memory",
+      "relation": "synonym",
+      "said": "random-access memory",
+      "anchor": "ram",
+      "sense": "WN_n_03426635",
+      "definition": "the most common computer memory which can be used by programs to perform necessary tasks while the computer is on; an integrated circuit memory chip allows information to be stored or accessed in any order and all storage locations are equally accessible",
+      "why": "a kind of volatile storage, and names memory",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.8,
+      "status": "passed"
+    },
+    {
+      "word": "random memory",
+      "concept": "memory",
+      "relation": "synonym",
+      "said": "random memory",
+      "anchor": "ram",
+      "sense": "WN_n_03426635",
+      "definition": "the most common computer memory which can be used by programs to perform necessary tasks while the computer is on; an integrated circuit memory chip allows information to be stored or accessed in any order and all storage locations are equally accessible",
+      "why": "a kind of volatile storage, and names memory",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.8,
+      "status": "passed"
+    },
+    {
+      "word": "read write memory",
+      "concept": "memory",
+      "relation": "synonym",
+      "said": "read/write memory",
+      "anchor": "ram",
+      "sense": "WN_n_03426635",
+      "definition": "the most common computer memory which can be used by programs to perform necessary tasks while the computer is on; an integrated circuit memory chip allows information to be stored or accessed in any order and all storage locations are equally accessible",
+      "why": "a kind of volatile storage, and names memory",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.8,
+      "status": "passed"
+    },
+    {
+      "word": "cyberspace",
+      "concept": "network",
+      "relation": "synonym",
+      "said": "cyberspace",
+      "anchor": "internet",
+      "sense": "WN_n_02957199",
+      "definition": "a computer network consisting of a worldwide network of computer networks that use the TCP/IP network protocols to facilitate data transmission and exchange",
+      "why": "a kind of computer network, and names network",
+      "own_evidence": "",
+      "senses_total": 1,
+      "senses_in_scope": 1,
+      "examples": [],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.8,
+      "status": "passed"
+    },
+    {
+      "word": "application program",
+      "concept": "program",
+      "relation": "synonym",
+      "said": "application program",
+      "anchor": "application",
+      "sense": "WN_n_05929582",
+      "definition": "a program that gives a computer instructions that provide the user with tools to accomplish a task; \"he has tried several different word processing applications\"",
+      "why": "a kind of program, and names program",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.8,
+      "status": "passed"
+    },
+    {
+      "word": "applications programme",
+      "concept": "program",
+      "relation": "synonym",
+      "said": "applications programme",
+      "anchor": "application",
+      "sense": "WN_n_05929582",
+      "definition": "a program that gives a computer instructions that provide the user with tools to accomplish a task; \"he has tried several different word processing applications\"",
+      "why": "a kind of program, and names program",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.8,
+      "status": "passed"
+    },
+    {
+      "word": "computer program",
+      "concept": "program",
+      "relation": "synonym",
+      "said": "computer program",
+      "anchor": "program",
+      "sense": "WN_n_05928303",
+      "definition": "(computer science) a sequence of instructions that a computer can interpret and execute; \"the program required several hundred lines of code\"",
+      "why": "filed under computer science",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.8,
+      "status": "passed"
+    },
+    {
+      "word": "computer programme",
+      "concept": "program",
+      "relation": "synonym",
+      "said": "computer programme",
+      "anchor": "program",
+      "sense": "WN_n_05928303",
+      "definition": "(computer science) a sequence of instructions that a computer can interpret and execute; \"the program required several hundred lines of code\"",
+      "why": "filed under computer science",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.8,
+      "status": "passed"
+    },
+    {
+      "word": "computer software",
+      "concept": "program",
+      "relation": "synonym",
+      "said": "computer software",
+      "anchor": "software",
+      "sense": "WN_n_05925514",
+      "definition": "(computer science) written programs or procedures or rules and associated documentation pertaining to the operation of a computer system and that are stored in read/write memory; \"the market for software is expected to expand\"",
+      "why": "filed under computer science, and names program",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.8,
+      "status": "passed"
+    },
+    {
+      "word": "software package",
+      "concept": "program",
+      "relation": "synonym",
+      "said": "software package",
+      "anchor": "software",
+      "sense": "WN_n_05925514",
+      "definition": "(computer science) written programs or procedures or rules and associated documentation pertaining to the operation of a computer system and that are stored in read/write memory; \"the market for software is expected to expand\"",
+      "why": "filed under computer science, and names program",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.8,
+      "status": "passed"
+    },
+    {
+      "word": "software program",
+      "concept": "program",
+      "relation": "synonym",
+      "said": "software program",
+      "anchor": "software",
+      "sense": "WN_n_05925514",
+      "definition": "(computer science) written programs or procedures or rules and associated documentation pertaining to the operation of a computer system and that are stored in read/write memory; \"the market for software is expected to expand\"",
+      "why": "filed under computer science, and names program",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.8,
+      "status": "passed"
+    },
+    {
+      "word": "software system",
+      "concept": "program",
+      "relation": "synonym",
+      "said": "software system",
+      "anchor": "software",
+      "sense": "WN_n_05925514",
+      "definition": "(computer science) written programs or procedures or rules and associated documentation pertaining to the operation of a computer system and that are stored in read/write memory; \"the market for software is expected to expand\"",
+      "why": "filed under computer science, and names program",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.8,
+      "status": "passed"
+    },
+    {
+      "word": "crt screen",
+      "concept": "screen",
+      "relation": "synonym",
+      "said": "crt screen",
+      "anchor": "screen",
+      "sense": "WN_n_03526315",
+      "definition": "the display that is electronically created on the surface of the large end of a cathode-ray tube",
+      "why": "a kind of display",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.8,
+      "status": "passed"
+    },
+    {
+      "word": "monitoring device",
+      "concept": "screen",
+      "relation": "synonym",
+      "said": "monitoring device",
+      "anchor": "monitor",
+      "sense": "WN_n_03157621",
+      "definition": "display produced by a device that takes signals and displays them on a television screen or a computer monitor",
+      "why": "a kind of display, and names screen",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.8,
+      "status": "passed"
+    },
+    {
+      "word": "deplete",
+      "concept": "use",
+      "relation": "synonym",
+      "said": "deplete",
+      "anchor": "use",
+      "sense": "WN_v_01202944",
+      "definition": "use up (resources or materials); \"this car consumes a lot of gas\"; \"We exhausted our savings\"; \"They run through 20 bottles of wine a week\"",
+      "why": "shared with consume, eat",
+      "own_evidence": "",
+      "senses_total": 1,
+      "senses_in_scope": 1,
+      "examples": [],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.8,
+      "status": "passed"
+    },
+    {
+      "word": "eat up",
+      "concept": "use",
+      "relation": "synonym",
+      "said": "eat up",
+      "anchor": "use",
+      "sense": "WN_v_01202944",
+      "definition": "use up (resources or materials); \"this car consumes a lot of gas\"; \"We exhausted our savings\"; \"They run through 20 bottles of wine a week\"",
+      "why": "shared with consume, eat",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.8,
+      "status": "passed"
+    },
+    {
+      "word": "run through",
+      "concept": "use",
+      "relation": "synonym",
+      "said": "run through",
+      "anchor": "use",
+      "sense": "WN_v_01202944",
+      "definition": "use up (resources or materials); \"this car consumes a lot of gas\"; \"We exhausted our savings\"; \"They run through 20 bottles of wine a week\"",
+      "why": "shared with consume, eat",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.8,
+      "status": "passed"
+    },
+    {
+      "word": "use up",
+      "concept": "use",
+      "relation": "synonym",
+      "said": "use up",
+      "anchor": "use",
+      "sense": "WN_v_01202944",
+      "definition": "use up (resources or materials); \"this car consumes a lot of gas\"; \"We exhausted our savings\"; \"They run through 20 bottles of wine a week\"",
+      "why": "shared with consume, eat",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.8,
+      "status": "passed"
+    },
+    {
+      "word": "wipe out",
+      "concept": "use",
+      "relation": "synonym",
+      "said": "wipe out",
+      "anchor": "use",
+      "sense": "WN_v_01202944",
+      "definition": "use up (resources or materials); \"this car consumes a lot of gas\"; \"We exhausted our savings\"; \"They run through 20 bottles of wine a week\"",
+      "why": "shared with consume, eat",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.8,
+      "status": "passed"
+    },
+    {
+      "word": "wireless fidelity",
+      "concept": "wifi",
+      "relation": "synonym",
+      "said": "wireless fidelity",
+      "anchor": "wifi",
+      "sense": "WN_n_03962076",
+      "definition": "a local area network that uses high frequency radio signals to transmit and receive data over distances of a few hundred feet; uses ethernet protocol",
+      "why": "a kind of local area network",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.8,
+      "status": "passed"
+    },
+    {
+      "word": "tardily",
+      "concept": "slow",
+      "relation": "synonym",
+      "said": "tardily",
+      "anchor": "slow",
+      "sense": "WN_r_00163052",
+      "definition": "without speed (‘slow’ is sometimes used informally for ‘slowly’); \"he spoke slowly\"; \"go easy here — the road is slippery\"; \"glaciers move tardily\"; \"please go slow so I can see the sights\"",
+      "why": "shared with slowly",
+      "own_evidence": "",
+      "senses_total": 2,
+      "senses_in_scope": 1,
+      "examples": [
+        "the train arrived late",
+        "we awoke late",
+        "the children came late to school",
+        "notice came so tardily that we almost missed the deadline",
+        "I belatedly wished her a happy birthday"
+      ],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.57,
+      "status": "passed"
+    },
+    {
+      "word": "expend",
+      "concept": "use",
+      "relation": "synonym",
+      "said": "expend",
+      "anchor": "use",
+      "sense": "WN_v_01202944",
+      "definition": "use up (resources or materials); \"this car consumes a lot of gas\"; \"We exhausted our savings\"; \"They run through 20 bottles of wine a week\"",
+      "why": "shared with consume, eat",
+      "own_evidence": "",
+      "senses_total": 2,
+      "senses_in_scope": 1,
+      "examples": [
+        "spend money"
+      ],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.57,
+      "status": "passed"
+    },
+    {
+      "word": "disc",
+      "concept": "disk",
+      "relation": "synonym",
+      "said": "disc",
+      "anchor": "disk",
+      "sense": "WN_n_03082025",
+      "definition": "(computer science) a memory device consisting of a flat disk covered with a magnetic coating on which information is stored",
+      "why": "filed under computer science",
+      "own_evidence": "",
+      "senses_total": 4,
+      "senses_in_scope": 1,
+      "examples": [
+        "the moon's disk hung in a cloudless sky"
+      ],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.4,
+      "status": "passed"
+    },
+    {
+      "word": "diskette",
+      "concept": "disk",
+      "relation": "kind",
+      "said": "diskette",
+      "anchor": "disk",
+      "sense": "WN_n_03082025",
+      "definition": "(computer science) a memory device consisting of a flat disk covered with a magnetic coating on which information is stored",
+      "why": "filed under computer science",
+      "own_evidence": "its definition is about computing",
+      "senses_total": 1,
+      "senses_in_scope": 1,
+      "examples": [
+        "floppy disks are noted for their relatively slow speed and small capacity and low price"
+      ],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.4,
+      "status": "passed"
+    },
+    {
+      "word": "scratchpad",
+      "concept": "memory",
+      "relation": "kind",
+      "said": "scratchpad",
+      "anchor": "memory",
+      "sense": "WN_n_03119352",
+      "definition": "an electronic memory device; \"a memory and the CPU form the central part of a computer to which peripherals are attached\"",
+      "why": "a kind of memory device",
+      "own_evidence": "its definition is about computing",
+      "senses_total": 1,
+      "senses_in_scope": 1,
+      "examples": [],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.4,
+      "status": "passed"
+    },
+    {
+      "word": "autocorrect",
+      "concept": "program",
+      "relation": "kind",
+      "said": "autocorrect",
+      "anchor": "program",
+      "sense": "WN_n_05928303",
+      "definition": "(computer science) a sequence of instructions that a computer can interpret and execute; \"the program required several hundred lines of code\"",
+      "why": "filed under computer science",
+      "own_evidence": "filed under computer science",
+      "senses_total": 1,
+      "senses_in_scope": 1,
+      "examples": [],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.4,
+      "status": "passed"
+    },
+    {
+      "word": "freeware",
+      "concept": "program",
+      "relation": "kind",
+      "said": "freeware",
+      "anchor": "software",
+      "sense": "WN_n_05925514",
+      "definition": "(computer science) written programs or procedures or rules and associated documentation pertaining to the operation of a computer system and that are stored in read/write memory; \"the market for software is expected to expand\"",
+      "why": "filed under computer science, and names program",
+      "own_evidence": "its definition is about computing",
+      "senses_total": 1,
+      "senses_in_scope": 1,
+      "examples": [],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.4,
+      "status": "passed"
+    },
+    {
+      "word": "groupware",
+      "concept": "program",
+      "relation": "kind",
+      "said": "groupware",
+      "anchor": "software",
+      "sense": "WN_n_05925514",
+      "definition": "(computer science) written programs or procedures or rules and associated documentation pertaining to the operation of a computer system and that are stored in read/write memory; \"the market for software is expected to expand\"",
+      "why": "filed under computer science, and names program",
+      "own_evidence": "its definition is about computing",
+      "senses_total": 1,
+      "senses_in_scope": 1,
+      "examples": [],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.4,
+      "status": "passed"
+    },
+    {
+      "word": "malware",
+      "concept": "program",
+      "relation": "kind",
+      "said": "malware",
+      "anchor": "software",
+      "sense": "WN_n_05925514",
+      "definition": "(computer science) written programs or procedures or rules and associated documentation pertaining to the operation of a computer system and that are stored in read/write memory; \"the market for software is expected to expand\"",
+      "why": "filed under computer science, and names program",
+      "own_evidence": "its definition is about computing",
+      "senses_total": 1,
+      "senses_in_scope": 1,
+      "examples": [],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.4,
+      "status": "passed"
+    },
+    {
+      "word": "package",
+      "concept": "program",
+      "relation": "synonym",
+      "said": "package",
+      "anchor": "software",
+      "sense": "WN_n_05925514",
+      "definition": "(computer science) written programs or procedures or rules and associated documentation pertaining to the operation of a computer system and that are stored in read/write memory; \"the market for software is expected to expand\"",
+      "why": "filed under computer science, and names program",
+      "own_evidence": "",
+      "senses_total": 4,
+      "senses_in_scope": 1,
+      "examples": [
+        "box the gift, please"
+      ],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.4,
+      "status": "passed"
+    },
+    {
+      "word": "parser",
+      "concept": "program",
+      "relation": "kind",
+      "said": "parser",
+      "anchor": "program",
+      "sense": "WN_n_05928303",
+      "definition": "(computer science) a sequence of instructions that a computer can interpret and execute; \"the program required several hundred lines of code\"",
+      "why": "filed under computer science",
+      "own_evidence": "its definition is about computing",
+      "senses_total": 1,
+      "senses_in_scope": 1,
+      "examples": [
+        "compilers must parse source code in order to translate it into object code"
+      ],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.4,
+      "status": "passed"
+    },
+    {
+      "word": "shareware",
+      "concept": "program",
+      "relation": "kind",
+      "said": "shareware",
+      "anchor": "software",
+      "sense": "WN_n_05925514",
+      "definition": "(computer science) written programs or procedures or rules and associated documentation pertaining to the operation of a computer system and that are stored in read/write memory; \"the market for software is expected to expand\"",
+      "why": "filed under computer science, and names program",
+      "own_evidence": "its definition is about computing",
+      "senses_total": 1,
+      "senses_in_scope": 1,
+      "examples": [],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.4,
+      "status": "passed"
+    },
+    {
+      "word": "spreadsheet",
+      "concept": "program",
+      "relation": "kind",
+      "said": "spreadsheet",
+      "anchor": "program",
+      "sense": "WN_n_05928303",
+      "definition": "(computer science) a sequence of instructions that a computer can interpret and execute; \"the program required several hundred lines of code\"",
+      "why": "filed under computer science",
+      "own_evidence": "its definition is about computing",
+      "senses_total": 1,
+      "senses_in_scope": 1,
+      "examples": [],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.4,
+      "status": "passed"
+    },
+    {
+      "word": "spyware",
+      "concept": "program",
+      "relation": "kind",
+      "said": "spyware",
+      "anchor": "software",
+      "sense": "WN_n_05925514",
+      "definition": "(computer science) written programs or procedures or rules and associated documentation pertaining to the operation of a computer system and that are stored in read/write memory; \"the market for software is expected to expand\"",
+      "why": "filed under computer science, and names program",
+      "own_evidence": "its definition is about computing",
+      "senses_total": 1,
+      "senses_in_scope": 1,
+      "examples": [],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.4,
+      "status": "passed"
+    },
+    {
+      "word": "compiler",
+      "concept": "program",
+      "relation": "kind",
+      "said": "compiler",
+      "anchor": "program",
+      "sense": "WN_n_05928303",
+      "definition": "(computer science) a sequence of instructions that a computer can interpret and execute; \"the program required several hundred lines of code\"",
+      "why": "filed under computer science",
+      "own_evidence": "filed under computer science",
+      "senses_total": 2,
+      "senses_in_scope": 1,
+      "examples": [],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.28,
+      "status": "passed"
+    },
+    {
+      "word": "interface",
+      "concept": "program",
+      "relation": "kind",
+      "said": "interface",
+      "anchor": "program",
+      "sense": "WN_n_05928303",
+      "definition": "(computer science) a sequence of instructions that a computer can interpret and execute; \"the program required several hundred lines of code\"",
+      "why": "filed under computer science",
+      "own_evidence": "filed under computer science",
+      "senses_total": 4,
+      "senses_in_scope": 2,
+      "examples": [
+        "the interface between chemistry and biology"
+      ],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.28,
+      "status": "passed"
+    },
+    {
+      "word": "predictor",
+      "concept": "computer",
+      "relation": "kind",
+      "said": "predictor",
+      "anchor": "computer",
+      "sense": "WN_n_02459358",
+      "definition": "a machine for performing calculations automatically",
+      "why": "filed under computer science",
+      "own_evidence": "its definition is about computing",
+      "senses_total": 3,
+      "senses_in_scope": 1,
+      "examples": [
+        "the weekly bulletin contains several predictors of mutual fund performance"
+      ],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.23,
+      "status": "passed"
+    },
+    {
+      "word": "spider",
+      "concept": "program",
+      "relation": "kind",
+      "said": "spider",
+      "anchor": "program",
+      "sense": "WN_n_05928303",
+      "definition": "(computer science) a sequence of instructions that a computer can interpret and execute; \"the program required several hundred lines of code\"",
+      "why": "filed under computer science",
+      "own_evidence": "its definition is about computing",
+      "senses_total": 3,
+      "senses_in_scope": 1,
+      "examples": [],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.23,
+      "status": "passed"
+    },
+    {
+      "word": "tagger",
+      "concept": "program",
+      "relation": "kind",
+      "said": "tagger",
+      "anchor": "program",
+      "sense": "WN_n_05928303",
+      "definition": "(computer science) a sequence of instructions that a computer can interpret and execute; \"the program required several hundred lines of code\"",
+      "why": "filed under computer science",
+      "own_evidence": "its definition is about computing",
+      "senses_total": 3,
+      "senses_in_scope": 1,
+      "examples": [
+        "a theory that was simply added on by some anonymous tagger"
+      ],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.23,
+      "status": "passed"
+    },
+    {
+      "word": "server",
+      "concept": "computer",
+      "relation": "kind",
+      "said": "server",
+      "anchor": "computer",
+      "sense": "WN_n_02459358",
+      "definition": "a machine for performing calculations automatically",
+      "why": "filed under computer science",
+      "own_evidence": "filed under computer science",
+      "senses_total": 4,
+      "senses_in_scope": 1,
+      "examples": [],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.2,
+      "status": "passed"
+    },
+    {
+      "word": "fragmentation",
+      "concept": "disk",
+      "relation": "kind",
+      "said": "fragmentation",
+      "anchor": "storage",
+      "sense": "WN_n_10854226",
+      "definition": "(computer science) the process of storing information in a computer memory or on a magnetic tape or disk",
+      "why": "filed under computer science, and names disk",
+      "own_evidence": "filed under computer science",
+      "senses_total": 4,
+      "senses_in_scope": 1,
+      "examples": [
+        "fragmentation slows system performance because it takes extra time to locate and assemble the parts of the fragmented file"
+      ],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.2,
+      "status": "passed"
+    },
+    {
+      "word": "interpreter",
+      "concept": "program",
+      "relation": "kind",
+      "said": "interpreter",
+      "anchor": "program",
+      "sense": "WN_n_05928303",
+      "definition": "(computer science) a sequence of instructions that a computer can interpret and execute; \"the program required several hundred lines of code\"",
+      "why": "filed under computer science",
+      "own_evidence": "filed under computer science",
+      "senses_total": 4,
+      "senses_in_scope": 1,
+      "examples": [
+        "his paintings reveal a sensitive interpreter of nature",
+        "she was famous as an interpreter of Shakespearean roles",
+        "the meeting was attended by spokespersons for all the major organs of government"
+      ],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.2,
+      "status": "passed"
+    },
+    {
+      "word": "routine",
+      "concept": "program",
+      "relation": "kind",
+      "said": "routine",
+      "anchor": "software",
+      "sense": "WN_n_05925514",
+      "definition": "(computer science) written programs or procedures or rules and associated documentation pertaining to the operation of a computer system and that are stored in read/write memory; \"the market for software is expected to expand\"",
+      "why": "filed under computer science, and names program",
+      "own_evidence": "its definition is about computing",
+      "senses_total": 4,
+      "senses_in_scope": 1,
+      "examples": [
+        "he did his act three times every evening",
+        "she had a catchy little routine",
+        "it was one of the best numbers he ever did",
+        "a placid everyday scene",
+        "it was a routine day",
+        "there's nothing quite like a real … train conductor to add color to a quotidian commute"
+      ],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.2,
+      "status": "passed"
+    },
+    {
+      "word": "easy",
+      "concept": "slow",
+      "relation": "synonym",
+      "said": "easy",
+      "anchor": "slow",
+      "sense": "WN_r_00163052",
+      "definition": "without speed (‘slow’ is sometimes used informally for ‘slowly’); \"he spoke slowly\"; \"go easy here — the road is slippery\"; \"glaciers move tardily\"; \"please go slow so I can see the sights\"",
+      "why": "shared with slowly",
+      "own_evidence": "",
+      "senses_total": 16,
+      "senses_in_scope": 1,
+      "examples": [
+        "easy money",
+        "commodities are easy this quarter",
+        "her easy virtue",
+        "he was told to avoid loose (or light) women",
+        "wanton behavior",
+        "soft light that was easy on the eyes",
+        "an easy teacher",
+        "easy standards",
+        "lenient rules",
+        "an easy penalty",
+        "an easy job",
+        "an easy problem"
+      ],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.2,
+      "status": "passed"
+    },
+    {
+      "word": "tablet",
+      "concept": "computer",
+      "relation": "kind",
+      "said": "tablet",
+      "anchor": "computer",
+      "sense": "WN_n_02459358",
+      "definition": "a machine for performing calculations automatically",
+      "why": "filed under computer science",
+      "own_evidence": "its definition is about computing",
+      "senses_total": 5,
+      "senses_in_scope": 1,
+      "examples": [
+        "a tablet of soap"
+      ],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.18,
+      "status": "passed"
+    },
+    {
+      "word": "dull",
+      "concept": "slow",
+      "relation": "synonym",
+      "said": "dull",
+      "anchor": "slow",
+      "sense": "WN_a_00036972",
+      "definition": "(of business) not active or brisk; \"business is dull (or slow)\"; \"a sluggish market\"",
+      "why": "shared with sluggish",
+      "own_evidence": "",
+      "senses_total": 19,
+      "senses_in_scope": 1,
+      "examples": [
+        "Middle age dulled her appetite for travel",
+        "the varnished table top dulled with time",
+        "Age had dulled the surface",
+        "Too much cutting dulls the knife's edge",
+        "The shock numbed her senses",
+        "a dull glow",
+        "dull silver badly in need of a polish",
+        "a dull sky",
+        "dull greens and blues",
+        "so dense he never understands anything I say to him",
+        "never met anyone quite so dim",
+        "although dull at classical learning, at mathematics he was uncommonly quick"
+      ],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.18,
+      "status": "passed"
+    },
+    {
+      "word": "upgrade",
+      "concept": "program",
+      "relation": "kind",
+      "said": "upgrade",
+      "anchor": "software",
+      "sense": "WN_n_05925514",
+      "definition": "(computer science) written programs or procedures or rules and associated documentation pertaining to the operation of a computer system and that are stored in read/write memory; \"the market for software is expected to expand\"",
+      "why": "filed under computer science, and names program",
+      "own_evidence": "its definition is about computing",
+      "senses_total": 11,
+      "senses_in_scope": 2,
+      "examples": [
+        "the power plant received a new upgrade",
+        "I got an upgrade to first class when coach class was full",
+        "the car couldn't make it up the rise",
+        "I've upgraded my computer so I can run better software",
+        "The company upgraded their personnel",
+        "The airline upgraded me when I arrived late and Coach Class was full",
+        "I upgraded to First Class when Coach Class was overbooked",
+        "John was kicked upstairs when a replacement was hired",
+        "Women tend not to advance in the major law firms",
+        "I got promoted after many years of hard work"
+      ],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.17,
+      "status": "passed"
+    },
+    {
+      "word": "loop",
+      "concept": "program",
+      "relation": "kind",
+      "said": "loop",
+      "anchor": "program",
+      "sense": "WN_n_05928303",
+      "definition": "(computer science) a sequence of instructions that a computer can interpret and execute; \"the program required several hundred lines of code\"",
+      "why": "filed under computer science",
+      "own_evidence": "its definition is about computing",
+      "senses_total": 15,
+      "senses_in_scope": 2,
+      "examples": [
+        "he's no longer in the loop",
+        "the solution took hundreds of iterations",
+        "He looped the watch through his belt",
+        "loop a rope",
+        "the stunt pilot looped his plane",
+        "The bicycle looped around the tree"
+      ],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.15,
+      "status": "passed"
+    },
+    {
+      "word": "node",
+      "concept": "computer",
+      "relation": "kind",
+      "said": "node",
+      "anchor": "computer",
+      "sense": "WN_n_02459358",
+      "definition": "a machine for performing calculations automatically",
+      "why": "filed under computer science",
+      "own_evidence": "filed under computer science",
+      "senses_total": 8,
+      "senses_in_scope": 1,
+      "examples": [],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.14,
+      "status": "passed"
+    },
+    {
+      "word": "background",
+      "concept": "screen",
+      "relation": "kind",
+      "said": "background",
+      "anchor": "screen",
+      "sense": "WN_n_03526315",
+      "definition": "the display that is electronically created on the surface of the large end of a cathode-ray tube",
+      "why": "a kind of display",
+      "own_evidence": "filed under computer science",
+      "senses_total": 9,
+      "senses_in_scope": 1,
+      "examples": [
+        "he is a lawyer with a sports background",
+        "the embassy filled him in on the background of the incident",
+        "he posed her against a background of rolling hills",
+        "when the rain came he could hear the sound of thunder in the background",
+        "they got a bad connection and could hardly hear one another over the background signals",
+        "you can't do that in a university setting",
+        "he played down his royal ancestry"
+      ],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.13,
+      "status": "passed"
+    },
+    {
+      "word": "patch",
+      "concept": "program",
+      "relation": "kind",
+      "said": "patch",
+      "anchor": "program",
+      "sense": "WN_n_05928303",
+      "definition": "(computer science) a sequence of instructions that a computer can interpret and execute; \"the program required several hundred lines of code\"",
+      "why": "filed under computer science",
+      "own_evidence": "its definition is about computing",
+      "senses_total": 13,
+      "senses_in_scope": 1,
+      "examples": [
+        "her stockings had several mends",
+        "a bald spot",
+        "a leopard's spots",
+        "a patch of clouds",
+        "patches of thin ice",
+        "a fleck of red",
+        "a bean plot",
+        "a cabbage patch",
+        "a briar patch",
+        "he was here for a little while",
+        "I need to rest for a piece",
+        "a spell of good weather"
+      ],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.11,
+      "status": "passed"
+    },
+    {
+      "word": "hack",
+      "concept": "program",
+      "relation": "kind",
+      "said": "hack",
+      "anchor": "program",
+      "sense": "WN_v_01804377",
+      "definition": "write a computer program",
+      "why": "filed under computer science",
+      "own_evidence": "its definition is about computing",
+      "senses_total": 16,
+      "senses_in_scope": 1,
+      "examples": [
+        "The patient with emphysema is hacking all day",
+        "I'm not very good at hacking but I'll give it my best",
+        "he hacked his way through the forest",
+        "I can't hack it anymore",
+        "she could not cut the long days in the office"
+      ],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.1,
+      "status": "passed"
+    },
+    {
+      "word": "job",
+      "concept": "program",
+      "relation": "kind",
+      "said": "job",
+      "anchor": "application",
+      "sense": "WN_n_05929582",
+      "definition": "a program that gives a computer instructions that provide the user with tools to accomplish a task; \"he has tried several different word processing applications\"",
+      "why": "a kind of program, and names program",
+      "own_evidence": "filed under computer science",
+      "senses_total": 15,
+      "senses_in_scope": 1,
+      "examples": [
+        "dry rot did the job of destroying the barn",
+        "the barber did a real job on my hair",
+        "she did an outstanding job as Ophelia",
+        "he gave it up as a bad job",
+        "he's not in my line of business",
+        "it is their job to print the truth",
+        "estimates of the city's loss on that job ranged as high as a million dollars",
+        "the job of repairing the engine took several hours",
+        "the endless task of classifying the samples",
+        "the farmer's morning chores",
+        "the gang pulled off a bank job in St. Louis",
+        "he held the job in his left hand and worked on it with his right"
+      ],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.1,
+      "status": "passed"
+    },
+    {
+      "word": "inactive",
+      "concept": "slow",
+      "relation": "similar",
+      "said": "inactive",
+      "anchor": "slow",
+      "sense": "WN_a_00036972",
+      "definition": "(of business) not active or brisk; \"business is dull (or slow)\"; \"a sluggish market\"",
+      "why": "shared with sluggish",
+      "own_evidence": "",
+      "senses_total": 10,
+      "senses_in_scope": 0,
+      "examples": [
+        "illness forced him to live an inactive life",
+        "dreamy and inactive by nature",
+        "inactive reserve",
+        "an inactive member",
+        "an inactive mine",
+        "inactive accounts",
+        "inactive machinery",
+        "Much benevolence of the passive order may be traced to a disinclination to inflict pain upon oneself",
+        "a dormant volcano",
+        "She remained motionless, yet poised to take flight",
+        "desired amounts of inactive chlorine"
+      ],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "ok"
+      },
+      "confidence": 0.0,
+      "status": "passed"
+    },
+    {
+      "word": "analog computer",
+      "concept": "computer",
+      "relation": "kind",
+      "said": "analog computer",
+      "anchor": "computer",
+      "sense": "WN_n_02459358",
+      "definition": "a machine for performing calculations automatically",
+      "why": "filed under computer science",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "audio system",
+      "concept": "computer",
+      "relation": "kind",
+      "said": "audio system",
+      "anchor": "system",
+      "sense": "WN_n_03749175",
+      "definition": "instrumentality that combines interrelated interacting artifacts designed to work as a coherent entity; \"he bought a new stereo system\"; \"the system consists of a motor and a small computer\"",
+      "why": "its definition says computer, and names computer",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "carbonation system",
+      "concept": "computer",
+      "relation": "kind",
+      "said": "carbonation system",
+      "anchor": "system",
+      "sense": "WN_n_03749175",
+      "definition": "instrumentality that combines interrelated interacting artifacts designed to work as a coherent entity; \"he bought a new stereo system\"; \"the system consists of a motor and a small computer\"",
+      "why": "its definition says computer, and names computer",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "communication system",
+      "concept": "computer",
+      "relation": "kind",
+      "said": "communication system",
+      "anchor": "system",
+      "sense": "WN_n_03749175",
+      "definition": "instrumentality that combines interrelated interacting artifacts designed to work as a coherent entity; \"he bought a new stereo system\"; \"the system consists of a motor and a small computer\"",
+      "why": "its definition says computer, and names computer",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "computer system",
+      "concept": "computer",
+      "relation": "kind",
+      "said": "computer system",
+      "anchor": "system",
+      "sense": "WN_n_03749175",
+      "definition": "instrumentality that combines interrelated interacting artifacts designed to work as a coherent entity; \"he bought a new stereo system\"; \"the system consists of a motor and a small computer\"",
+      "why": "its definition says computer, and names computer",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "containment",
+      "concept": "computer",
+      "relation": "kind",
+      "said": "containment",
+      "anchor": "system",
+      "sense": "WN_n_03749175",
+      "definition": "instrumentality that combines interrelated interacting artifacts designed to work as a coherent entity; \"he bought a new stereo system\"; \"the system consists of a motor and a small computer\"",
+      "why": "its definition says computer, and names computer",
+      "own_evidence": "",
+      "senses_total": 3,
+      "senses_in_scope": 0,
+      "examples": [
+        "the containment of the AIDS epidemic",
+        "the containment of the rebellion",
+        "containment of communist expansion was a central principle of United States' foreign policy from 1947 to the 1975"
+      ],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "control system",
+      "concept": "computer",
+      "relation": "kind",
+      "said": "control system",
+      "anchor": "system",
+      "sense": "WN_n_03749175",
+      "definition": "instrumentality that combines interrelated interacting artifacts designed to work as a coherent entity; \"he bought a new stereo system\"; \"the system consists of a motor and a small computer\"",
+      "why": "its definition says computer, and names computer",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "data system",
+      "concept": "computer",
+      "relation": "kind",
+      "said": "data system",
+      "anchor": "system",
+      "sense": "WN_n_03749175",
+      "definition": "instrumentality that combines interrelated interacting artifacts designed to work as a coherent entity; \"he bought a new stereo system\"; \"the system consists of a motor and a small computer\"",
+      "why": "its definition says computer, and names computer",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "desktop computer",
+      "concept": "computer",
+      "relation": "kind",
+      "said": "desktop computer",
+      "anchor": "pc",
+      "sense": "WN_n_03292010",
+      "definition": "a small digital computer based on a microprocessor and designed to be used by one person at a time",
+      "why": "a kind of digital computer, and names computer",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "digital computer",
+      "concept": "computer",
+      "relation": "kind",
+      "said": "digital computer",
+      "anchor": "computer",
+      "sense": "WN_n_02459358",
+      "definition": "a machine for performing calculations automatically",
+      "why": "filed under computer science",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "drainage system",
+      "concept": "computer",
+      "relation": "kind",
+      "said": "drainage system",
+      "anchor": "system",
+      "sense": "WN_n_03749175",
+      "definition": "instrumentality that combines interrelated interacting artifacts designed to work as a coherent entity; \"he bought a new stereo system\"; \"the system consists of a motor and a small computer\"",
+      "why": "its definition says computer, and names computer",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "exhaust",
+      "concept": "computer",
+      "relation": "kind",
+      "said": "exhaust",
+      "anchor": "system",
+      "sense": "WN_n_03749175",
+      "definition": "instrumentality that combines interrelated interacting artifacts designed to work as a coherent entity; \"he bought a new stereo system\"; \"the system consists of a motor and a small computer\"",
+      "why": "its definition says computer, and names computer",
+      "own_evidence": "",
+      "senses_total": 7,
+      "senses_in_scope": 1,
+      "examples": [
+        "This kind of work exhausts me",
+        "I'm beat",
+        "He was all washed up after the exam",
+        "combustion products are exhausted in the engine",
+        "the plant releases a gas",
+        "We have exhausted the food supplies",
+        "exhaust one's savings",
+        "We quickly played out our strength"
+      ],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "explosive detection system",
+      "concept": "computer",
+      "relation": "kind",
+      "said": "explosive detection system",
+      "anchor": "system",
+      "sense": "WN_n_03749175",
+      "definition": "instrumentality that combines interrelated interacting artifacts designed to work as a coherent entity; \"he bought a new stereo system\"; \"the system consists of a motor and a small computer\"",
+      "why": "its definition says computer, and names computer",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "explosive trace detection",
+      "concept": "computer",
+      "relation": "kind",
+      "said": "explosive trace detection",
+      "anchor": "system",
+      "sense": "WN_n_03749175",
+      "definition": "instrumentality that combines interrelated interacting artifacts designed to work as a coherent entity; \"he bought a new stereo system\"; \"the system consists of a motor and a small computer\"",
+      "why": "its definition says computer, and names computer",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "guidance system",
+      "concept": "computer",
+      "relation": "kind",
+      "said": "guidance system",
+      "anchor": "system",
+      "sense": "WN_n_03749175",
+      "definition": "instrumentality that combines interrelated interacting artifacts designed to work as a coherent entity; \"he bought a new stereo system\"; \"the system consists of a motor and a small computer\"",
+      "why": "its definition says computer, and names computer",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "home computer",
+      "concept": "computer",
+      "relation": "kind",
+      "said": "home computer",
+      "anchor": "computer",
+      "sense": "WN_n_02459358",
+      "definition": "a machine for performing calculations automatically",
+      "why": "filed under computer science",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "hookup",
+      "concept": "computer",
+      "relation": "kind",
+      "said": "hookup",
+      "anchor": "system",
+      "sense": "WN_n_03749175",
+      "definition": "instrumentality that combines interrelated interacting artifacts designed to work as a coherent entity; \"he bought a new stereo system\"; \"the system consists of a motor and a small computer\"",
+      "why": "its definition says computer, and names computer",
+      "own_evidence": "",
+      "senses_total": 2,
+      "senses_in_scope": 0,
+      "examples": [
+        "some campsites have electrical hookups for trailers"
+      ],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "inertial guidance system",
+      "concept": "computer",
+      "relation": "kind",
+      "said": "inertial guidance system",
+      "anchor": "system",
+      "sense": "WN_n_03749175",
+      "definition": "instrumentality that combines interrelated interacting artifacts designed to work as a coherent entity; \"he bought a new stereo system\"; \"the system consists of a motor and a small computer\"",
+      "why": "its definition says computer, and names computer",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "lockage",
+      "concept": "computer",
+      "relation": "kind",
+      "said": "lockage",
+      "anchor": "system",
+      "sense": "WN_n_03749175",
+      "definition": "instrumentality that combines interrelated interacting artifacts designed to work as a coherent entity; \"he bought a new stereo system\"; \"the system consists of a motor and a small computer\"",
+      "why": "its definition says computer, and names computer",
+      "own_evidence": "",
+      "senses_total": 3,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "maze",
+      "concept": "computer",
+      "relation": "kind",
+      "said": "maze",
+      "anchor": "system",
+      "sense": "WN_n_03749175",
+      "definition": "instrumentality that combines interrelated interacting artifacts designed to work as a coherent entity; \"he bought a new stereo system\"; \"the system consists of a motor and a small computer\"",
+      "why": "its definition says computer, and names computer",
+      "own_evidence": "",
+      "senses_total": 2,
+      "senses_in_scope": 0,
+      "examples": [
+        "a tangle of government regulations"
+      ],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "mechanical system",
+      "concept": "computer",
+      "relation": "kind",
+      "said": "mechanical system",
+      "anchor": "system",
+      "sense": "WN_n_03749175",
+      "definition": "instrumentality that combines interrelated interacting artifacts designed to work as a coherent entity; \"he bought a new stereo system\"; \"the system consists of a motor and a small computer\"",
+      "why": "its definition says computer, and names computer",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "navigational system",
+      "concept": "computer",
+      "relation": "kind",
+      "said": "navigational system",
+      "anchor": "system",
+      "sense": "WN_n_03749175",
+      "definition": "instrumentality that combines interrelated interacting artifacts designed to work as a coherent entity; \"he bought a new stereo system\"; \"the system consists of a motor and a small computer\"",
+      "why": "its definition says computer, and names computer",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "network",
+      "concept": "computer",
+      "relation": "kind",
+      "said": "network",
+      "anchor": "system",
+      "sense": "WN_n_03749175",
+      "definition": "instrumentality that combines interrelated interacting artifacts designed to work as a coherent entity; \"he bought a new stereo system\"; \"the system consists of a motor and a small computer\"",
+      "why": "its definition says computer, and names computer",
+      "own_evidence": "filed under computer science",
+      "senses_total": 6,
+      "senses_in_scope": 1,
+      "examples": [
+        "the networks compete to broadcast important sports events",
+        "a railroad network",
+        "a network of canals",
+        "he owned a network of shops",
+        "retirement meant dropping out of a whole network of people who had been part of my life",
+        "tangled in a web of cloth"
+      ],
+      "checks": {
+        "usable": "already a word for 'network'"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "number cruncher",
+      "concept": "computer",
+      "relation": "kind",
+      "said": "number cruncher",
+      "anchor": "computer",
+      "sense": "WN_n_02459358",
+      "definition": "a machine for performing calculations automatically",
+      "why": "filed under computer science",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "pari mutuel machine",
+      "concept": "computer",
+      "relation": "kind",
+      "said": "pari-mutuel machine",
+      "anchor": "computer",
+      "sense": "WN_n_02459358",
+      "definition": "a machine for performing calculations automatically",
+      "why": "filed under computer science",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "portable computer",
+      "concept": "computer",
+      "relation": "kind",
+      "said": "portable computer",
+      "anchor": "pc",
+      "sense": "WN_n_03292010",
+      "definition": "a small digital computer based on a microprocessor and designed to be used by one person at a time",
+      "why": "a kind of digital computer, and names computer",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "propulsion system",
+      "concept": "computer",
+      "relation": "kind",
+      "said": "propulsion system",
+      "anchor": "system",
+      "sense": "WN_n_03749175",
+      "definition": "instrumentality that combines interrelated interacting artifacts designed to work as a coherent entity; \"he bought a new stereo system\"; \"the system consists of a motor and a small computer\"",
+      "why": "its definition says computer, and names computer",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "quantum computer",
+      "concept": "computer",
+      "relation": "kind",
+      "said": "quantum computer",
+      "anchor": "computer",
+      "sense": "WN_n_02459358",
+      "definition": "a machine for performing calculations automatically",
+      "why": "filed under computer science",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "resonator",
+      "concept": "computer",
+      "relation": "kind",
+      "said": "resonator",
+      "anchor": "system",
+      "sense": "WN_n_03749175",
+      "definition": "instrumentality that combines interrelated interacting artifacts designed to work as a coherent entity; \"he bought a new stereo system\"; \"the system consists of a motor and a small computer\"",
+      "why": "its definition says computer, and names computer",
+      "own_evidence": "",
+      "senses_total": 3,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "scaffolding",
+      "concept": "computer",
+      "relation": "kind",
+      "said": "scaffolding",
+      "anchor": "system",
+      "sense": "WN_n_03749175",
+      "definition": "instrumentality that combines interrelated interacting artifacts designed to work as a coherent entity; \"he bought a new stereo system\"; \"the system consists of a motor and a small computer\"",
+      "why": "its definition says computer, and names computer",
+      "own_evidence": "",
+      "senses_total": 1,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "security system",
+      "concept": "computer",
+      "relation": "kind",
+      "said": "security system",
+      "anchor": "system",
+      "sense": "WN_n_03749175",
+      "definition": "instrumentality that combines interrelated interacting artifacts designed to work as a coherent entity; \"he bought a new stereo system\"; \"the system consists of a motor and a small computer\"",
+      "why": "its definition says computer, and names computer",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "selsyn",
+      "concept": "computer",
+      "relation": "kind",
+      "said": "selsyn",
+      "anchor": "system",
+      "sense": "WN_n_03749175",
+      "definition": "instrumentality that combines interrelated interacting artifacts designed to work as a coherent entity; \"he bought a new stereo system\"; \"the system consists of a motor and a small computer\"",
+      "why": "its definition says computer, and names computer",
+      "own_evidence": "",
+      "senses_total": 1,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "shipboard system",
+      "concept": "computer",
+      "relation": "kind",
+      "said": "shipboard system",
+      "anchor": "system",
+      "sense": "WN_n_03749175",
+      "definition": "instrumentality that combines interrelated interacting artifacts designed to work as a coherent entity; \"he bought a new stereo system\"; \"the system consists of a motor and a small computer\"",
+      "why": "its definition says computer, and names computer",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "solar thermal system",
+      "concept": "computer",
+      "relation": "kind",
+      "said": "solar thermal system",
+      "anchor": "system",
+      "sense": "WN_n_03749175",
+      "definition": "instrumentality that combines interrelated interacting artifacts designed to work as a coherent entity; \"he bought a new stereo system\"; \"the system consists of a motor and a small computer\"",
+      "why": "its definition says computer, and names computer",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "sprinkler system",
+      "concept": "computer",
+      "relation": "kind",
+      "said": "sprinkler system",
+      "anchor": "system",
+      "sense": "WN_n_03749175",
+      "definition": "instrumentality that combines interrelated interacting artifacts designed to work as a coherent entity; \"he bought a new stereo system\"; \"the system consists of a motor and a small computer\"",
+      "why": "its definition says computer, and names computer",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "synchromesh",
+      "concept": "computer",
+      "relation": "kind",
+      "said": "synchromesh",
+      "anchor": "system",
+      "sense": "WN_n_03749175",
+      "definition": "instrumentality that combines interrelated interacting artifacts designed to work as a coherent entity; \"he bought a new stereo system\"; \"the system consists of a motor and a small computer\"",
+      "why": "its definition says computer, and names computer",
+      "own_evidence": "",
+      "senses_total": 1,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "turing machine",
+      "concept": "computer",
+      "relation": "kind",
+      "said": "turing machine",
+      "anchor": "computer",
+      "sense": "WN_n_02459358",
+      "definition": "a machine for performing calculations automatically",
+      "why": "filed under computer science",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "web site",
+      "concept": "computer",
+      "relation": "kind",
+      "said": "web site",
+      "anchor": "computer",
+      "sense": "WN_n_02459358",
+      "definition": "a machine for performing calculations automatically",
+      "why": "filed under computer science",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "c p u",
+      "concept": "cpu",
+      "relation": "synonym",
+      "said": "c.p.u.",
+      "anchor": "cpu",
+      "sense": "WN_n_02372783",
+      "definition": "(computer science) the part of a computer (a microprocessor chip) that does most of the data processing; \"the CPU and the memory form the central part of a computer to which the peripherals are attached\"",
+      "why": "filed under computer science",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "usable": "has a single letter in it (an abbreviation with its dots removed)"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "hard disc",
+      "concept": "disk",
+      "relation": "kind",
+      "said": "hard disc",
+      "anchor": "disk",
+      "sense": "WN_n_03082025",
+      "definition": "(computer science) a memory device consisting of a flat disk covered with a magnetic coating on which information is stored",
+      "why": "filed under computer science",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "local memory",
+      "concept": "memory",
+      "relation": "kind",
+      "said": "local memory",
+      "anchor": "memory",
+      "sense": "WN_n_03119352",
+      "definition": "an electronic memory device; \"a memory and the CPU form the central part of a computer to which peripherals are attached\"",
+      "why": "a kind of memory device",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "magnetic core memory",
+      "concept": "memory",
+      "relation": "kind",
+      "said": "magnetic core memory",
+      "anchor": "ram",
+      "sense": "WN_n_03426635",
+      "definition": "the most common computer memory which can be used by programs to perform necessary tasks while the computer is on; an integrated circuit memory chip allows information to be stored or accessed in any order and all storage locations are equally accessible",
+      "why": "a kind of volatile storage, and names memory",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "non volatile storage",
+      "concept": "memory",
+      "relation": "kind",
+      "said": "non-volatile storage",
+      "anchor": "memory",
+      "sense": "WN_n_03119352",
+      "definition": "an electronic memory device; \"a memory and the CPU form the central part of a computer to which peripherals are attached\"",
+      "why": "a kind of memory device",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "read only memory",
+      "concept": "memory",
+      "relation": "kind",
+      "said": "read-only memory",
+      "anchor": "memory",
+      "sense": "WN_n_03119352",
+      "definition": "an electronic memory device; \"a memory and the CPU form the central part of a computer to which peripherals are attached\"",
+      "why": "a kind of memory device",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "real storage",
+      "concept": "memory",
+      "relation": "kind",
+      "said": "real storage",
+      "anchor": "memory",
+      "sense": "WN_n_03119352",
+      "definition": "an electronic memory device; \"a memory and the CPU form the central part of a computer to which peripherals are attached\"",
+      "why": "a kind of memory device",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "storage",
+      "concept": "memory",
+      "relation": "synonym",
+      "said": "storage",
+      "anchor": "memory",
+      "sense": "WN_n_03119352",
+      "definition": "an electronic memory device; \"a memory and the CPU form the central part of a computer to which peripherals are attached\"",
+      "why": "a kind of memory device",
+      "own_evidence": "",
+      "senses_total": 6,
+      "senses_in_scope": 2,
+      "examples": [
+        "they decided to reposition their furniture in a recommended repository in Brooklyn",
+        "my car is in storage",
+        "publishers reduced print runs to cut down the cost of warehousing",
+        "storehouses were built close to the docks"
+      ],
+      "checks": {
+        "usable": "already a word for 'disk'"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "store",
+      "concept": "memory",
+      "relation": "synonym",
+      "said": "store",
+      "anchor": "memory",
+      "sense": "WN_n_03119352",
+      "definition": "an electronic memory device; \"a memory and the CPU form the central part of a computer to which peripherals are attached\"",
+      "why": "a kind of memory device",
+      "own_evidence": "",
+      "senses_total": 6,
+      "senses_in_scope": 1,
+      "examples": [
+        "he bought it at a shop on Cape Cod",
+        "storehouses were built close to the docks",
+        "he brought back a large store of Cuban cigars",
+        "store grain for the winter",
+        "The bear stores fat for the period of hibernation when he doesn't eat",
+        "where should we stow the vegetables?",
+        "I couldn't store all the books in the attic so I sold some"
+      ],
+      "checks": {
+        "usable": "ok",
+        "phrases_unchanged": "ok",
+        "no_new_ambiguity": "ok",
+        "scores_hold": "ok",
+        "other_meanings_quiet": "would answer 'he brought back a large store of Cuban cigars' -> hardware.memory (+1 more)"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "virtual memory",
+      "concept": "memory",
+      "relation": "kind",
+      "said": "virtual memory",
+      "anchor": "memory",
+      "sense": "WN_n_03119352",
+      "definition": "an electronic memory device; \"a memory and the CPU form the central part of a computer to which peripherals are attached\"",
+      "why": "a kind of memory device",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "volatile storage",
+      "concept": "memory",
+      "relation": "kind",
+      "said": "volatile storage",
+      "anchor": "memory",
+      "sense": "WN_n_03119352",
+      "definition": "an electronic memory device; \"a memory and the CPU form the central part of a computer to which peripherals are attached\"",
+      "why": "a kind of memory device",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "active application",
+      "concept": "program",
+      "relation": "kind",
+      "said": "active application",
+      "anchor": "application",
+      "sense": "WN_n_05929582",
+      "definition": "a program that gives a computer instructions that provide the user with tools to accomplish a task; \"he has tried several different word processing applications\"",
+      "why": "a kind of program, and names program",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "alpha software",
+      "concept": "program",
+      "relation": "kind",
+      "said": "alpha software",
+      "anchor": "software",
+      "sense": "WN_n_05925514",
+      "definition": "(computer science) written programs or procedures or rules and associated documentation pertaining to the operation of a computer system and that are stored in read/write memory; \"the market for software is expected to expand\"",
+      "why": "filed under computer science, and names program",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "anti virus program",
+      "concept": "program",
+      "relation": "kind",
+      "said": "anti-virus program",
+      "anchor": "program",
+      "sense": "WN_n_05928303",
+      "definition": "(computer science) a sequence of instructions that a computer can interpret and execute; \"the program required several hundred lines of code\"",
+      "why": "filed under computer science",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "applet",
+      "concept": "program",
+      "relation": "kind",
+      "said": "applet",
+      "anchor": "application",
+      "sense": "WN_n_05929582",
+      "definition": "a program that gives a computer instructions that provide the user with tools to accomplish a task; \"he has tried several different word processing applications\"",
+      "why": "a kind of program, and names program",
+      "own_evidence": "",
+      "senses_total": 1,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "assembler",
+      "concept": "program",
+      "relation": "kind",
+      "said": "assembler",
+      "anchor": "program",
+      "sense": "WN_n_05928303",
+      "definition": "(computer science) a sequence of instructions that a computer can interpret and execute; \"the program required several hundred lines of code\"",
+      "why": "filed under computer science",
+      "own_evidence": "",
+      "senses_total": 1,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "authoring language",
+      "concept": "program",
+      "relation": "kind",
+      "said": "authoring language",
+      "anchor": "software",
+      "sense": "WN_n_05925514",
+      "definition": "(computer science) written programs or procedures or rules and associated documentation pertaining to the operation of a computer system and that are stored in read/write memory; \"the market for software is expected to expand\"",
+      "why": "filed under computer science, and names program",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "automated moderator",
+      "concept": "program",
+      "relation": "kind",
+      "said": "automated moderator",
+      "anchor": "program",
+      "sense": "WN_n_05928303",
+      "definition": "(computer science) a sequence of instructions that a computer can interpret and execute; \"the program required several hundred lines of code\"",
+      "why": "filed under computer science",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "beta software",
+      "concept": "program",
+      "relation": "kind",
+      "said": "beta software",
+      "anchor": "software",
+      "sense": "WN_n_05925514",
+      "definition": "(computer science) written programs or procedures or rules and associated documentation pertaining to the operation of a computer system and that are stored in read/write memory; \"the market for software is expected to expand\"",
+      "why": "filed under computer science, and names program",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "binary",
+      "concept": "program",
+      "relation": "kind",
+      "said": "binary",
+      "anchor": "program",
+      "sense": "WN_n_05928303",
+      "definition": "(computer science) a sequence of instructions that a computer can interpret and execute; \"the program required several hundred lines of code\"",
+      "why": "filed under computer science",
+      "own_evidence": "",
+      "senses_total": 4,
+      "senses_in_scope": 0,
+      "examples": [
+        "the same source code can be compiled to produce different binaries for different operating systems",
+        "a binary star is a system in which two stars revolve around each other",
+        "a binary compound",
+        "the binary number system has two as its base",
+        "a binary digit"
+      ],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "browser",
+      "concept": "program",
+      "relation": "kind",
+      "said": "browser",
+      "anchor": "application",
+      "sense": "WN_n_05929582",
+      "definition": "a program that gives a computer instructions that provide the user with tools to accomplish a task; \"he has tried several different word processing applications\"",
+      "why": "a kind of program, and names program",
+      "own_evidence": "",
+      "senses_total": 2,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "c program",
+      "concept": "program",
+      "relation": "kind",
+      "said": "c program",
+      "anchor": "program",
+      "sense": "WN_n_05928303",
+      "definition": "(computer science) a sequence of instructions that a computer can interpret and execute; \"the program required several hundred lines of code\"",
+      "why": "filed under computer science",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "checking program",
+      "concept": "program",
+      "relation": "kind",
+      "said": "checking program",
+      "anchor": "program",
+      "sense": "WN_n_05928303",
+      "definition": "(computer science) a sequence of instructions that a computer can interpret and execute; \"the program required several hundred lines of code\"",
+      "why": "filed under computer science",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "client program",
+      "concept": "program",
+      "relation": "kind",
+      "said": "client program",
+      "anchor": "program",
+      "sense": "WN_n_05928303",
+      "definition": "(computer science) a sequence of instructions that a computer can interpret and execute; \"the program required several hundred lines of code\"",
+      "why": "filed under computer science",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "compatible software",
+      "concept": "program",
+      "relation": "kind",
+      "said": "compatible software",
+      "anchor": "software",
+      "sense": "WN_n_05925514",
+      "definition": "(computer science) written programs or procedures or rules and associated documentation pertaining to the operation of a computer system and that are stored in read/write memory; \"the market for software is expected to expand\"",
+      "why": "filed under computer science, and names program",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "computer aided design",
+      "concept": "program",
+      "relation": "kind",
+      "said": "computer-aided design",
+      "anchor": "software",
+      "sense": "WN_n_05925514",
+      "definition": "(computer science) written programs or procedures or rules and associated documentation pertaining to the operation of a computer system and that are stored in read/write memory; \"the market for software is expected to expand\"",
+      "why": "filed under computer science, and names program",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "database management system",
+      "concept": "program",
+      "relation": "kind",
+      "said": "database management system",
+      "anchor": "software",
+      "sense": "WN_n_05925514",
+      "definition": "(computer science) written programs or procedures or rules and associated documentation pertaining to the operation of a computer system and that are stored in read/write memory; \"the market for software is expected to expand\"",
+      "why": "filed under computer science, and names program",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "debugger",
+      "concept": "program",
+      "relation": "kind",
+      "said": "debugger",
+      "anchor": "program",
+      "sense": "WN_n_05928303",
+      "definition": "(computer science) a sequence of instructions that a computer can interpret and execute; \"the program required several hundred lines of code\"",
+      "why": "filed under computer science",
+      "own_evidence": "",
+      "senses_total": 1,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "editor program",
+      "concept": "program",
+      "relation": "kind",
+      "said": "editor program",
+      "anchor": "application",
+      "sense": "WN_n_05929582",
+      "definition": "a program that gives a computer instructions that provide the user with tools to accomplish a task; \"he has tried several different word processing applications\"",
+      "why": "a kind of program, and names program",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "fortran program",
+      "concept": "program",
+      "relation": "kind",
+      "said": "fortran program",
+      "anchor": "program",
+      "sense": "WN_n_05928303",
+      "definition": "(computer science) a sequence of instructions that a computer can interpret and execute; \"the program required several hundred lines of code\"",
+      "why": "filed under computer science",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "frame",
+      "concept": "program",
+      "relation": "kind",
+      "said": "frame",
+      "anchor": "application",
+      "sense": "WN_n_05929582",
+      "definition": "a program that gives a computer instructions that provide the user with tools to accomplish a task; \"he has tried several different word processing applications\"",
+      "why": "a kind of program, and names program",
+      "own_evidence": "",
+      "senses_total": 18,
+      "senses_in_scope": 0,
+      "examples": [
+        "the frame enhances but is not itself the subject of attention",
+        "the frame was much more valuable than the mirror it held",
+        "the building has a steel skeleton",
+        "Leonardo studied the human body",
+        "he has a strong physique",
+        "the spirit is willing but the flesh is weak",
+        "frame a policy",
+        "I wouldn't put it that way",
+        "She cast her request in very polite language",
+        "frame a picture",
+        "I was set up!",
+        "The innocent man was framed by the police"
+      ],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "graphic engine",
+      "concept": "program",
+      "relation": "kind",
+      "said": "graphic engine",
+      "anchor": "program",
+      "sense": "WN_n_05928303",
+      "definition": "(computer science) a sequence of instructions that a computer can interpret and execute; \"the program required several hundred lines of code\"",
+      "why": "filed under computer science",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "job control",
+      "concept": "program",
+      "relation": "kind",
+      "said": "job control",
+      "anchor": "program",
+      "sense": "WN_n_05928303",
+      "definition": "(computer science) a sequence of instructions that a computer can interpret and execute; \"the program required several hundred lines of code\"",
+      "why": "filed under computer science",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "library program",
+      "concept": "program",
+      "relation": "kind",
+      "said": "library program",
+      "anchor": "program",
+      "sense": "WN_n_05928303",
+      "definition": "(computer science) a sequence of instructions that a computer can interpret and execute; \"the program required several hundred lines of code\"",
+      "why": "filed under computer science",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "lisp program",
+      "concept": "program",
+      "relation": "kind",
+      "said": "lisp program",
+      "anchor": "program",
+      "sense": "WN_n_05928303",
+      "definition": "(computer science) a sequence of instructions that a computer can interpret and execute; \"the program required several hundred lines of code\"",
+      "why": "filed under computer science",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "malevolent program",
+      "concept": "program",
+      "relation": "kind",
+      "said": "malevolent program",
+      "anchor": "program",
+      "sense": "WN_n_05928303",
+      "definition": "(computer science) a sequence of instructions that a computer can interpret and execute; \"the program required several hundred lines of code\"",
+      "why": "filed under computer science",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "monitor program",
+      "concept": "program",
+      "relation": "kind",
+      "said": "monitor program",
+      "anchor": "program",
+      "sense": "WN_n_05928303",
+      "definition": "(computer science) a sequence of instructions that a computer can interpret and execute; \"the program required several hundred lines of code\"",
+      "why": "filed under computer science",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "natural language processor",
+      "concept": "program",
+      "relation": "kind",
+      "said": "natural language processor",
+      "anchor": "application",
+      "sense": "WN_n_05929582",
+      "definition": "a program that gives a computer instructions that provide the user with tools to accomplish a task; \"he has tried several different word processing applications\"",
+      "why": "a kind of program, and names program",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "object program",
+      "concept": "program",
+      "relation": "kind",
+      "said": "object program",
+      "anchor": "program",
+      "sense": "WN_n_05928303",
+      "definition": "(computer science) a sequence of instructions that a computer can interpret and execute; \"the program required several hundred lines of code\"",
+      "why": "filed under computer science",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "operating system",
+      "concept": "program",
+      "relation": "kind",
+      "said": "operating system",
+      "anchor": "software",
+      "sense": "WN_n_05925514",
+      "definition": "(computer science) written programs or procedures or rules and associated documentation pertaining to the operation of a computer system and that are stored in read/write memory; \"the market for software is expected to expand\"",
+      "why": "filed under computer science, and names program",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "pim tool",
+      "concept": "program",
+      "relation": "kind",
+      "said": "pim tool",
+      "anchor": "program",
+      "sense": "WN_n_05928303",
+      "definition": "(computer science) a sequence of instructions that a computer can interpret and execute; \"the program required several hundred lines of code\"",
+      "why": "filed under computer science",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "plug in",
+      "concept": "program",
+      "relation": "kind",
+      "said": "plug-in",
+      "anchor": "software",
+      "sense": "WN_n_05925514",
+      "definition": "(computer science) written programs or procedures or rules and associated documentation pertaining to the operation of a computer system and that are stored in read/write memory; \"the market for software is expected to expand\"",
+      "why": "filed under computer science, and names program",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "relocatable program",
+      "concept": "program",
+      "relation": "kind",
+      "said": "relocatable program",
+      "anchor": "program",
+      "sense": "WN_n_05928303",
+      "definition": "(computer science) a sequence of instructions that a computer can interpret and execute; \"the program required several hundred lines of code\"",
+      "why": "filed under computer science",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "reusable program",
+      "concept": "program",
+      "relation": "kind",
+      "said": "reusable program",
+      "anchor": "program",
+      "sense": "WN_n_05928303",
+      "definition": "(computer science) a sequence of instructions that a computer can interpret and execute; \"the program required several hundred lines of code\"",
+      "why": "filed under computer science",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "search engine",
+      "concept": "program",
+      "relation": "kind",
+      "said": "search engine",
+      "anchor": "program",
+      "sense": "WN_n_05928303",
+      "definition": "(computer science) a sequence of instructions that a computer can interpret and execute; \"the program required several hundred lines of code\"",
+      "why": "filed under computer science",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "self adapting program",
+      "concept": "program",
+      "relation": "kind",
+      "said": "self-adapting program",
+      "anchor": "program",
+      "sense": "WN_n_05928303",
+      "definition": "(computer science) a sequence of instructions that a computer can interpret and execute; \"the program required several hundred lines of code\"",
+      "why": "filed under computer science",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "shrink wrapped software",
+      "concept": "program",
+      "relation": "kind",
+      "said": "shrink-wrapped software",
+      "anchor": "software",
+      "sense": "WN_n_05925514",
+      "definition": "(computer science) written programs or procedures or rules and associated documentation pertaining to the operation of a computer system and that are stored in read/write memory; \"the market for software is expected to expand\"",
+      "why": "filed under computer science, and names program",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "software documentation",
+      "concept": "program",
+      "relation": "kind",
+      "said": "software documentation",
+      "anchor": "software",
+      "sense": "WN_n_05925514",
+      "definition": "(computer science) written programs or procedures or rules and associated documentation pertaining to the operation of a computer system and that are stored in read/write memory; \"the market for software is expected to expand\"",
+      "why": "filed under computer science, and names program",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "source program",
+      "concept": "program",
+      "relation": "kind",
+      "said": "source program",
+      "anchor": "program",
+      "sense": "WN_n_05928303",
+      "definition": "(computer science) a sequence of instructions that a computer can interpret and execute; \"the program required several hundred lines of code\"",
+      "why": "filed under computer science",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "stored program",
+      "concept": "program",
+      "relation": "kind",
+      "said": "stored program",
+      "anchor": "program",
+      "sense": "WN_n_05928303",
+      "definition": "(computer science) a sequence of instructions that a computer can interpret and execute; \"the program required several hundred lines of code\"",
+      "why": "filed under computer science",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "supervisory program",
+      "concept": "program",
+      "relation": "kind",
+      "said": "supervisory program",
+      "anchor": "program",
+      "sense": "WN_n_05928303",
+      "definition": "(computer science) a sequence of instructions that a computer can interpret and execute; \"the program required several hundred lines of code\"",
+      "why": "filed under computer science",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "supervisory software",
+      "concept": "program",
+      "relation": "kind",
+      "said": "supervisory software",
+      "anchor": "software",
+      "sense": "WN_n_05925514",
+      "definition": "(computer science) written programs or procedures or rules and associated documentation pertaining to the operation of a computer system and that are stored in read/write memory; \"the market for software is expected to expand\"",
+      "why": "filed under computer science, and names program",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "syntax checker",
+      "concept": "program",
+      "relation": "kind",
+      "said": "syntax checker",
+      "anchor": "program",
+      "sense": "WN_n_05928303",
+      "definition": "(computer science) a sequence of instructions that a computer can interpret and execute; \"the program required several hundred lines of code\"",
+      "why": "filed under computer science",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "system program",
+      "concept": "program",
+      "relation": "kind",
+      "said": "system program",
+      "anchor": "program",
+      "sense": "WN_n_05928303",
+      "definition": "(computer science) a sequence of instructions that a computer can interpret and execute; \"the program required several hundred lines of code\"",
+      "why": "filed under computer science",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "text matching",
+      "concept": "program",
+      "relation": "kind",
+      "said": "text-matching",
+      "anchor": "program",
+      "sense": "WN_n_05928303",
+      "definition": "(computer science) a sequence of instructions that a computer can interpret and execute; \"the program required several hundred lines of code\"",
+      "why": "filed under computer science",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "translator",
+      "concept": "program",
+      "relation": "kind",
+      "said": "translator",
+      "anchor": "program",
+      "sense": "WN_n_05928303",
+      "definition": "(computer science) a sequence of instructions that a computer can interpret and execute; \"the program required several hundred lines of code\"",
+      "why": "filed under computer science",
+      "own_evidence": "",
+      "senses_total": 3,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "utility program",
+      "concept": "program",
+      "relation": "kind",
+      "said": "utility program",
+      "anchor": "program",
+      "sense": "WN_n_05928303",
+      "definition": "(computer science) a sequence of instructions that a computer can interpret and execute; \"the program required several hundred lines of code\"",
+      "why": "filed under computer science",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "web map service",
+      "concept": "program",
+      "relation": "kind",
+      "said": "web map service",
+      "anchor": "program",
+      "sense": "WN_n_05928303",
+      "definition": "(computer science) a sequence of instructions that a computer can interpret and execute; \"the program required several hundred lines of code\"",
+      "why": "filed under computer science",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "word processor",
+      "concept": "program",
+      "relation": "kind",
+      "said": "word processor",
+      "anchor": "application",
+      "sense": "WN_n_05929582",
+      "definition": "a program that gives a computer instructions that provide the user with tools to accomplish a task; \"he has tried several different word processing applications\"",
+      "why": "a kind of program, and names program",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "computer monitor",
+      "concept": "screen",
+      "relation": "kind",
+      "said": "computer monitor",
+      "anchor": "monitor",
+      "sense": "WN_n_03157621",
+      "definition": "display produced by a device that takes signals and displays them on a television screen or a computer monitor",
+      "why": "a kind of display, and names screen",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "computer screen",
+      "concept": "screen",
+      "relation": "kind",
+      "said": "computer screen",
+      "anchor": "screen",
+      "sense": "WN_n_03526315",
+      "definition": "the display that is electronically created on the surface of the large end of a cathode-ray tube",
+      "why": "a kind of display",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "fluorescent screen",
+      "concept": "screen",
+      "relation": "kind",
+      "said": "fluorescent screen",
+      "anchor": "screen",
+      "sense": "WN_n_03526315",
+      "definition": "the display that is electronically created on the surface of the large end of a cathode-ray tube",
+      "why": "a kind of display",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "luminescent screen",
+      "concept": "screen",
+      "relation": "kind",
+      "said": "luminescent screen",
+      "anchor": "screen",
+      "sense": "WN_n_03526315",
+      "definition": "the display that is electronically created on the surface of the large end of a cathode-ray tube",
+      "why": "a kind of display",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "own_evidence": "a kind of an anchor, but nothing in its own senses is about computing"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "exhaust",
+      "concept": "use",
+      "relation": "synonym",
+      "said": "exhaust",
+      "anchor": "use",
+      "sense": "WN_v_01202944",
+      "definition": "use up (resources or materials); \"this car consumes a lot of gas\"; \"We exhausted our savings\"; \"They run through 20 bottles of wine a week\"",
+      "why": "shared with consume, eat",
+      "own_evidence": "",
+      "senses_total": 7,
+      "senses_in_scope": 1,
+      "examples": [
+        "This kind of work exhausts me",
+        "I'm beat",
+        "He was all washed up after the exam",
+        "combustion products are exhausted in the engine",
+        "the plant releases a gas",
+        "We have exhausted the food supplies",
+        "exhaust one's savings",
+        "We quickly played out our strength"
+      ],
+      "checks": {
+        "one_concept": "the corpus also offers it for computer"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    },
+    {
+      "word": "wireless local area network",
+      "concept": "wifi",
+      "relation": "synonym",
+      "said": "wireless local area network",
+      "anchor": "wifi",
+      "sense": "WN_n_03962076",
+      "definition": "a local area network that uses high frequency radio signals to transmit and receive data over distances of a few hundred feet; uses ethernet protocol",
+      "why": "a kind of local area network",
+      "own_evidence": "",
+      "senses_total": 0,
+      "senses_in_scope": 0,
+      "examples": [],
+      "checks": {
+        "usable": "more than three words"
+      },
+      "confidence": 0.0,
+      "status": "blocked"
+    }
+  ]
+}

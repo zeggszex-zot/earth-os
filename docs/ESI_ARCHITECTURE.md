@@ -1,9 +1,10 @@
-# Earth Semantic Intelligence — assessment, and phase 1
+# Earth Semantic Intelligence — assessment, phase 1, and the phase 2 bridge
 
 *Baseline: branch `sec/phase-2-audit` at `3012e53`. In the build environment
 the suite ran 1217 tests with 9 failures, all environmental (no GTK 4
 typelib, the install harness, the OpenSSL-loading check) — the same 9
-before and after this work. `tests/test_esi.py` adds 41, all passing.*
+before and after this work. `tests/test_esi.py` adds 41 (phase 1) and
+`tests/test_esi_bridge.py` 27 (phase 2), all passing.*
 
 ESI was proposed as a dictionary-based language-understanding engine for the
 AI terminal: WordNet, a semantic network, FastText embeddings, a small
@@ -169,6 +170,8 @@ memory for faces" finds the phrase "memory" as written, as it always has.
 
 ## 5. What was not built, and what phase 2 should be
 
+*Phase 2's first part — the bridge — is built; see §7.*
+
 * **No second dictionary.** Phase 2 should draw synonyms from the corpus CDOS
   already has, not from a new WordNet: propose candidate words for each
   concept from the corpus's `SYNONYM` and `HYPERNYM` facts, the way
@@ -205,3 +208,131 @@ python3 tools/esi_measure.py tests/esi_heldout.jsonl
 A word that belongs to two concepts, a new collision between two questions,
 any change to how an existing phrase resolves, or a drop on either set fails
 the suite.
+
+---
+
+## 7. Phase 2: the CDOS Dictionary Bridge
+
+*Built against the Phase 1.5 reference corpus (`corpus.pf`, 1,459,260 rows),
+compiled with CDOS's own `build_shards.py --fix-wordnet` into 1,229,268 facts
+over 143,777 subjects, and read through CDOS's own `Corpus` reader. Nothing
+was parsed twice: the bridge never reads `corpus.pf` itself, because that
+file's WordNet labels are swapped (its `ANTONYM` rows are hypernyms) and
+CDOS already knows how to repair them.*
+
+**CDOS supplies knowledge; ESI interprets language; a person approves.**
+`earth_os/dictionary_bridge.py` reads the corpus and proposes words for
+ESI's concepts; `tools/esi_bridge.py` is how a person reviews them. Earth OS
+never needs the corpus at run time — `tests/test_esi_bridge.py` reads the
+imports of the start-up modules to keep it that way.
+
+```bash
+python3 cdos-computer/tools/build_shards.py corpus.pf --out DATA --fix-wordnet   # 15 s
+python3 tools/esi_bridge.py propose --corpus DATA        # 22 s → reviews/esi_bridge.json
+python3 tools/esi_bridge.py list [--concept memory] [--blocked]
+python3 tools/esi_bridge.py show "random access memory" memory
+python3 tools/esi_bridge.py approve "random access memory" memory --by NAME
+python3 tools/esi_bridge.py reject mainframe cpu --by NAME --reason "not a processor"
+```
+
+### Where a concept lives
+
+A word's senses are many — "ram" is a sheep, a battering ram, a verb and
+computer memory — so a sense is taken as a concept's only on two kinds of
+evidence, both required:
+
+1. **The right world.** For a concept about the machine, WordNet files the
+   sense under computer science, its *direct* parent is a computing kind, or
+   its definition says "computer". For any other concept, two of the
+   concept's own words share the sense.
+2. **The right concept.** The sense names the concept — "a portable
+   *computer*", "computer *memory*" — or, for a concept not about the
+   machine, the concept's own name word is in the sense.
+
+Each half was added because the output without it was wrong, read against
+the real corpus:
+
+| Without | What it proposed |
+|---|---|
+| computing evidence, for the machine | ESI's "net" and "network" agree on the fishing net: *mesh, hairnet, tulle* |
+| the name word, for other concepts | "consume" and "devour" agree on eating greedily: *demolish, down* as **use**; "usage" and "utilisation" agree: *employment, exercise* as **load** |
+| naming the concept | desktop's computing sense is the screen background: *screen background* as **computer** |
+| ignoring a definition's "(computer science)" label | the same, through the label |
+| walking further up the hierarchy (tried first) | "screen > display > show > entertainment"; "computer > machine > motor vehicle" |
+
+A "kind of" candidate (a hyponym) must be about computing in its own senses:
+being a kind of monitor does not make a cardiac monitor part of this
+computer.
+
+### What is checked
+
+Every candidate is tried with exactly that word added, against everything
+phase 1 guarantees:
+
+| Check | Fails when |
+|---|---|
+| `usable` | not plain words; a single letter in it ("C.P.U." → "c p u"); a function word; already a word for any concept |
+| `own_evidence` | a kind of something, but nothing in its own senses is about computing |
+| `one_concept` | the corpus offers it for two concepts |
+| `phrases_unchanged` | any of the 356 phrasebook phrases resolves differently ("status" → wifi changes "network status") |
+| `no_new_ambiguity` | two questions come to read the same |
+| `scores_hold` | either paraphrase set loses a right answer, gains a wrong one, or starts answering a non-question. Re-adding "hog" as using fails here — it is the phase 1 noun/verb bug |
+| `other_meanings_quiet` | one of WordNet's own example sentences, for one of the word's *other* senses, starts resolving to a capability |
+
+The last check is the closest thing here to independent testing: the
+sentences were written by WordNet's lexicographers, not by anyone tuning
+ESI. It is what blocked **store** as memory — WordNet's synonym for computer
+memory, and also *"he brought back a large store of Cuban cigars"*.
+
+Approval re-runs every check against the tables *as they are then*, so
+words approved one after another are checked together. A word that fails
+can only be approved with `--override REASON`, which is recorded; a word
+that is not `usable` cannot be approved at all. Approval needs `--by NAME`;
+a rejection needs a reason and is final — the bridge never proposes that
+word for that concept again. `lexical.py` re-checks every entry each time it
+reads `approved.json`, so a hand edit is held to the same rules, and a bad
+entry is skipped and named, never fatal.
+
+**The bridge approves nothing itself, at any confidence.** Confidence —
+relation weight times the square root of the share of the word's senses that
+are this meaning — only orders the list. A word can pass every check with a
+confidence of 0.00: "inactive" is similar to "sluggish" in one sense and
+means something else in all ten of its own.
+
+### Measured
+
+| | |
+|---|---|
+| Concepts with an anchor | 11 of 17 grown (`user` is not: pronouns are grammar). None for battery, capacity, hot, load, overheat, temperature |
+| Candidates | 175 |
+| Passed every check | 72 (44 synonyms, 27 kinds, 1 similar) |
+| Blocked | 103: 97 kinds with no computing sense of their own, 4 unusable, 1 offered for two concepts, 1 waking its other meanings (store) |
+| All 72 approved together | dev 34/36 right, 0 wrong, 5/6 left alone; held-out 50/58, 2 wrong, 15/15 — **unchanged**; no phrase changed; no new ambiguity; corpus build 2.8 ms, as before |
+| Shipped `approved.json` | empty. Nothing has been approved |
+
+**What that measurement does and does not say.** The paraphrase sets cannot
+show the bridge's value, because their misses are missing *phrases* ("is
+the processor getting too hot"), not missing *words*, and none of them says
+"microcomputer" or "random access memory". What they do show is that
+approving everything that passed costs nothing on either set. Whether the
+words help needs sentences that use them — which is, again, the case for a
+held-out set written by someone else.
+
+**What the checks cannot catch.** They test behaviour on known sentences; a
+word wrong in meaning but absent from every sentence passes. Read against
+the corpus, the 72 include good words (*central processing unit, random
+access memory, personal computer, computer program, video display*), WordNet
+quirks (*mainframe* as CPU, *monitoring device* as screen), and many kinds of
+program few people would say (*parser, loop, patch, tagger*). That is why a
+person approves: the bridge narrows 1.2 million facts to a page, and reading
+the page is the part that cannot be automated honestly.
+
+### Not built
+
+* **No Evolution Center panel.** `tools/esi_bridge.py status` and
+  `load_approved().problems` are the readings one would show.
+* **Concepts the bridge cannot grow** (battery, temperature, hot, load,
+  overheat, capacity) have no computing sense in WordNet that names them, or
+  no sense two of their words share. They stay hand-written.
+* **Context resolution and sentence structure** remain unbuilt for the
+  reason in §5: no measured failure yet calls for them.
