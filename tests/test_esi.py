@@ -346,6 +346,24 @@ class TestItIsMeasured(unittest.TestCase):
         self.assertEqual((s["attachment"], s["attachment_lines"]), (19, 19))
         self.assertGreaterEqual(s["recognition"], 35)
         self.assertGreaterEqual(s["interpretation"], 19)
+        # False positives are ceilings: answering wrongly, and answering a
+        # sentence that was not a request, may only fall. (All three answered
+        # non-requests are the phrasebook's bare words, not ESI's.)
+        self.assertLessEqual(s["wrong"], 11)
+        self.assertLessEqual(s["non_requests_answered"], 3)
+
+    def test_attachment_is_scored_exactly(self):
+        """An attachment nobody labelled fails as surely as a missing one.
+        The first version only checked the expected ones were present, and
+        "my computer and my phone" was labelled with one of its two."""
+        import tempfile
+        with tempfile.TemporaryDirectory() as d:
+            path = Path(d) / "one.jsonl"
+            path.write_text(json.dumps({
+                "text": "my computer and my phone are both slow", "expect": "performance_report",
+                "concepts": [], "attach": ["user>computer"], "not_attach": []}) + "\n")
+            (_row, _rec, attached, _got), = esi_measure.measure_context(path)
+        self.assertFalse(attached)
 
     def test_the_independent_set_is_well_formed_if_it_exists(self):
         """Phase 3C (docs/ESI_INDEPENDENT_SET.md). Shape only — no score is

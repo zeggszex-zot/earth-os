@@ -349,7 +349,7 @@ says what to do next.
 ### The failure
 
 *"My computer is struggling because several programs are consuming
-memory"* answered **top_memory** — by matching the phrase "taking up **my**
+memory"* — kept in the set as a regression example — answered **top_memory** — by matching the phrase "taking up **my**
 memory", using the "my" of "**my** computer". Phase 1 reads a sentence as an
 unordered set of concepts, so a possessive belonged to the whole sentence
 rather than to its noun. The answer happened to be reasonable; the reason
@@ -373,11 +373,27 @@ score as before; the collision list is unchanged.
 vocabulary problem is not mistaken for a grammar problem:
 `python3 tools/esi_measure.py tests/esi_context.jsonl --show`.
 
-| | Recognition | Attachment | Interpretation |
-|---|---|---|---|
-| Phrasebook alone | — | — | 11 / 44 |
-| Before 3A | 35 / 44 | 0 / 19 | 19 / 44 |
-| **After 3A** | **35 / 44** | **19 / 19** | **19 / 44** |
+| | Recognition | Attachment | Interpretation | Requests answered wrongly | Requests unanswered | Non-requests answered |
+|---|---|---|---|---|---|---|
+| Phrasebook alone | — | — | 11 / 44 | 13 | 17 | 3 / 7 |
+| Before 3A | 35 / 44 | 0 / 19 | 19 / 44 | 11 | 11 | 3 / 7 |
+| **After 3A** | **35 / 44** | **19 / 19** | **19 / 44** | **11** | **11** | **3 / 7** |
+
+Interpretation is split three ways because they are not equally bad: a
+request unanswered falls through to conversation; a request answered
+wrongly gives a wrong reading; a non-request answered does something nobody
+asked for. All three answered non-requests ("my memory is terrible", "never
+mind the memory", "how hot is it outside") come from the phrasebook's bare
+phrases, not from ESI. The test holds wrong answers and answered
+non-requests as ceilings.
+
+Attachment is scored **exactly**: the possessives must attach to precisely
+the labelled nouns, none missing and none extra. An outside review found
+that the first version only checked the labelled ones were present, and
+that "my computer and my phone are both slow" was labelled with one of its
+two. The label was completed and the scoring made exact (a test now proves
+an unlabelled attachment fails); every one of the 19 lines was checked
+against the reading, and that was the only incomplete label.
 
 Interpretation did not move, and that is the honest result: the two
 sentences that were answered for the wrong reason ("my computer is

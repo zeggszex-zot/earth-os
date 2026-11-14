@@ -15,8 +15,9 @@ A set whose lines also carry ``concepts``, ``attach`` and ``not_attach``
 problem is not mistaken for a grammar problem:
 
     recognition     every concept in ``concepts`` was understood
-    attachment      each my/your went to the noun in ``attach`` and none
-                    to a noun in ``not_attach`` (lines with neither: n/a)
+    attachment      the possessives attached to exactly the nouns in
+                    ``attach`` — none missing, none extra, none in
+                    ``not_attach`` (lines with no possessive: n/a)
     interpretation  the sentence resolved to ``expect``
 """
 
@@ -100,9 +101,12 @@ def measure_context(path: Path, lexical: bool = True):
         reading = reader.read(row["text"])
         attachments = set(getattr(reading, "attachments", ()) or ())
         recognised = set(row.get("concepts", ())) <= set(reading.concepts)
+        # Exact, not "the expected ones are there": an attachment nobody
+        # labelled is as wrong as a missing one. A line with no attachment
+        # labels is scored only if the reading made attachments anyway.
         attached = None
-        if row.get("attach") or row.get("not_attach"):
-            attached = (set(row.get("attach", ())) <= attachments
+        if row.get("attach") or row.get("not_attach") or attachments:
+            attached = (attachments == set(row.get("attach", ()))
                         and not attachments & set(row.get("not_attach", ())))
         out.append((row, recognised, attached, label(corpus.resolve(row["text"]))))
     return out
@@ -113,8 +117,17 @@ def context_summary(results) -> dict:
         rec = sum(1 for _r, ok, _a, _g in rows if ok)
         att = [a for _r, _ok, a, _g in rows if a is not None]
         interp = sum(1 for r, _ok, _a, got in rows if got == r["expect"])
+        # False positives, kept apart from silence: answering wrongly is
+        # worse than not answering, and answering a non-request is worst.
+        wrong = sum(1 for r, _ok, _a, got in rows
+                    if r["expect"] != "-" and got not in ("-", r["expect"]))
+        silent = sum(1 for r, _ok, _a, got in rows if r["expect"] != "-" and got == "-")
+        requests_not = [got for r, _ok, _a, got in rows if r["expect"] == "-"]
         return {"lines": len(rows), "recognition": rec, "attachment": sum(att),
-                "attachment_lines": len(att), "interpretation": interp}
+                "attachment_lines": len(att), "interpretation": interp,
+                "wrong": wrong, "unanswered": silent,
+                "non_requests": len(requests_not),
+                "non_requests_answered": sum(1 for g in requests_not if g != "-")}
     by = {}
     for item in results:
         by.setdefault(item[0].get("category", "-"), []).append(item)
@@ -124,12 +137,16 @@ def context_summary(results) -> dict:
 def _print_context(path: Path, results, raw: bool, show: bool) -> None:
     s = context_summary(results)
     print(f"{path.name}{' (raw)' if raw else ''}: {s['all']['lines']} lines")
-    print(f"  {'':22} {'recognition':>12} {'attachment':>11} {'interpretation':>15}")
+    print(f"  {'':22} {'recognition':>12} {'attachment':>11} {'interpretation':>15}"
+          f"  {'wrong':>5} {'silent':>6} {'non-requests answered':>22}")
     for name, t in s.items():
         att = (f"{t['attachment']}/{t['attachment_lines']}" if t["attachment_lines"]
                else "n/a")
+        fp = (f"{t['non_requests_answered']}/{t['non_requests']}" if t["non_requests"]
+              else "n/a")
         print(f"  {name:22} {t['recognition']:>8}/{t['lines']:<3} {att:>11} "
-              f"{t['interpretation']:>11}/{t['lines']:<3}")
+              f"{t['interpretation']:>11}/{t['lines']:<3}  {t['wrong']:>5} "
+              f"{t['unanswered']:>6} {fp:>22}")
     if show:
         for row, recognised, attached, got in results:
             marks = []

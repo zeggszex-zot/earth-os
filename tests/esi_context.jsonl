@@ -11,7 +11,7 @@
 {"category": "possessive", "text": "my free memory is low", "expect": "hardware.memory", "concepts": ["memory"], "attach": ["user>memory"], "not_attach": []}
 {"category": "possessive", "text": "my wifi keeps dropping", "expect": "network.wireless", "concepts": ["wifi", "network"], "attach": ["user>wifi"], "not_attach": []}
 {"category": "multiple subjects", "text": "the browser and the editor are both using lots of memory", "expect": "memory_report", "concepts": ["use", "memory"], "attach": [], "not_attach": []}
-{"category": "multiple subjects", "text": "my computer and my phone are both slow", "expect": "performance_report", "concepts": ["computer", "slow"], "attach": ["user>computer"], "not_attach": []}
+{"category": "multiple subjects", "text": "my computer and my phone are both slow", "expect": "performance_report", "concepts": ["computer", "slow"], "attach": ["user>computer", "user>phone"], "not_attach": []}
 {"category": "multiple subjects", "text": "the cpu is busy and the memory is full", "expect": "performance_report", "concepts": ["cpu", "load", "memory", "capacity"], "attach": [], "not_attach": []}
 {"category": "multiple subjects", "text": "the fan is loud and the laptop is hot", "expect": "hardware.temperature", "concepts": ["computer", "hot"], "attach": [], "not_attach": []}
 {"category": "multiple subjects", "text": "chrome is eating memory while the disk is almost full", "expect": "performance_report", "concepts": ["use", "memory", "disk", "capacity"], "attach": [], "not_attach": []}
