@@ -456,9 +456,6 @@ READINGS: frozenset = frozenset({
 #: looser match should only ever look.
 MEANING_READINGS: frozenset = READINGS - {"display.screenshot"}
 
-#: "not", "never", "cannot", and every "n't" (which ``normalise`` leaves as a
-#: separate "t").
-_NEGATED = re.compile(r"(?:^|\s)(?:not|never|cannot|dont|\w+n t)(?:\s|$)")
 
 
 def _bytes(count: object) -> str:
@@ -638,9 +635,8 @@ class CapabilityCorpus:
         """
         if intent.analysis or intent.capability in MEANING_READINGS:
             return False
-        if not _NEGATED.search(cleaned):
-            return False
-        return True
+        from .lexical import says_not
+        return says_not(cleaned)
 
     def _as_meaning(self, cleaned: str) -> Optional[CapabilityIntent]:
         """The sentence read as concepts, against every question's concepts."""

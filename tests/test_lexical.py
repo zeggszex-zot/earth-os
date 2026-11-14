@@ -351,6 +351,10 @@ class TestThroughTheShell(unittest.TestCase):
             self.invoked.append(capability)
             return real(capability, **kwargs)
         self.shell.capabilities.invoke = recording
+        # A headless shell has no screens attached, so go() cannot change
+        # ``current``; record what it was asked to show instead.
+        self.shown = []
+        self.shell.go = self.shown.append
 
     def tearDown(self):
         from earth_os.platform import reset_platform
@@ -361,6 +365,24 @@ class TestThroughTheShell(unittest.TestCase):
     def test_dont_lock_the_screen_does_not_lock_the_screen(self):
         self.shell.handle_utterance("don't lock the screen")
         self.assertNotIn("system.lock", self.invoked)
+
+    def test_not_means_not_in_the_vocabulary_too(self):
+        """The fixed vocabulary matches by containment as well: "do not open
+        the terminal" opened it, and "don't shut down" asked to power off."""
+        self.shell.handle_utterance("do not open the terminal")
+        self.assertEqual(self.shown, [])
+        self.shell.pending_options.clear()
+        self.shell.handle_utterance("never mind, don't shut down")
+        self.assertEqual(list(self.shell.pending_options), [])
+        self.assertEqual(self.invoked, [])
+
+    def test_the_same_commands_said_plainly_still_work(self):
+        self.shell.handle_utterance("open the terminal")
+        self.assertEqual(self.shown, ["terminal"])
+        self.shell.pending_options.clear()
+        self.shell.handle_utterance("shut down")
+        self.assertTrue(self.shell.pending_options, "an effectful act asks first")
+        self.assertNotIn("system.shutdown", self.invoked)
 
     def test_a_question_by_meaning_is_answered_from_readings(self):
         self.shell.handle_utterance("which app is hogging my ram")

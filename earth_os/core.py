@@ -616,7 +616,18 @@ class Shell:
         # capability phrase is preferred over a shorter vocabulary one. Equal
         # lengths leave the vocabulary in front, because it is the older and
         # better-tested layer.
-        spoken = self.dispatcher.vocabulary.match_span(text)
+        # Not means not. "Don't lock the screen" contains "lock the screen",
+        # and "do not open the terminal" contains "open the terminal"; every
+        # command layer below matches by containment, so each of them once did
+        # the thing it was told not to. A sentence that says not to do
+        # something skips the layers that only do things — the vocabulary,
+        # compositions and the learned layer. The capability corpus still
+        # reads it, because it may be a question, and the corpus refuses a
+        # negated act itself. What is left is talk.
+        from .lexical import says_not
+        negated = says_not(text)
+
+        spoken = 0 if negated else self.dispatcher.vocabulary.match_span(text)
         intent = (self.capability_corpus.resolve(text)
                   if self.capabilities is not None else None)
 
@@ -627,7 +638,7 @@ class Shell:
         # somebody named after an existing phrase should still win when they
         # say the whole of it.
         match = (self.compositions.resolve(text)
-                 if self.compositions is not None else None)
+                 if self.compositions is not None and not negated else None)
         # The conversation guard. "I was thinking about going home after
         # work" contains the vocabulary's "home"; it is still talk. A sentence
         # that is plainly conversational, and that the command layers
@@ -648,7 +659,8 @@ class Shell:
             if self.run_capability_intent(text):
                 return
 
-        action, resolution = self.dispatcher.resolve_learned(text)
+        action, resolution = ((None, None) if negated
+                              else self.dispatcher.resolve_learned(text))
 
         # Tier 1: somebody wrote this phrase down. Just run it.
         if action and resolution is None and action in self.dispatcher.handlers:

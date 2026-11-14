@@ -3,7 +3,7 @@
 *Baseline: branch `sec/phase-2-audit` at `3012e53`. In the build environment
 the suite ran 1217 tests with 9 failures, all environmental (no GTK 4
 typelib, the install harness, the OpenSSL-loading check) — the same 9
-before and after this work. `tests/test_lexical.py` adds 39, all passing.*
+before and after this work. `tests/test_lexical.py` adds 41, all passing.*
 
 ESI was proposed as a dictionary-based language-understanding engine for the
 AI terminal: WordNet, a semantic network, FastText embeddings, a small
@@ -54,6 +54,7 @@ Measured, not assumed. The phrasebook matches phrases **as written**, so:
 | why is my pc so slow | nothing | the phrase is "*computer* is slow" |
 | you're getting tired | learned layer proposed opening **settings** | fuzzy match: "getting" ≈ "settings" |
 | don't lock the screen | **locked the screen** | contains "lock the screen"; `system.lock` is not effectful, so nothing asked first |
+| do not open the terminal | **opened the terminal** | the fixed vocabulary matches "terminal" inside it |
 
 The learned layer already knew that RAM is memory. Nothing let the corpus use
 it. Every new wording had to be typed into a tuple by hand, and the
@@ -86,9 +87,14 @@ Five rules, each a test in `tests/test_lexical.py`:
    non-effectful readings are indexed, and not the screenshot, which leaves a
    file behind. An act is reached only by its phrase as written.
 2. **Not means not.** A negated sentence is never read by meaning, and never
-   starts an act through the phrasebook either — "don't lock the screen" now
-   reaches the conversation, not `system.lock`. This holds with ESI switched
-   off; it is a fix to the corpus, not a feature of the new layer.
+   starts an act through any command layer — the phrasebook, the fixed
+   vocabulary, compositions or the learned layer. Every one of them matched
+   by containment, so each did the thing it was told not to: "don't lock the
+   screen" locked it, "do not open the terminal" opened it, "don't reboot"
+   and "never mind, don't shut down" asked to do it. Now each reaches the
+   conversation. A negated *question* is still answered. `lexical.says_not`
+   is the one definition; `Shell.handle_utterance` and the corpus both use
+   it. This holds with ESI switched off; it is a fix, not a feature.
 3. **Meaning refines, it never overrules.** A reading by meaning replaces a
    phrase match only if it contains everything the phrase said. "Which app is
    eating the most memory" found {memory}; by meaning it is {use, most,

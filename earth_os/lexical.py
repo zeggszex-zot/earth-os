@@ -361,6 +361,20 @@ class Lexicon:
         return frozenset(w.concept for w in self.read(phrase).words)
 
 
+#: "not", "never", "cannot", and every "n't" (which ``normalise`` leaves as a
+#: separate "t": "don t", "isn t").
+_SAYS_NOT = re.compile(r"(?:^|\s)(?:not|never|cannot|dont|\w+n t)(?:\s|$)")
+
+
+def says_not(text: str) -> bool:
+    """Whether *text* says not to do something.
+
+    The one definition, used by the capability corpus and by the shell's
+    command layers alike, so that "don't" means the same thing everywhere.
+    """
+    return _SAYS_NOT.search(normalise(text)) is not None
+
+
 # --------------------------------------------------------------------------
 # Is it an English word?  For the learned layer's typo matching only.
 # --------------------------------------------------------------------------
