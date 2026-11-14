@@ -46,7 +46,7 @@ deciding where it went.
 | GUI: window, chrome, screens, widgets, splash, theme, phosphor | Earth OS `earth_os/{app,chrome,splash,theme,…}.py`, `screens/`, `widgets/` | **Retained** | Untouched, except the title cap reads `V2.0` and the terminal's header line names who answered |
 | Terminal screen and Universal Translator | Earth OS `screens/terminal.py`, `translator.py` | **Extended** | 1.0's steps unchanged; Earth Mind takes the lines that are not commands (§6) |
 | Capability layer: closed catalogue, platform adapters, effectful gate | Earth OS `platform/`, `core.py` | **Retained, connected** | The system subsystem reads through it; no capability added |
-| Capability corpus: what the machine can be asked, analyses | Earth OS `capability_corpus.py` | **Extended** | One analysis added, `performance_report` — readings only |
+| Capability corpus: what the machine can be asked, analyses | Earth OS `capability_corpus.py` | **Extended** | One analysis added, `performance_report` — readings only. Since ESI phase 1, a question may also be read by meaning (`lexical.py`, [ESI_ARCHITECTURE.md](ESI_ARCHITECTURE.md)); Earth Mind gets it through the same `resolve` |
 | System monitoring: `sysinfo`, `process.list`, `hardware.*` readings | Earth OS `sysinfo.py`, `platform/linux_adapter.py` | **Retained, connected** | Real readings for §4's system queries |
 | Voice path and its tiers, reasoner backends (Ollama, cloud, CDOS bridge) | Earth OS `voice/`, `core.handle_utterance` | **Extended** | Tier 4 goes to Earth Mind; tiers 1–3 unchanged |
 | Agent workspace (Claude Code), compositions, semantics, comms, windows | Earth OS | **Retained** | Untouched |

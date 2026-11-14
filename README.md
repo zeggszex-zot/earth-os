@@ -224,6 +224,7 @@ earth_os/
     reporter.py    seven reports, as text or JSON
   companion/       the Companion Engine: conversation (docs/COMPANION.md)
   world_model.py   what the person let the computer remember (docs/WORLD_MODEL.md)
+  lexical.py       ESI: a question read by meaning, not spelling (docs/ESI_ARCHITECTURE.md)
   agent/           Claude Code, built in (docs/CLAUDE_CODE.md)
     policy.py      what it may never touch, what runs unasked (human-only)
     gate.py        the suite decides what is kept (human-only)
@@ -296,6 +297,10 @@ nothing else is touched. Full detail in [docs/INSTALL.md](docs/INSTALL.md).
   never do, `earth-os --evolution-report`, and the measured test results;
   **[docs/SEC_ARCHITECTURE.md](docs/SEC_ARCHITECTURE.md)** is the assessment
   and plan written before it was built
+- **[docs/ESI_ARCHITECTURE.md](docs/ESI_ARCHITECTURE.md)** — Earth Semantic
+  Intelligence: the proposal checked against the code, phase 1 (questions read
+  by meaning; "don't lock the screen" no longer locks it), and its measured
+  held-out score
 - **[docs/RENDERING.md](docs/RENDERING.md)** — why the shell used to spend a
   third of a core drawing the same picture, the measurements that showed it,
   the adaptive engine that replaced the frame clock, and how to roll back
