@@ -1,0 +1,42 @@
+{"text": "how hot is the computer", "expect": "hardware.temperature"}
+{"text": "what's the cpu temperature", "expect": "hardware.temperature"}
+{"text": "are you running hot", "expect": "hardware.temperature"}
+{"text": "how much memory do i have", "expect": "hardware.memory"}
+{"text": "how much ram is free", "expect": "hardware.memory"}
+{"text": "what is eating my memory", "expect": "top_memory"}
+{"text": "which app is using the most memory", "expect": "top_memory"}
+{"text": "which program is consuming the most memory", "expect": "top_memory"}
+{"text": "what is hogging my ram", "expect": "top_memory"}
+{"text": "why is my ram usage so high", "expect": "memory_report"}
+{"text": "you're using too much memory", "expect": "memory_report"}
+{"text": "computer, i think you're getting tired. you're using too much memory", "expect": "memory_report"}
+{"text": "why is my pc so slow", "expect": "performance_report"}
+{"text": "the computer is crawling", "expect": "performance_report"}
+{"text": "my machine feels sluggish", "expect": "performance_report"}
+{"text": "why is everything lagging", "expect": "performance_report"}
+{"text": "how full is my disk", "expect": "hardware.disk"}
+{"text": "how much free storage do i have", "expect": "hardware.disk"}
+{"text": "how much space is left on the drive", "expect": "hardware.disk"}
+{"text": "is the cpu working hard", "expect": "hardware.cpu_load"}
+{"text": "how busy is the processor", "expect": "hardware.cpu_load"}
+{"text": "cpu usage", "expect": "hardware.cpu_load"}
+{"text": "how much charge do i have", "expect": "hardware.battery"}
+{"text": "battery status", "expect": "hardware.battery"}
+{"text": "how long have you been running", "expect": "hardware.uptime"}
+{"text": "how many cores do you have", "expect": "hardware.cpu_count"}
+{"text": "what cpu do you have", "expect": "hardware.cpu_model"}
+{"text": "am i on wifi", "expect": "network.wireless"}
+{"text": "is the wifi working", "expect": "network.wireless"}
+{"text": "are you swapping", "expect": "hardware.swap"}
+{"text": "what is the computer called", "expect": "system.hostname"}
+{"text": "how many programs are running", "expect": "hardware.processes"}
+{"text": "how fast is the internet", "expect": "hardware.net_rate"}
+{"text": "what is the screen resolution", "expect": "display.get_resolution"}
+{"text": "how loud is the volume", "expect": "audio.get_volume"}
+{"text": "is bluetooth on", "expect": "bluetooth.state"}
+{"text": "i'm eating dinner with my family", "expect": "-"}
+{"text": "the soup is too hot", "expect": "-"}
+{"text": "work has been slow this week", "expect": "-"}
+{"text": "what is the population of brazil", "expect": "-"}
+{"text": "i have a terrible memory for faces", "expect": "-"}
+{"text": "don't lock the screen", "expect": "-"}
