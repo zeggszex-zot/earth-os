@@ -1,0 +1,6793 @@
+{
+ "format": "cdos-computer-lexicon/1",
+ "meta": {
+  "examples_used": 14,
+  "examples_dropped": [
+   {
+    "question": "kenya's money",
+    "gold": [
+     "shilling"
+    ],
+    "expect": "answered",
+    "dropped": "the same question is held out"
+   },
+   {
+    "question": "what is the home of a bat",
+    "gold": [
+     "cave"
+    ],
+    "expect": "answered",
+    "dropped": "the same question is held out"
+   }
+  ],
+  "heldout_questions": 40,
+  "relations_skipped": {
+   "ALSO_KNOWN_AS": "a yes/no property or schema, not asked as 'the ___ of X'",
+   "BIRTH_NAME": "a compound name the dictionary doesn't have",
+   "CAN_FLY": "a yes/no property or schema, not asked as 'the ___ of X'",
+   "CAPITAL_OF": "not a noun relation",
+   "CONTAINS_ELEMENT": "not a noun relation",
+   "CONVERSION_FACTOR": "a compound name the dictionary doesn't have",
+   "CONVERTS_TO": "not a noun relation",
+   "COUNTRY_OF_ORIGIN": "a compound name the dictionary doesn't have",
+   "DAY_COUNT": "a count: asked as 'how many'",
+   "DAY_NUMBER": "a count: asked as 'how many'",
+   "DESCRIPTION": "a yes/no property or schema, not asked as 'the ___ of X'",
+   "DIED": "no dictionary entry for died",
+   "DIVISOR_COUNT": "a count: asked as 'how many'",
+   "EQUALS": "a yes/no property or schema, not asked as 'the ___ of X'",
+   "EXECUTION_MODEL": "a compound name the dictionary doesn't have",
+   "FIRST_RELEASED": "a compound name the dictionary doesn't have",
+   "FOLLOWED_BY": "not a noun relation",
+   "FOLLOWS": "not a noun relation",
+   "HAS_LIQUID_WATER": "yes/no values",
+   "HAS_UNIT": "a yes/no property or schema, not asked as 'the ___ of X'",
+   "INTERIOR_ANGLE_SUM": "a compound name the dictionary doesn't have",
+   "IS_AMBIGUOUS": "a yes/no property or schema, not asked as 'the ___ of X'",
+   "IS_COMPONENT_OF": "a yes/no property or schema, not asked as 'the ___ of X'",
+   "IS_FUNCTIONAL": "a yes/no property or schema, not asked as 'the ___ of X'",
+   "IS_METAL": "a yes/no property or schema, not asked as 'the ___ of X'",
+   "IS_PRIME": "a yes/no property or schema, not asked as 'the ___ of X'",
+   "IS_WARM_BLOODED": "a yes/no property or schema, not asked as 'the ___ of X'",
+   "LOCATED_AT": "not a noun relation",
+   "LOCATED_IN": "not a noun relation",
+   "MEASURES": "not a noun relation",
+   "MEMBER_HOLONYM": "not a noun relation",
+   "MEMBER_MERONYM": "not a noun relation",
+   "MONTH_NUMBER": "a count: asked as 'how many'",
+   "NAMED_AFTER": "not a noun relation",
+   "OCCURRED_IN": "not a noun relation",
+   "ORBITS": "not a noun relation",
+   "PARENT_BODY": "a compound name the dictionary doesn't have",
+   "PARENT_TAXON": "a compound name the dictionary doesn't have",
+   "PART_HOLONYM": "not a noun relation",
+   "PART_MERONYM": "not a noun relation",
+   "PART_OF": "not a noun relation",
+   "PLAYERS_PER_SIDE": "a compound name the dictionary doesn't have",
+   "PRECEDES": "not a noun relation",
+   "PUBLICATION_DATE": "a compound name the dictionary doesn't have",
+   "SIDE_COUNT": "a count: asked as 'how many'",
+   "SUBSTANCE_HOLONYM": "a compound name the dictionary doesn't have",
+   "SUBSTANCE_MERONYM": "a compound name the dictionary doesn't have",
+   "TAXON_NAME": "a compound name the dictionary doesn't have",
+   "TAXON_RANK": "a compound name the dictionary doesn't have",
+   "WN_ALSO_SEE": "a compound name the dictionary doesn't have",
+   "WN_REGION_DOMAIN": "a compound name the dictionary doesn't have",
+   "WN_REGION_MEMBER": "a compound name the dictionary doesn't have",
+   "WN_TOPIC_DOMAIN": "a compound name the dictionary doesn't have",
+   "WN_TOPIC_MEMBER": "a compound name the dictionary doesn't have",
+   "WN_USAGE_DOMAIN": "a compound name the dictionary doesn't have",
+   "WN_USAGE_MEMBER": "a compound name the dictionary doesn't have",
+   "WN_VERB_GROUP": "a compound name the dictionary doesn't have"
+  }
+ },
+ "mappings": [
+  {
+   "word": "altitude",
+   "relation": "HEIGHT",
+   "conf": 0.75,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "HEIGHT SYNONYM ALTITUDE",
+     "sense": "WN_n_04508760",
+     "note": "same sense as the definition that fits"
+    }
+   ],
+   "status": "accepted",
+   "why": ""
+  },
+  {
+   "word": "envelope",
+   "relation": "ATMOSPHERE",
+   "conf": 0.8,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "ATMOSPHERE DEFINITION the envelope of gases surrounding any celestial body",
+     "sense": "WN_n_07986520",
+     "sense_fits": [
+      "celestial"
+     ],
+     "note": "the sense the relation is used in"
+    }
+   ],
+   "status": "accepted",
+   "why": ""
+  },
+  {
+   "word": "environment",
+   "relation": "HABITAT",
+   "conf": 0.8,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "HABITAT DEFINITION the type of environment in which an organism or group normally lives or occurs; \"a marine habitat\"; \"he felt safe on his home grounds\"",
+     "sense": "WN_n_07888318",
+     "sense_fits": [
+      "organism"
+     ],
+     "note": "the sense the relation is used in"
+    }
+   ],
+   "status": "accepted",
+   "why": ""
+  },
+  {
+   "word": "food",
+   "relation": "DIET",
+   "conf": 0.8,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "DIET DEFINITION the usual food and drink consumed by an organism (person or animal)",
+     "sense": "WN_n_06950118",
+     "sense_fits": [
+      "animal",
+      "organism"
+     ],
+     "note": "the sense the relation is used in"
+    }
+   ],
+   "status": "accepted",
+   "why": ""
+  },
+  {
+   "word": "grub",
+   "relation": "DIET",
+   "conf": 0.6,
+   "via": [
+    {
+     "how": "examples",
+     "subjects": [
+      "ELEPHANT",
+      "TIGER"
+     ],
+     "n": 2,
+     "note": "the answer was this relation's value for each of these"
+    }
+   ],
+   "status": "accepted",
+   "why": ""
+  },
+  {
+   "word": "home",
+   "relation": "HABITAT",
+   "conf": 0.8999999999999999,
+   "via": [
+    {
+     "how": "examples",
+     "subjects": [
+      "DOLPHIN",
+      "PENGUIN",
+      "TIGER",
+      "ZEBRA"
+     ],
+     "n": 4,
+     "note": "the answer was this relation's value for each of these"
+    }
+   ],
+   "status": "accepted",
+   "why": ""
+  },
+  {
+   "word": "set",
+   "relation": "GROUP",
+   "conf": 0.8,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "GROUP DEFINITION a set that is closed, associative, has an identity element and every element has an inverse",
+     "sense": "WN_n_05403315",
+     "sense_fits": [
+      "element"
+     ],
+     "note": "the sense the relation is used in"
+    }
+   ],
+   "status": "accepted",
+   "why": ""
+  },
+  {
+   "word": "ability",
+   "relation": "DEPTH",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "DEPTH DEFINITION the intellectual ability to penetrate deeply into ideas",
+     "sense": "WN_n_04994992",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "above",
+   "relation": "ELEVATION",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "ELEVATION DEFINITION angular distance above the horizon (especially of a celestial object)",
+     "sense": "WN_n_11133507",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "aboveboard",
+   "relation": "SQUARE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "SQUARE SYNONYM ABOVEBOARD",
+     "sense": "WN_a_02335484",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a noun in the dictionary: can't be 'the ___ of X'"
+  },
+  {
+   "word": "abstraction",
+   "relation": "ATTRIBUTE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "definition head, first sense",
+     "fact": "ATTRIBUTE DEFINITION an abstraction belonging to or characteristic of an entity",
+     "sense": "WN_n_00018584",
+     "sense_fits": [],
+     "note": "no sense fits; the dictionary's first noun sense"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "accelerate",
+   "relation": "SPEED",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "SPEED SYNONYM ACCELERATE",
+     "sense": "WN_v_00456347",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a noun in the dictionary: can't be 'the ___ of X'"
+  },
+  {
+   "word": "acceptance",
+   "relation": "CURRENCY",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "definition head, first sense",
+     "fact": "CURRENCY DEFINITION general acceptance or use; \"the currency of ideas\"",
+     "sense": "WN_n_04135405",
+     "sense_fits": [],
+     "note": "no sense fits; the dictionary's first noun sense"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "acme",
+   "relation": "ELEVATION",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "ELEVATION SYNONYM ACME",
+     "sense": "WN_n_11239140",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "acme",
+   "relation": "HEIGHT",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "HEIGHT SYNONYM ACME",
+     "sense": "WN_n_11239140",
+     "note": "a synonym from another sense of the word"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "actions",
+   "relation": "FUNCTION",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "definition head, first sense",
+     "fact": "FUNCTION DEFINITION the actions and activities assigned to or required or expected of a person or group; \"the function of a teacher\"; \"the government must do its part\"; \"play its role\"",
+     "sense": "WN_n_00721106",
+     "sense_fits": [],
+     "note": "no sense fits; the dictionary's first noun sense"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "actions",
+   "relation": "HAS_PART",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "definition head, first sense",
+     "fact": "PART DEFINITION the actions and activities assigned to or required or expected of a person or group; \"the function of a teacher\"; \"the government must do its part\"; \"play its role\"",
+     "sense": "WN_n_00721106",
+     "sense_fits": [],
+     "note": "no sense fits; the dictionary's first noun sense"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "activity",
+   "relation": "OCCUPATION",
+   "conf": 0.38499999999999995,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "OCCUPATION DEFINITION the principal activity in your life that you do to earn money; \"he's not in my line of business\"",
+     "sense": "WN_n_00581847",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    },
+    {
+     "how": "definition head",
+     "fact": "OCCUPATION DEFINITION any activity that occupies a person's attention; \"he missed the bell in his occupation with the computer game\"",
+     "sense": "WN_n_00582327",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "affair",
+   "relation": "FUNCTION",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "FUNCTION SYNONYM AFFAIR",
+     "sense": "WN_n_06834281",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "aggrandisement",
+   "relation": "ELEVATION",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym, first sense",
+     "fact": "ELEVATION SYNONYM AGGRANDISEMENT",
+     "sense": "WN_n_00371615",
+     "note": "no sense fits; the dictionary's first noun sense"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "aggrandizement",
+   "relation": "ELEVATION",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym, first sense",
+     "fact": "ELEVATION SYNONYM AGGRANDIZEMENT",
+     "sense": "WN_n_00371615",
+     "note": "no sense fits; the dictionary's first noun sense"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "aggregate",
+   "relation": "MASS",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "MASS SYNONYM AGGREGATE",
+     "sense": "WN_a_00471835",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "aggregated",
+   "relation": "MASS",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "MASS SYNONYM AGGREGATED",
+     "sense": "WN_a_00471835",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a noun in the dictionary: can't be 'the ___ of X'"
+  },
+  {
+   "word": "aggregation",
+   "relation": "POPULATION",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "POPULATION DEFINITION (statistics) the entire aggregation of items from which samples can be drawn; \"it is an estimate of the mean of the population\"",
+     "sense": "WN_n_05412977",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "aggregative",
+   "relation": "MASS",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "MASS SYNONYM AGGREGATIVE",
+     "sense": "WN_a_00471835",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a noun in the dictionary: can't be 'the ___ of X'"
+  },
+  {
+   "word": "aggroup",
+   "relation": "GROUP",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "GROUP SYNONYM AGGROUP",
+     "sense": "WN_v_01134051",
+     "note": "a synonym from another sense of the word"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a noun in the dictionary: can't be 'the ___ of X'"
+  },
+  {
+   "word": "air",
+   "relation": "ATMOSPHERE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "ATMOSPHERE SYNONYM AIR",
+     "sense": "WN_n_04095596",
+     "note": "a synonym from another sense of the word"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "alt",
+   "relation": "ELEVATION",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "ELEVATION SYNONYM ALT",
+     "sense": "WN_n_11133507",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "altitude",
+   "relation": "ELEVATION",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "ELEVATION SYNONYM ALTITUDE",
+     "sense": "WN_n_11133507",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "ambiance",
+   "relation": "ATMOSPHERE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "ATMOSPHERE SYNONYM AMBIANCE",
+     "sense": "WN_n_11826677",
+     "note": "a synonym from another sense of the word"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "ambience",
+   "relation": "ATMOSPHERE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "ATMOSPHERE SYNONYM AMBIENCE",
+     "sense": "WN_n_11826677",
+     "note": "a synonym from another sense of the word"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "amount",
+   "relation": "PERIOD",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "PERIOD DEFINITION an amount of time; \"a time period of 30 years\"; \"hastened the period of time of his recovery\"; \"Picasso's blue period\"",
+     "sense": "WN_n_12422920",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "amount",
+   "relation": "VALUE",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "VALUE DEFINITION the amount (of money or goods or services) that is considered to be a fair equivalent for something else; \"he tried to estimate the value of the produce at normal prices\"",
+     "sense": "WN_n_10702314",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "amphetamine",
+   "relation": "SPEED",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "SPEED SYNONYM AMPHETAMINE",
+     "sense": "WN_n_02084691",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "animal",
+   "relation": "AREA",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "AREA DEFINITION a part of an animal that has a special function or is supplied by a given artery or nerve; \"in the abdominal region\"",
+     "sense": "WN_n_04600443",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "appraise",
+   "relation": "VALUE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "VALUE SYNONYM APPRAISE",
+     "sense": "WN_v_00712910",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a noun in the dictionary: can't be 'the ___ of X'"
+  },
+  {
+   "word": "appreciate",
+   "relation": "VALUE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "VALUE SYNONYM APPRECIATE",
+     "sense": "WN_v_02323637",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a noun in the dictionary: can't be 'the ___ of X'"
+  },
+  {
+   "word": "approximating",
+   "relation": "SQUARE",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "SQUARE DEFINITION something approximating the shape of a square",
+     "sense": "WN_n_11176912",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "area",
+   "relation": "SQUARE",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "SQUARE DEFINITION an open area at the meeting of two or more streets",
+     "sense": "WN_n_07915331",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "already names a relation (or is a known alias)"
+  },
+  {
+   "word": "arena",
+   "relation": "AREA",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "AREA SYNONYM ARENA",
+     "sense": "WN_n_11815894",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "arrangement",
+   "relation": "ATC_CODE",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "CODE DEFINITION (computer science) the symbolic arrangement of data or instructions in a computer program or the set of such instructions",
+     "sense": "WN_n_05748043",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "arrangement",
+   "relation": "SYSTEM",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "SYSTEM SYNONYM ARRANGEMENT",
+     "sense": "WN_n_05108199",
+     "note": "a synonym from another sense of the word"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "art",
+   "relation": "GENRE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "definition head, first sense",
+     "fact": "GENRE DEFINITION a class of art (or artistic endeavor) having a characteristic form or technique",
+     "sense": "WN_n_02813082",
+     "sense_fits": [],
+     "note": "no sense fits; the dictionary's first noun sense"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "artifact",
+   "relation": "SQUARE",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "SQUARE DEFINITION any artifact having a shape similar to a plane geometric figure with four equal sides and four right angles; \"a checkerboard has 64 squares\"",
+     "sense": "WN_n_03664460",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "ascribe",
+   "relation": "ATTRIBUTE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "ATTRIBUTE SYNONYM ASCRIBE",
+     "sense": "WN_v_00758699",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a noun in the dictionary: can't be 'the ___ of X'"
+  },
+  {
+   "word": "assess",
+   "relation": "VALUE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "VALUE SYNONYM ASSESS",
+     "sense": "WN_v_00712910",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a noun in the dictionary: can't be 'the ___ of X'"
+  },
+  {
+   "word": "assets",
+   "relation": "HAS_PART",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "PART DEFINITION assets belonging to or due to or contributed by an individual person or group; \"he wanted his share in cash\"",
+     "sense": "WN_n_10573389",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "assign",
+   "relation": "ATTRIBUTE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "ATTRIBUTE SYNONYM ASSIGN",
+     "sense": "WN_v_00758699",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a noun in the dictionary: can't be 'the ___ of X'"
+  },
+  {
+   "word": "assort",
+   "relation": "CLASS",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "CLASS SYNONYM ASSORT",
+     "sense": "WN_v_00685112",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a noun in the dictionary: can't be 'the ___ of X'"
+  },
+  {
+   "word": "astuteness",
+   "relation": "DEPTH",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "DEPTH SYNONYM ASTUTENESS",
+     "sense": "WN_n_04994992",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "atm",
+   "relation": "ATMOSPHERE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "ATMOSPHERE SYNONYM ATM",
+     "sense": "WN_n_11007385",
+     "note": "a synonym from another sense of the word"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "attribute",
+   "relation": "DEPTH",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "DEPTH DEFINITION the attribute or quality of being deep, strong, or intense; \"the depth of his breathing\"; \"the depth of his sighs\"; \"the depth of his emotion\"",
+     "sense": "WN_n_04511502",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "already names a relation (or is a known alias)"
+  },
+  {
+   "word": "aura",
+   "relation": "ATMOSPHERE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "ATMOSPHERE SYNONYM AURA",
+     "sense": "WN_n_04095596",
+     "note": "a synonym from another sense of the word"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "available",
+   "relation": "CAPITAL",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "CAPITAL DEFINITION assets available for use in the production of further assets",
+     "sense": "WN_n_10642839",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a noun in the dictionary: can't be 'the ___ of X'"
+  },
+  {
+   "word": "batch",
+   "relation": "MASS",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "MASS SYNONYM BATCH",
+     "sense": "WN_n_11070943",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "between",
+   "relation": "PARITY",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "PARITY DEFINITION (mathematics) a relation between a pair of integers: if both integers are odd or both are even they have the same parity; if one is odd and the other is even they have different parity; \"parity is often used to check the integrity of transmitted data\"",
+     "sense": "WN_n_11086822",
+     "sense_fits": [
+      "integer"
+     ],
+     "note": "two senses fit equally"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a noun in the dictionary: can't be 'the ___ of X'"
+  },
+  {
+   "word": "between",
+   "relation": "WINGSPAN",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "definition head, first sense",
+     "fact": "WINGSPAN DEFINITION linear distance between the extremities of an airfoil",
+     "sense": "WN_n_04507726",
+     "sense_fits": [],
+     "note": "no sense fits; the dictionary's first noun sense"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a noun in the dictionary: can't be 'the ___ of X'"
+  },
+  {
+   "word": "bit",
+   "relation": "PARITY",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "PARITY DEFINITION (computer science) a bit that is used in an error detection procedure in which a 0 or 1 is added to each group of bits so that it will have either an odd number of 1's or an even number of 1's; e.g., if the parity is odd then any group of bits that arrives with an even number of 1's must contain an error",
+     "sense": "WN_n_10920181",
+     "sense_fits": [
+      "number"
+     ],
+     "note": "two senses fit equally"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "board",
+   "relation": "DIRECTOR",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "DIRECTOR DEFINITION member of a board of directors",
+     "sense": "WN_n_08543703",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "body",
+   "relation": "HAS_SATELLITE",
+   "conf": 0.8,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "SATELLITE DEFINITION any celestial body orbiting around a planet or star",
+     "sense": "WN_n_08082802",
+     "sense_fits": [
+      "celestial",
+      "planet"
+     ],
+     "note": "the sense the relation is used in"
+    }
+   ],
+   "status": "rejected",
+   "why": "already names a relation (or is a known alias)"
+  },
+  {
+   "word": "body",
+   "relation": "CLASS",
+   "conf": 0.38499999999999995,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "CLASS DEFINITION a body of students who are taught together; \"early morning classes are always sleepy\"",
+     "sense": "WN_n_07581142",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    },
+    {
+     "how": "definition head",
+     "fact": "CLASS DEFINITION a body of students who graduate together; \"the class of '97\"; \"she was in my year at Hoehandle High\"",
+     "sense": "WN_n_07581339",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "already names a relation (or is a known alias)"
+  },
+  {
+   "word": "body",
+   "relation": "MASS",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "MASS DEFINITION a body of matter without definite shape; \"a huge ice mass\"",
+     "sense": "WN_n_08048235",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "already names a relation (or is a known alias)"
+  },
+  {
+   "word": "body",
+   "relation": "SYSTEM",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "SYSTEM DEFINITION the living body considered as made up of interdependent components forming a unified whole; \"exercise helped him get the alcohol out of his system\"",
+     "sense": "WN_n_04597626",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "already names a relation (or is a known alias)"
+  },
+  {
+   "word": "breadth",
+   "relation": "WIDTH",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym, first sense",
+     "fact": "WIDTH SYNONYM BREADTH",
+     "sense": "WN_n_04513356",
+     "note": "no sense fits; the dictionary's first noun sense"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "break",
+   "relation": "HAS_PART",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "PART SYNONYM BREAK",
+     "sense": "WN_v_02504459",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "bulk",
+   "relation": "MASS",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "MASS SYNONYM BULK",
+     "sense": "WN_n_04476391",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "business",
+   "relation": "OCCUPATION",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "OCCUPATION SYNONYM BUSINESS",
+     "sense": "WN_n_00581847",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "but",
+   "relation": "SYSTEM",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "SYSTEM DEFINITION a group of independent but interrelated elements comprising a unified whole; \"a vast system of production and distribution and consumption keep the country going\"",
+     "sense": "WN_n_07771949",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a noun in the dictionary: can't be 'the ___ of X'"
+  },
+  {
+   "word": "campaign",
+   "relation": "CAUSE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "CAUSE SYNONYM CAMPAIGN",
+     "sense": "WN_n_00798788",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "cap",
+   "relation": "CAPITAL",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym, first sense",
+     "fact": "CAPITAL SYNONYM CAP",
+     "sense": "WN_n_02333408",
+     "note": "no sense fits; the dictionary's first noun sense"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "case",
+   "relation": "CAUSE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "CAUSE SYNONYM CASE",
+     "sense": "WN_n_01190155",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "catamenia",
+   "relation": "PERIOD",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "PERIOD SYNONYM CATAMENIA",
+     "sense": "WN_n_10804779",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "category",
+   "relation": "CLASS",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "CLASS SYNONYM CATEGORY",
+     "sense": "WN_n_07383944",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "already names a relation (or is a known alias)"
+  },
+  {
+   "word": "causa",
+   "relation": "CAUSE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "CAUSE SYNONYM CAUSA",
+     "sense": "WN_n_01190155",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "celebration",
+   "relation": "MASS",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "definition head, first sense",
+     "fact": "MASS DEFINITION (Roman Catholic Church and Protestant Churches) the celebration of the Eucharist",
+     "sense": "WN_n_01047134",
+     "sense_fits": [],
+     "note": "no sense fits; the dictionary's first noun sense"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "celibate",
+   "relation": "CONTINENT",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "CONTINENT SYNONYM CELIBATE",
+     "sense": "WN_a_00363397",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "center",
+   "relation": "CAPITAL",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "CAPITAL DEFINITION a center that is associated more than any other with some activity or product; \"the crime capital of Italy\"; \"the drug capital of Colombia\"",
+     "sense": "WN_n_07848884",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "chapiter",
+   "relation": "CAPITAL",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym, first sense",
+     "fact": "CAPITAL SYNONYM CHAPITER",
+     "sense": "WN_n_02333408",
+     "note": "no sense fits; the dictionary's first noun sense"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "character",
+   "relation": "HAS_PART",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "PART SYNONYM CHARACTER",
+     "sense": "WN_n_05314048",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "chaste",
+   "relation": "CONTINENT",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "CONTINENT SYNONYM CHASTE",
+     "sense": "WN_a_00363397",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a noun in the dictionary: can't be 'the ___ of X'"
+  },
+  {
+   "word": "cipher",
+   "relation": "ATC_CODE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "CODE SYNONYM CIPHER",
+     "sense": "WN_v_01036014",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "classify",
+   "relation": "CLASS",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "CLASS SYNONYM CLASSIFY",
+     "sense": "WN_v_00685112",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a noun in the dictionary: can't be 'the ___ of X'"
+  },
+  {
+   "word": "codification",
+   "relation": "ATC_CODE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "CODE SYNONYM CODIFICATION",
+     "sense": "WN_n_06024970",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "collection",
+   "relation": "CLASS",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "CLASS DEFINITION a collection of things sharing a common attribute; \"there are two classes of detergents\"",
+     "sense": "WN_n_07383944",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "collection",
+   "relation": "MASS",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "MASS DEFINITION an ill-structured collection of similar things (objects or people)",
+     "sense": "WN_n_07353340",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "collective",
+   "relation": "MASS",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "MASS SYNONYM COLLECTIVE",
+     "sense": "WN_a_00471835",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "common",
+   "relation": "MASS",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "MASS DEFINITION the common people generally; \"separate the warriors from the mass\"; \"power to the people\"",
+     "sense": "WN_n_07523789",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "communication",
+   "relation": "OFFICIAL_LANGUAGE",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "LANGUAGE DEFINITION (language) communication by word of mouth; \"his speech was garbled\"; \"he uttered harsh language\"; \"he recorded the spoken language of the streets\"",
+     "sense": "WN_n_06497062",
+     "sense_fits": [
+      "language"
+     ],
+     "note": "two senses fit equally"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "compactness",
+   "relation": "DENSITY",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "DENSITY SYNONYM COMPACTNESS",
+     "sense": "WN_n_04465334",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "complex",
+   "relation": "SYSTEM",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "SYSTEM DEFINITION a complex of methods or rules governing behavior; \"they have to operate under a system they oppose\"; \"that language has a complex system for indicating gender\"",
+     "sense": "WN_n_05043387",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "component",
+   "relation": "HAS_PART",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "PART SYNONYM COMPONENT",
+     "sense": "WN_n_11106068",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "already names a relation (or is a known alias)"
+  },
+  {
+   "word": "comprehensive",
+   "relation": "CAUSE",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "CAUSE DEFINITION a comprehensive term for any proceeding in a court of law whereby an individual seeks a legal remedy; \"the family brought suit against the landlord\"",
+     "sense": "WN_n_01190155",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "concentration",
+   "relation": "DENSITY",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "DENSITY SYNONYM CONCENTRATION",
+     "sense": "WN_n_04465334",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "conduct",
+   "relation": "CITIZENSHIP",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "definition head, first sense",
+     "fact": "CITIZENSHIP DEFINITION conduct as a citizen; \"award for good citizenship\"",
+     "sense": "WN_n_04270014",
+     "sense_fits": [],
+     "note": "no sense fits; the dictionary's first noun sense"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "conductor",
+   "relation": "DIRECTOR",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym, first sense",
+     "fact": "DIRECTOR SYNONYM CONDUCTOR",
+     "sense": "WN_n_08481668",
+     "note": "no sense fits; the dictionary's first noun sense"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "constituent",
+   "relation": "HAS_PART",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "PART SYNONYM CONSTITUENT",
+     "sense": "WN_n_11106068",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "continuance",
+   "relation": "LENGTH",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "LENGTH DEFINITION continuance in time; \"the ceremony was of short duration\"; \"he complained about the length of time required\"",
+     "sense": "WN_n_04427367",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "contribution",
+   "relation": "HAS_PART",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "PART SYNONYM CONTRIBUTION",
+     "sense": "WN_n_00787878",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "control",
+   "relation": "OCCUPATION",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "OCCUPATION DEFINITION the control of a country by military forces of a foreign power",
+     "sense": "WN_n_01138960",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "conventional",
+   "relation": "SQUARE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "SQUARE SYNONYM CONVENTIONAL",
+     "sense": "WN_a_00613233",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a noun in the dictionary: can't be 'the ___ of X'"
+  },
+  {
+   "word": "country",
+   "relation": "AREA",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "AREA SYNONYM COUNTRY",
+     "sense": "WN_n_07830585",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "already names a relation (or is a known alias)"
+  },
+  {
+   "word": "course",
+   "relation": "CLASS",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym, first sense",
+     "fact": "CLASS SYNONYM COURSE",
+     "sense": "WN_n_00890488",
+     "note": "no sense fits; the dictionary's first noun sense"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "crusade",
+   "relation": "CAUSE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "CAUSE SYNONYM CRUSADE",
+     "sense": "WN_n_00798788",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "currentness",
+   "relation": "CURRENCY",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "CURRENCY SYNONYM CURRENTNESS",
+     "sense": "WN_n_04426443",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "cypher",
+   "relation": "ATC_CODE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "CODE SYNONYM CYPHER",
+     "sense": "WN_v_01036014",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "darkness",
+   "relation": "VALUE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "definition head, first sense",
+     "fact": "VALUE DEFINITION relative darkness or lightness of a color; \"I establish the colors and principal values by organizing the painting into three values \u2014 dark, medium \u2026 and light\" - Joe Hing Lowe",
+     "sense": "WN_n_04354040",
+     "sense_fits": [],
+     "note": "no sense fits; the dictionary's first noun sense"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "deal",
+   "relation": "MASS",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "MASS SYNONYM DEAL",
+     "sense": "WN_n_11070943",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "deduction",
+   "relation": "ENTAILMENT",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym, first sense",
+     "fact": "ENTAILMENT SYNONYM DEDUCTION",
+     "sense": "WN_n_05163886",
+     "note": "no sense fits; the dictionary's first noun sense"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "deepness",
+   "relation": "DEPTH",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "DEPTH SYNONYM DEEPNESS",
+     "sense": "WN_n_04511696",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "degree",
+   "relation": "DEPTH",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "definition head, first sense",
+     "fact": "DEPTH DEFINITION degree of psychological or intellectual profundity",
+     "sense": "WN_n_04471347",
+     "sense_fits": [],
+     "note": "no sense fits; the dictionary's first noun sense"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "denseness",
+   "relation": "DENSITY",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym, first sense",
+     "fact": "DENSITY SYNONYM DENSENESS",
+     "sense": "WN_n_04314488",
+     "note": "no sense fits; the dictionary's first noun sense"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "depart",
+   "relation": "HAS_PART",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "PART SYNONYM DEPART",
+     "sense": "WN_v_02075789",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a noun in the dictionary: can't be 'the ___ of X'"
+  },
+  {
+   "word": "determined",
+   "relation": "HAS_PART",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "PART DEFINITION something determined in relation to something that includes it; \"he wanted to feel a part of something bigger than himself\"; \"I read a portion of the manuscript\"; \"the smaller component is hard to reach\"; \"the animal constituent of plankton\"",
+     "sense": "WN_n_11106068",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a noun in the dictionary: can't be 'the ___ of X'"
+  },
+  {
+   "word": "diam",
+   "relation": "DIAMETER",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym, first sense",
+     "fact": "DIAMETER SYNONYM DIAM",
+     "sense": "WN_n_04478817",
+     "note": "no sense fits; the dictionary's first noun sense"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "dieting",
+   "relation": "DIET",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "DIET SYNONYM DIETING",
+     "sense": "WN_n_01075171",
+     "note": "a synonym from another sense of the word"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "dimension",
+   "relation": "HEIGHT",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "HEIGHT DEFINITION the vertical dimension of extension; distance from the base of something to the top",
+     "sense": "WN_n_04514371",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "dimension",
+   "relation": "ATTRIBUTE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "ATTRIBUTE SYNONYM DIMENSION",
+     "sense": "WN_n_05233756",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "discharge",
+   "relation": "PERIOD",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "PERIOD DEFINITION the monthly discharge of blood from the uterus of nonpregnant women from puberty to menopause; \"the women were sickly and subject to excessive menstruation\"; \"a woman does not take the gout unless her menses be stopped\" - Hippocrates; \"the semen begins to appear in males and to be emitted at the same time of life that the catamenia begin to flow in females\" - Aristotle",
+     "sense": "WN_n_10804779",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "distance",
+   "relation": "ELEVATION",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "ELEVATION DEFINITION distance of something above a reference point (such as sea level); \"there was snow at the higher elevations\"",
+     "sense": "WN_n_04508396",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "already names a relation (or is a known alias)"
+  },
+  {
+   "word": "distance",
+   "relation": "HEIGHT",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "HEIGHT DEFINITION (of a standing person) the distance from head to foot",
+     "sense": "WN_n_04377449",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "already names a relation (or is a known alias)"
+  },
+  {
+   "word": "distance",
+   "relation": "SPEED",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "SPEED DEFINITION distance travelled per unit time",
+     "sense": "WN_n_12581053",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "already names a relation (or is a known alias)"
+  },
+  {
+   "word": "distance",
+   "relation": "LENGTH",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "LENGTH SYNONYM DISTANCE",
+     "sense": "WN_n_04506677",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "already names a relation (or is a known alias)"
+  },
+  {
+   "word": "disunite",
+   "relation": "HAS_PART",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "PART SYNONYM DISUNITE",
+     "sense": "WN_v_01608640",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a noun in the dictionary: can't be 'the ___ of X'"
+  },
+  {
+   "word": "divide",
+   "relation": "HAS_PART",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "PART SYNONYM DIVIDE",
+     "sense": "WN_v_01608640",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "division",
+   "relation": "CLASS",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "CLASS SYNONYM DIVISION",
+     "sense": "WN_n_07582487",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "division",
+   "relation": "HAS_PART",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "PART SYNONYM DIVISION",
+     "sense": "WN_n_05252360",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "do",
+   "relation": "CAUSE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "CAUSE SYNONYM DO",
+     "sense": "WN_v_01699724",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a content word"
+  },
+  {
+   "word": "domain",
+   "relation": "AREA",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "AREA SYNONYM DOMAIN",
+     "sense": "WN_n_11815894",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "already names a relation (or is a known alias)"
+  },
+  {
+   "word": "downward",
+   "relation": "DEPTH",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "DEPTH DEFINITION the extent downward or backward or inward; \"the depth of the water\"; \"depth of a shelf\"; \"depth of a closet\"",
+     "sense": "WN_n_04511696",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a noun in the dictionary: can't be 'the ___ of X'"
+  },
+  {
+   "word": "drawing",
+   "relation": "ELEVATION",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "ELEVATION DEFINITION drawing of an exterior of a structure",
+     "sense": "WN_n_02658698",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "drive",
+   "relation": "CAUSE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "CAUSE SYNONYM DRIVE",
+     "sense": "WN_n_00798788",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "duration",
+   "relation": "VALUE",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "VALUE DEFINITION (music) the relative duration of a musical note",
+     "sense": "WN_n_12438504",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "duration",
+   "relation": "LENGTH",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "LENGTH SYNONYM DURATION",
+     "sense": "WN_n_04427367",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "education",
+   "relation": "CLASS",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "definition head, first sense",
+     "fact": "CLASS DEFINITION education imparted in a series of lessons or meetings; \"he took a course in basket weaving\"; \"flirting is not unknown in college classes\"",
+     "sense": "WN_n_00890488",
+     "sense_fits": [],
+     "note": "no sense fits; the dictionary's first noun sense"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "effort",
+   "relation": "HAS_PART",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "PART DEFINITION the effort contributed by a person in bringing about a result; \"I am proud of my contribution in advancing the project\"; \"they all did their share of the work\"",
+     "sense": "WN_n_00787878",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "effort",
+   "relation": "CAUSE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "CAUSE SYNONYM EFFORT",
+     "sense": "WN_n_00798788",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "el",
+   "relation": "ELEVATION",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "ELEVATION SYNONYM EL",
+     "sense": "WN_n_11133507",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "elegance",
+   "relation": "CLASS",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "CLASS DEFINITION elegance in dress or behavior; \"she has a lot of class\"",
+     "sense": "WN_n_04185784",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "elevation",
+   "relation": "HEIGHT",
+   "conf": 0.8300000000000001,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "HEIGHT DEFINITION elevation especially above sea level or above the earth's surface; \"the altitude gave her a headache\"",
+     "sense": "WN_n_04508760",
+     "sense_fits": [
+      "elevation"
+     ],
+     "note": "the sense the relation is used in"
+    },
+    {
+     "how": "synonym",
+     "fact": "HEIGHT SYNONYM ELEVATION",
+     "sense": "WN_n_11239140",
+     "note": "a synonym from another sense of the word"
+    }
+   ],
+   "status": "rejected",
+   "why": "already names a relation (or is a known alias)"
+  },
+  {
+   "word": "encipher",
+   "relation": "ATC_CODE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "CODE SYNONYM ENCIPHER",
+     "sense": "WN_v_01036014",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a noun in the dictionary: can't be 'the ___ of X'"
+  },
+  {
+   "word": "encrypt",
+   "relation": "ATC_CODE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "CODE SYNONYM ENCRYPT",
+     "sense": "WN_v_01036014",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a noun in the dictionary: can't be 'the ___ of X'"
+  },
+  {
+   "word": "end",
+   "relation": "PERIOD",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "PERIOD DEFINITION the end or completion of something; \"death put a period to his endeavors\"; \"a change soon put a period to my tranquility\"",
+     "sense": "WN_n_12447850",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "entity",
+   "relation": "CAUSE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "definition head, first sense",
+     "fact": "CAUSE DEFINITION any entity that produces an effect or is responsible for events or results",
+     "sense": "WN_n_00007604",
+     "sense_fits": [],
+     "note": "no sense fits; the dictionary's first noun sense"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "environment",
+   "relation": "AREA",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "AREA DEFINITION a particular environment or walk of life; \"his social sphere is limited\"; \"it was a closed area of employment\"; \"he's out of my orbit\"",
+     "sense": "WN_n_11815894",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "environment",
+   "relation": "ATMOSPHERE",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "ATMOSPHERE DEFINITION a particular environment or surrounding influence; \"there was an atmosphere of excitement\"",
+     "sense": "WN_n_11826677",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "equality",
+   "relation": "PARITY",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "PARITY DEFINITION functional equality",
+     "sense": "WN_n_04117364",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "equipment",
+   "relation": "HAS_SATELLITE",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "SATELLITE DEFINITION man-made equipment that orbits around the earth or the moon",
+     "sense": "WN_n_03511126",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "esteem",
+   "relation": "VALUE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "VALUE SYNONYM ESTEEM",
+     "sense": "WN_v_00725868",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "evaluate",
+   "relation": "VALUE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "VALUE SYNONYM EVALUATE",
+     "sense": "WN_v_00712910",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a noun in the dictionary: can't be 'the ___ of X'"
+  },
+  {
+   "word": "event",
+   "relation": "ELEVATION",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "ELEVATION DEFINITION the event of something being raised upward; \"an elevation of the temperature in the afternoon\"; \"a raising of the land resulting from volcanic activity\"",
+     "sense": "WN_n_06757186",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "events",
+   "relation": "CAUSE",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "CAUSE DEFINITION events that provide the generative force that is the origin of something; \"they are trying to determine the cause of the crash\"",
+     "sense": "WN_n_06713143",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "expanse",
+   "relation": "AREA",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "AREA SYNONYM EXPANSE",
+     "sense": "WN_n_04505631",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "extent",
+   "relation": "AREA",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "AREA DEFINITION the extent of a 2-dimensional surface enclosed within a boundary; \"the area of a rectangle\"; \"it was about 500 square feet in area\"",
+     "sense": "WN_n_04505631",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "extent",
+   "relation": "LENGTH",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "LENGTH DEFINITION the linear extent in space from one end to the other; the longest dimension of something that is fixed in place; \"the length of the table was 5 feet\"",
+     "sense": "WN_n_04506313",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "extent",
+   "relation": "WIDTH",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "definition head, first sense",
+     "fact": "WIDTH DEFINITION the extent of something from side to side",
+     "sense": "WN_n_04513356",
+     "sense_fits": [],
+     "note": "no sense fits; the dictionary's first noun sense"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "faculty",
+   "relation": "OFFICIAL_LANGUAGE",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "LANGUAGE DEFINITION the mental faculty or power of vocal communication; \"language sets homo sapiens apart from all other animals\"",
+     "sense": "WN_n_05032210",
+     "sense_fits": [
+      "faculty"
+     ],
+     "note": "two senses fit equally"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "family",
+   "relation": "CLASS",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "CLASS SYNONYM FAMILY",
+     "sense": "WN_n_07383944",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "fastness",
+   "relation": "SPEED",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "SPEED SYNONYM FASTNESS",
+     "sense": "WN_n_04434348",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "feather",
+   "relation": "SQUARE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "SQUARE SYNONYM FEATHER",
+     "sense": "WN_v_01170067",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "field",
+   "relation": "AREA",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "AREA SYNONYM FIELD",
+     "sense": "WN_n_11815894",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "flock",
+   "relation": "MASS",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "MASS SYNONYM FLOCK",
+     "sense": "WN_n_11070943",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "flow",
+   "relation": "PERIOD",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "PERIOD SYNONYM FLOW",
+     "sense": "WN_n_10804779",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "form",
+   "relation": "CLASS",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "CLASS SYNONYM FORM",
+     "sense": "WN_n_07581142",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "form",
+   "relation": "WN_PARTICIPLE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "definition head, first sense",
+     "fact": "PARTICIPLE DEFINITION a non-finite form of the verb; in English it is used adjectivally and to form compound tenses",
+     "sense": "WN_n_05721853",
+     "sense_fits": [],
+     "note": "no sense fits; the dictionary's first noun sense"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "formal",
+   "relation": "FUNCTION",
+   "conf": 0.38499999999999995,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "FUNCTION DEFINITION a formal or official social gathering or ceremony of people; \"the party was quite an affair\"; \"an occasion arranged to honor the president\"; \"a seemingly endless round of social functions\"",
+     "sense": "WN_n_06834281",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    },
+    {
+     "how": "definition head",
+     "fact": "FUNCTION DEFINITION a formal or official social gathering or ceremony; \"it was a black-tie function\"",
+     "sense": "WN_n_07594774",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "formal",
+   "relation": "SQUARE",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "SQUARE DEFINITION a formal and conservative person with old-fashioned views",
+     "sense": "WN_n_09139788",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "foursquare",
+   "relation": "SQUARE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "SQUARE SYNONYM FOURSQUARE",
+     "sense": "WN_n_11176595",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "function",
+   "relation": "HAS_PART",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym, first sense",
+     "fact": "PART SYNONYM FUNCTION",
+     "sense": "WN_n_00721106",
+     "note": "no sense fits; the dictionary's first noun sense"
+    }
+   ],
+   "status": "rejected",
+   "why": "already names a relation (or is a known alias)"
+  },
+  {
+   "word": "generator",
+   "relation": "AUTHOR",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym, first sense",
+     "fact": "AUTHOR SYNONYM GENERATOR",
+     "sense": "WN_n_08647289",
+     "note": "no sense fits; the dictionary's first noun sense"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "get",
+   "relation": "CAUSE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "CAUSE SYNONYM GET",
+     "sense": "WN_v_00804540",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a content word"
+  },
+  {
+   "word": "go",
+   "relation": "FUNCTION",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "FUNCTION SYNONYM GO",
+     "sense": "WN_v_01576673",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "grade",
+   "relation": "CLASS",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "CLASS SYNONYM GRADE",
+     "sense": "WN_n_07581142",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "great",
+   "relation": "CAPITAL",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "CAPITAL SYNONYM GREAT",
+     "sense": "WN_a_01477202",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "grounds",
+   "relation": "CAUSE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "CAUSE SYNONYM GROUNDS",
+     "sense": "WN_n_06107661",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "group",
+   "relation": "CLASS",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "CLASS DEFINITION (biology) a taxonomic group containing one or more orders",
+     "sense": "WN_n_07452951",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "already names a relation (or is a known alias)"
+  },
+  {
+   "word": "grouping",
+   "relation": "GROUP",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "GROUP SYNONYM GROUPING",
+     "sense": "WN_n_00025820",
+     "note": "a synonym from another sense of the word"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "guileless",
+   "relation": "SQUARE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "SQUARE SYNONYM GUILELESS",
+     "sense": "WN_a_02335484",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a noun in the dictionary: can't be 'the ___ of X'"
+  },
+  {
+   "word": "hasten",
+   "relation": "SPEED",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "SPEED SYNONYM HASTEN",
+     "sense": "WN_v_02121054",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a noun in the dictionary: can't be 'the ___ of X'"
+  },
+  {
+   "word": "hatched",
+   "relation": "BORN",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "BORN SYNONYM HATCHED",
+     "sense": "WN_a_01744142",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a noun in the dictionary: can't be 'the ___ of X'"
+  },
+  {
+   "word": "hatful",
+   "relation": "MASS",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "MASS SYNONYM HATFUL",
+     "sense": "WN_n_11070943",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "have",
+   "relation": "CAUSE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "CAUSE SYNONYM HAVE",
+     "sense": "WN_v_00804540",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a content word"
+  },
+  {
+   "word": "having",
+   "relation": "CLASS",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "CLASS DEFINITION people having the same social, economic, or educational status; \"the working class\"; \"an emerging professional class\"",
+     "sense": "WN_n_07365144",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "heap",
+   "relation": "MASS",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "MASS SYNONYM HEAP",
+     "sense": "WN_n_11070943",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "hearty",
+   "relation": "SQUARE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "SQUARE SYNONYM HEARTY",
+     "sense": "WN_a_02578750",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a noun in the dictionary: can't be 'the ___ of X'"
+  },
+  {
+   "word": "height",
+   "relation": "ELEVATION",
+   "conf": 0.38,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "ELEVATION DEFINITION (ballet) the height of a dancer's leap or jump; \"a dancer of exceptional elevation\"",
+     "sense": "WN_n_04463433",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    },
+    {
+     "how": "synonym",
+     "fact": "ELEVATION SYNONYM HEIGHT",
+     "sense": "WN_n_11239140",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "already names a relation (or is a known alias)"
+  },
+  {
+   "word": "hie",
+   "relation": "SPEED",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "SPEED SYNONYM HIE",
+     "sense": "WN_v_02121054",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a noun in the dictionary: can't be 'the ___ of X'"
+  },
+  {
+   "word": "hotfoot",
+   "relation": "SPEED",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "SPEED SYNONYM HOTFOOT",
+     "sense": "WN_v_02121054",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "hurry",
+   "relation": "SPEED",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "SPEED SYNONYM HURRY",
+     "sense": "WN_v_02117675",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "hurrying",
+   "relation": "SPEED",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym, first sense",
+     "fact": "SPEED SYNONYM HURRYING",
+     "sense": "WN_n_00327676",
+     "note": "no sense fits; the dictionary's first noun sense"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "ideal",
+   "relation": "VALUE",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "VALUE DEFINITION an ideal accepted by some individual or group; \"he has old-fashioned values\"",
+     "sense": "WN_n_05308776",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "implication",
+   "relation": "ENTAILMENT",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym, first sense",
+     "fact": "ENTAILMENT SYNONYM IMPLICATION",
+     "sense": "WN_n_05163886",
+     "note": "no sense fits; the dictionary's first noun sense"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "impute",
+   "relation": "ATTRIBUTE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "ATTRIBUTE SYNONYM IMPUTE",
+     "sense": "WN_v_00758699",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a noun in the dictionary: can't be 'the ___ of X'"
+  },
+  {
+   "word": "increasing",
+   "relation": "ELEVATION",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "definition head, first sense",
+     "fact": "ELEVATION DEFINITION the act of increasing the wealth or prestige or power or scope of something; \"the aggrandizement of the king\"; \"his elevation to cardinal\"",
+     "sense": "WN_n_00371615",
+     "sense_fits": [],
+     "note": "no sense fits; the dictionary's first noun sense"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a noun in the dictionary: can't be 'the ___ of X'"
+  },
+  {
+   "word": "induce",
+   "relation": "CAUSE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "CAUSE SYNONYM INDUCE",
+     "sense": "WN_v_00804540",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a noun in the dictionary: can't be 'the ___ of X'"
+  },
+  {
+   "word": "inscribe",
+   "relation": "ATC_CODE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "CODE SYNONYM INSCRIBE",
+     "sense": "WN_v_01036014",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a noun in the dictionary: can't be 'the ___ of X'"
+  },
+  {
+   "word": "instrumentality",
+   "relation": "SYSTEM",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "SYSTEM DEFINITION instrumentality that combines interrelated interacting artifacts designed to work as a coherent entity; \"he bought a new stereo system\"; \"the system consists of a motor and a small computer\"",
+     "sense": "WN_n_03749175",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "item",
+   "relation": "HAS_PART",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "PART DEFINITION an item that is an instance of some type; \"he designed a new piece of equipment\"; \"she bought a lovely piece of china\"; \"my dog swallowed a Lego part\"",
+     "sense": "WN_n_03306170",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "job",
+   "relation": "OCCUPATION",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "OCCUPATION SYNONYM JOB",
+     "sense": "WN_n_00581847",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "justification",
+   "relation": "CAUSE",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "CAUSE DEFINITION a justification for something existing or happening; \"he had no cause to complain\"; \"they had good reason to rejoice\"",
+     "sense": "WN_n_06107661",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "lame",
+   "relation": "SQUARE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "SQUARE SYNONYM LAME",
+     "sense": "WN_n_09139931",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "landmass",
+   "relation": "CONTINENT",
+   "conf": 0.44999999999999996,
+   "via": [
+    {
+     "how": "examples",
+     "subjects": [
+      "FRANCE"
+     ],
+     "n": 1,
+     "note": "seen with one thing only"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "landmass",
+   "relation": "LOCATED_IN",
+   "conf": 0.44999999999999996,
+   "via": [
+    {
+     "how": "examples",
+     "subjects": [
+      "FRANCE"
+     ],
+     "n": 1,
+     "note": "seen with one thing only"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "lawsuit",
+   "relation": "CAUSE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "CAUSE SYNONYM LAWSUIT",
+     "sense": "WN_n_01190155",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "league",
+   "relation": "CLASS",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "CLASS DEFINITION a league ranked by quality; \"he played baseball in class D for two years\"; \"Princeton is in the NCAA Division 1-AA\"",
+     "sense": "WN_n_07582487",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "legislative",
+   "relation": "DIET",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "DIET DEFINITION a legislative assembly in certain countries (e.g., Japan)",
+     "sense": "WN_n_07660264",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a noun in the dictionary: can't be 'the ___ of X'"
+  },
+  {
+   "word": "length",
+   "relation": "DIAMETER",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "definition head, first sense",
+     "fact": "DIAMETER DEFINITION the length of a straight line passing through the center of a circle and connecting two points on the circumference",
+     "sense": "WN_n_04478817",
+     "sense_fits": [],
+     "note": "no sense fits; the dictionary's first noun sense"
+    }
+   ],
+   "status": "rejected",
+   "why": "already names a relation (or is a known alias)"
+  },
+  {
+   "word": "less",
+   "relation": "HAS_PART",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "PART DEFINITION something less than the whole of a human artifact; \"the rear part of the house\"; \"glue the two parts together\"",
+     "sense": "WN_n_03266226",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a noun in the dictionary: can't be 'the ___ of X'"
+  },
+  {
+   "word": "level",
+   "relation": "ELEVATION",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "ELEVATION DEFINITION the highest level or degree attainable; the highest stage of development; \"his landscapes were deemed the acme of beauty\"; \"the artist's gifts are at their acme\"; \"at the height of her career\"; \"the peak of perfection\"; \"summer was at its peak\"; \"\u2026 catapulted Einstein to the pinnacle of fame\"; \"the summit of his ambition\"; \"so many highest superlatives achieved by man\"; \"at the top of his profession\"",
+     "sense": "WN_n_11239140",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "level",
+   "relation": "HEIGHT",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "HEIGHT DEFINITION the highest level or degree attainable; the highest stage of development; \"his landscapes were deemed the acme of beauty\"; \"the artist's gifts are at their acme\"; \"at the height of her career\"; \"the peak of perfection\"; \"summer was at its peak\"; \"\u2026 catapulted Einstein to the pinnacle of fame\"; \"the summit of his ambition\"; \"so many highest superlatives achieved by man\"; \"at the top of his profession\"",
+     "sense": "WN_n_11239140",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "lift",
+   "relation": "ELEVATION",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "ELEVATION SYNONYM LIFT",
+     "sense": "WN_n_06757186",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "line",
+   "relation": "DIAMETER",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "DIAMETER DEFINITION a straight line connecting the center of a circle with two points on its perimeter (or the center of a sphere with two points on its surface)",
+     "sense": "WN_n_11169621",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "line",
+   "relation": "HAS_PART",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "PART DEFINITION a line of scalp that can be seen when sections of hair are combed in opposite directions; \"his part was right in the middle\"",
+     "sense": "WN_n_04635160",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "line",
+   "relation": "OCCUPATION",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "OCCUPATION SYNONYM LINE",
+     "sense": "WN_n_00581847",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "literary",
+   "relation": "GENRE",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "GENRE DEFINITION a kind of literary or artistic work",
+     "sense": "WN_n_05229861",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a noun in the dictionary: can't be 'the ___ of X'"
+  },
+  {
+   "word": "location",
+   "relation": "HAS_PART",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "PART DEFINITION the extended spatial location of something; \"the farming regions of France\"; \"religions in all parts of the world\"; \"regions of outer space\"",
+     "sense": "WN_n_07925397",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "location",
+   "relation": "SPEED",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "definition head, first sense",
+     "fact": "SPEED DEFINITION changing location rapidly",
+     "sense": "WN_n_00327676",
+     "sense_fits": [],
+     "note": "no sense fits; the dictionary's first noun sense"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "lot",
+   "relation": "MASS",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "MASS SYNONYM LOT",
+     "sense": "WN_n_11070943",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "lyric",
+   "relation": "OFFICIAL_LANGUAGE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "LANGUAGE SYNONYM LYRIC",
+     "sense": "WN_n_06437984",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "majuscule",
+   "relation": "CAPITAL",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "CAPITAL SYNONYM MAJUSCULE",
+     "sense": "WN_n_06190469",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "make",
+   "relation": "CAUSE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "CAUSE SYNONYM MAKE",
+     "sense": "WN_v_00804540",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "manager",
+   "relation": "DIRECTOR",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "DIRECTOR SYNONYM MANAGER",
+     "sense": "WN_n_08543214",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "manner",
+   "relation": "SYSTEM",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "SYSTEM DEFINITION an ordered manner; orderliness by virtue of being methodical and well organized; \"his compulsive organization was not an endearing quality\"; \"we can't do it unless we establish some system around here\"",
+     "sense": "WN_n_04138496",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "map",
+   "relation": "FUNCTION",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "FUNCTION SYNONYM MAP",
+     "sense": "WN_n_11080451",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "mapping",
+   "relation": "FUNCTION",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "FUNCTION SYNONYM MAPPING",
+     "sense": "WN_n_11080451",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "mark",
+   "relation": "PERIOD",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "definition head, first sense",
+     "fact": "PERIOD DEFINITION a punctuation mark (\u2018.\u2019) placed at the end of a declarative sentence to indicate a full stop or after abbreviations; \"in England they call a period a \u2018stop\u2019\"",
+     "sense": "WN_n_06210103",
+     "sense_fits": [],
+     "note": "no sense fits; the dictionary's first noun sense"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "mass",
+   "relation": "ATMOSPHERE",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "ATMOSPHERE DEFINITION the mass of air surrounding the Earth; \"there was great heat as the comet entered the atmosphere\"; \"it was exposed to the air\"",
+     "sense": "WN_n_07832347",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "already names a relation (or is a known alias)"
+  },
+  {
+   "word": "masses",
+   "relation": "MASS",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "MASS SYNONYM MASSES",
+     "sense": "WN_n_07523789",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "measure",
+   "relation": "VALUE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "VALUE SYNONYM MEASURE",
+     "sense": "WN_v_00712910",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "already names a relation (or is a known alias)"
+  },
+  {
+   "word": "melody",
+   "relation": "HAS_PART",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "PART DEFINITION the melody carried by a particular voice or instrument in polyphonic music; \"he tried to sing the tenor part\"",
+     "sense": "WN_n_06417607",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "melted",
+   "relation": "DISSOLVED",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "DISSOLVED SYNONYM MELTED",
+     "sense": "WN_a_01516523",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a noun in the dictionary: can't be 'the ___ of X'"
+  },
+  {
+   "word": "menses",
+   "relation": "PERIOD",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "PERIOD SYNONYM MENSES",
+     "sense": "WN_n_10804779",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "menstruation",
+   "relation": "PERIOD",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "PERIOD SYNONYM MENSTRUATION",
+     "sense": "WN_n_10804779",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "menstruum",
+   "relation": "PERIOD",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "PERIOD SYNONYM MENSTRUUM",
+     "sense": "WN_n_10804779",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "meridian",
+   "relation": "ELEVATION",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "ELEVATION SYNONYM MERIDIAN",
+     "sense": "WN_n_11239140",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "meridian",
+   "relation": "HEIGHT",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "HEIGHT SYNONYM MERIDIAN",
+     "sense": "WN_n_11239140",
+     "note": "a synonym from another sense of the word"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "mess",
+   "relation": "MASS",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "MASS SYNONYM MESS",
+     "sense": "WN_n_11070943",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "metal",
+   "relation": "CURRENCY",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "CURRENCY DEFINITION the metal or paper medium of exchange that is presently used",
+     "sense": "WN_n_10674654",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "already names a relation (or is a known alias)"
+  },
+  {
+   "word": "mickle",
+   "relation": "MASS",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "MASS SYNONYM MICKLE",
+     "sense": "WN_n_11070943",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "mint",
+   "relation": "MASS",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "MASS SYNONYM MINT",
+     "sense": "WN_n_11070943",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "mountain",
+   "relation": "MASS",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "MASS SYNONYM MOUNTAIN",
+     "sense": "WN_n_11070943",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "movement",
+   "relation": "CAUSE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "CAUSE SYNONYM MOVEMENT",
+     "sense": "WN_n_00798788",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "muckle",
+   "relation": "MASS",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "MASS SYNONYM MUCKLE",
+     "sense": "WN_n_11070943",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "multitude",
+   "relation": "MASS",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "MASS SYNONYM MULTITUDE",
+     "sense": "WN_n_07523789",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "musical",
+   "relation": "MASS",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "MASS DEFINITION a musical setting for a Mass; \"they played a Mass composed by Beethoven\"",
+     "sense": "WN_n_06420660",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "nomenclature",
+   "relation": "OFFICIAL_LANGUAGE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "LANGUAGE SYNONYM NOMENCLATURE",
+     "sense": "WN_n_05694446",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "number",
+   "relation": "GROUP",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "GROUP DEFINITION any number of entities (members) considered as a unit",
+     "sense": "WN_n_00025820",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "already names a relation (or is a known alias)"
+  },
+  {
+   "word": "number",
+   "relation": "MASS",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "MASS DEFINITION (often followed by \u2018of\u2019) a large number or amount or extent; \"a batch of letters\"; \"a deal of trouble\"; \"a lot of money\"; \"he made a mint on the stock market\"; \"see the rest of the winners in our huge passel of photos\"; \"it must have cost plenty\"; \"a slew of journalists\"; \"a wad of money\"",
+     "sense": "WN_n_11070943",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "already names a relation (or is a known alias)"
+  },
+  {
+   "word": "number",
+   "relation": "PARITY",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "PARITY DEFINITION (obstetrics) the number of liveborn children a woman has delivered; \"the parity of the mother must be considered\"; \"a bipara is a woman who has given birth to two children\"",
+     "sense": "WN_n_11347000",
+     "sense_fits": [
+      "number"
+     ],
+     "note": "two senses fit equally"
+    }
+   ],
+   "status": "rejected",
+   "why": "already names a relation (or is a known alias)"
+  },
+  {
+   "word": "number",
+   "relation": "POPULATION",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "POPULATION DEFINITION the number of inhabitants (either the total number or the number of a particular race or class) in a given place (country or city etc.); \"people come and go, but the population of this town has remained approximately constant for the past decade\"; \"the African-American population of Salt Lake City has been increasing\"",
+     "sense": "WN_n_11076387",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "already names a relation (or is a known alias)"
+  },
+  {
+   "word": "objects",
+   "relation": "ATTRIBUTE",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "ATTRIBUTE DEFINITION a construct whereby objects or individuals can be distinguished; \"self-confidence is not an endearing property\"",
+     "sense": "WN_n_05233756",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "occasion",
+   "relation": "FUNCTION",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "FUNCTION SYNONYM OCCASION",
+     "sense": "WN_n_06834281",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "occupancy",
+   "relation": "OCCUPATION",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym, first sense",
+     "fact": "OCCUPATION SYNONYM OCCUPANCY",
+     "sense": "WN_n_00081846",
+     "note": "no sense fits; the dictionary's first noun sense"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "occupying",
+   "relation": "OCCUPATION",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "definition head, first sense",
+     "fact": "OCCUPATION DEFINITION the act of occupying or taking possession of a building; \"occupation of a building without a certificate of occupancy is illegal\"",
+     "sense": "WN_n_00081846",
+     "sense_fits": [],
+     "note": "no sense fits; the dictionary's first noun sense"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "office",
+   "relation": "FUNCTION",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym, first sense",
+     "fact": "FUNCTION SYNONYM OFFICE",
+     "sense": "WN_n_00721106",
+     "note": "no sense fits; the dictionary's first noun sense"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "office",
+   "relation": "HAS_PART",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym, first sense",
+     "fact": "PART SYNONYM OFFICE",
+     "sense": "WN_n_00721106",
+     "note": "no sense fits; the dictionary's first noun sense"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "officiate",
+   "relation": "FUNCTION",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "FUNCTION SYNONYM OFFICIATE",
+     "sense": "WN_v_01140763",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a noun in the dictionary: can't be 'the ___ of X'"
+  },
+  {
+   "word": "operate",
+   "relation": "FUNCTION",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "FUNCTION SYNONYM OPERATE",
+     "sense": "WN_v_01576673",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a noun in the dictionary: can't be 'the ___ of X'"
+  },
+  {
+   "word": "orbit",
+   "relation": "AREA",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "AREA SYNONYM ORBIT",
+     "sense": "WN_n_11815894",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "already names a relation (or is a known alias)"
+  },
+  {
+   "word": "orbiter",
+   "relation": "HAS_SATELLITE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "SATELLITE SYNONYM ORBITER",
+     "sense": "WN_n_03511126",
+     "note": "a synonym from another sense of the word"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "organisation",
+   "relation": "SYSTEM",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "SYSTEM SYNONYM ORGANISATION",
+     "sense": "WN_n_04138496",
+     "note": "a synonym from another sense of the word"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "organisms",
+   "relation": "POPULATION",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "POPULATION DEFINITION a group of organisms of the same species inhabiting a given area; \"they hired hunters to keep down the deer population\"",
+     "sense": "WN_n_07522321",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "organization",
+   "relation": "SYSTEM",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "SYSTEM SYNONYM ORGANIZATION",
+     "sense": "WN_n_04138496",
+     "note": "a synonym from another sense of the word"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "outer(a)",
+   "relation": "HAS_SATELLITE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "SATELLITE SYNONYM OUTER(A)",
+     "sense": "WN_a_00957270",
+     "note": "a synonym from another sense of the word"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a content word"
+  },
+  {
+   "word": "para",
+   "relation": "PARITY",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "PARITY SYNONYM PARA",
+     "sense": "WN_n_11347000",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "parity",
+   "relation": "PARITY",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "PARITY DEFINITION (physics) parity is conserved in a universe in which the laws of physics are the same in a right-handed system of coordinates as in a left-handed system",
+     "sense": "WN_n_05492362",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "already names a relation (or is a known alias)"
+  },
+  {
+   "word": "part",
+   "relation": "CAPITAL",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "definition head, first sense",
+     "fact": "CAPITAL DEFINITION the upper part of a column that supports the entablature",
+     "sense": "WN_n_02333408",
+     "sense_fits": [],
+     "note": "no sense fits; the dictionary's first noun sense"
+    }
+   ],
+   "status": "rejected",
+   "why": "already names a relation (or is a known alias)"
+  },
+  {
+   "word": "part",
+   "relation": "FUNCTION",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym, first sense",
+     "fact": "FUNCTION SYNONYM PART",
+     "sense": "WN_n_00721106",
+     "note": "no sense fits; the dictionary's first noun sense"
+    }
+   ],
+   "status": "rejected",
+   "why": "already names a relation (or is a known alias)"
+  },
+  {
+   "word": "partially",
+   "relation": "HAS_PART",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "PART SYNONYM PARTIALLY",
+     "sense": "WN_r_00008063",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a noun in the dictionary: can't be 'the ___ of X'"
+  },
+  {
+   "word": "participial",
+   "relation": "WN_PARTICIPLE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym, first sense",
+     "fact": "PARTICIPLE SYNONYM PARTICIPIAL",
+     "sense": "WN_n_05721853",
+     "note": "no sense fits; the dictionary's first noun sense"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "parting",
+   "relation": "HAS_PART",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "PART SYNONYM PARTING",
+     "sense": "WN_n_04635160",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "partly",
+   "relation": "HAS_PART",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "PART SYNONYM PARTLY",
+     "sense": "WN_r_00008063",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a noun in the dictionary: can't be 'the ___ of X'"
+  },
+  {
+   "word": "passel",
+   "relation": "MASS",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "MASS SYNONYM PASSEL",
+     "sense": "WN_n_11070943",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "peak",
+   "relation": "ELEVATION",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "ELEVATION SYNONYM PEAK",
+     "sense": "WN_n_11239140",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "peak",
+   "relation": "HEIGHT",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "HEIGHT SYNONYM PEAK",
+     "sense": "WN_n_11239140",
+     "note": "a synonym from another sense of the word"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "peck",
+   "relation": "MASS",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "MASS SYNONYM PECK",
+     "sense": "WN_n_11070943",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "people",
+   "relation": "MASS",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "MASS SYNONYM PEOPLE",
+     "sense": "WN_n_07523789",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a content word"
+  },
+  {
+   "word": "percentage",
+   "relation": "HAS_PART",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "PART SYNONYM PERCENTAGE",
+     "sense": "WN_n_10573389",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "period",
+   "relation": "OCCUPATION",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "OCCUPATION DEFINITION the period of time during which a place or position or nation is occupied; \"during the German occupation of Paris\"",
+     "sense": "WN_n_12445158",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "already names a relation (or is a known alias)"
+  },
+  {
+   "word": "persona",
+   "relation": "HAS_PART",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "PART SYNONYM PERSONA",
+     "sense": "WN_n_05314048",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "physiologically",
+   "relation": "SYSTEM",
+   "conf": 0.8,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "SYSTEM DEFINITION a group of physiologically or anatomically related organs or parts; \"the body has a system of organs for digestion\"",
+     "sense": "WN_n_04615888",
+     "sense_fits": [
+      "organ"
+     ],
+     "note": "the sense the relation is used in"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a noun in the dictionary: can't be 'the ___ of X'"
+  },
+  {
+   "word": "piece",
+   "relation": "HAS_PART",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "PART SYNONYM PIECE",
+     "sense": "WN_n_03306170",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "pile",
+   "relation": "MASS",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "MASS SYNONYM PILE",
+     "sense": "WN_n_11070943",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "pinnacle",
+   "relation": "ELEVATION",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "ELEVATION SYNONYM PINNACLE",
+     "sense": "WN_n_11239140",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "pinnacle",
+   "relation": "HEIGHT",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "HEIGHT SYNONYM PINNACLE",
+     "sense": "WN_n_11239140",
+     "note": "a synonym from another sense of the word"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "planet",
+   "relation": "HAS_SATELLITE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "SATELLITE SYNONYM PLANET",
+     "sense": "WN_n_09051616",
+     "note": "a synonym from another sense of the word"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "plenty",
+   "relation": "MASS",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "MASS SYNONYM PLENTY",
+     "sense": "WN_n_11070943",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "point",
+   "relation": "APOAPSIS",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "definition head, first sense",
+     "fact": "APOAPSIS DEFINITION (astronomy) the point in an orbit farthest from the body being orbited",
+     "sense": "WN_n_07829433",
+     "sense_fits": [],
+     "note": "no sense fits; the dictionary's first noun sense"
+    }
+   ],
+   "status": "rejected",
+   "why": "already names a relation (or is a known alias)"
+  },
+  {
+   "word": "point",
+   "relation": "PERIAPSIS",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "definition head, first sense",
+     "fact": "PERIAPSIS DEFINITION (astronomy) the point in an orbit closest to the body being orbited",
+     "sense": "WN_n_07914109",
+     "sense_fits": [],
+     "note": "no sense fits; the dictionary's first noun sense"
+    }
+   ],
+   "status": "rejected",
+   "why": "already names a relation (or is a known alias)"
+  },
+  {
+   "word": "point",
+   "relation": "PERIOD",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym, first sense",
+     "fact": "PERIOD SYNONYM POINT",
+     "sense": "WN_n_06210103",
+     "note": "no sense fits; the dictionary's first noun sense"
+    }
+   ],
+   "status": "rejected",
+   "why": "already names a relation (or is a known alias)"
+  },
+  {
+   "word": "populating",
+   "relation": "POPULATION",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "definition head, first sense",
+     "fact": "POPULATION DEFINITION the act of populating (causing to live in a place); \"he deplored the population of colonies with convicted criminals\"",
+     "sense": "WN_n_01267188",
+     "sense_fits": [],
+     "note": "no sense fits; the dictionary's first noun sense"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "portion",
+   "relation": "HAS_PART",
+   "conf": 0.38,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "PART DEFINITION a portion of a natural object; \"they analyzed the river into three parts\"; \"he needed a piece of granite\"",
+     "sense": "WN_n_08064721",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    },
+    {
+     "how": "synonym",
+     "fact": "PART SYNONYM PORTION",
+     "sense": "WN_n_03266226",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "portrayal",
+   "relation": "HAS_PART",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "PART DEFINITION an actor's portrayal of someone in a play; \"she played the part of Desdemona\"",
+     "sense": "WN_n_05314048",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "possessing",
+   "relation": "METALLICITY",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "definition head, first sense",
+     "fact": "METALLICITY DEFINITION The state of possessing a similar aural resonance to metal.",
+     "sense": "WN_n_12879317",
+     "sense_fits": [],
+     "note": "no sense fits; the dictionary's first noun sense"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "pot",
+   "relation": "MASS",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "MASS SYNONYM POT",
+     "sense": "WN_n_11070943",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "primary",
+   "relation": "CAPITAL",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "CAPITAL SYNONYM PRIMARY",
+     "sense": "WN_a_01865533",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "prise",
+   "relation": "VALUE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "VALUE SYNONYM PRISE",
+     "sense": "WN_v_00725868",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a noun in the dictionary: can't be 'the ___ of X'"
+  },
+  {
+   "word": "prize",
+   "relation": "VALUE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "VALUE SYNONYM PRIZE",
+     "sense": "WN_v_00725868",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "procedure",
+   "relation": "SYSTEM",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "SYSTEM DEFINITION a procedure or process for obtaining an objective; \"they had to devise a system that did not depend on cooperation\"",
+     "sense": "WN_n_05287539",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "procedure",
+   "relation": "FUNCTION",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "FUNCTION SYNONYM PROCEDURE",
+     "sense": "WN_n_05940556",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "processes",
+   "relation": "OFFICIAL_LANGUAGE",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "LANGUAGE DEFINITION the cognitive processes involved in producing and understanding linguistic communication; \"he didn't have the language to express his feelings\"",
+     "sense": "WN_n_05192002",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "product",
+   "relation": "SQUARE",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "SQUARE DEFINITION the product of two equal terms; \"nine is the second power of three\"; \"gravity is inversely proportional to the square of the distance\"",
+     "sense": "WN_n_11027382",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "profoundness",
+   "relation": "DEPTH",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "DEPTH SYNONYM PROFOUNDNESS",
+     "sense": "WN_n_04994992",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "profundity",
+   "relation": "DEPTH",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "DEPTH SYNONYM PROFUNDITY",
+     "sense": "WN_n_04994992",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "property",
+   "relation": "MASS",
+   "conf": 0.38499999999999995,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "MASS DEFINITION the property of a body that causes it to have weight in a gravitational field",
+     "sense": "WN_n_04399826",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    },
+    {
+     "how": "definition head",
+     "fact": "MASS DEFINITION the property of something that is great in magnitude; \"it is cheaper to buy it in bulk\"; \"he received a mass of correspondence\"; \"the volume of exports\"",
+     "sense": "WN_n_04476391",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "property",
+   "relation": "CURRENCY",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "CURRENCY DEFINITION the property of belonging to the present time; \"the currency of a slang term\"",
+     "sense": "WN_n_04426443",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "property",
+   "relation": "DENSITY",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "DENSITY DEFINITION the spatial property of being crowded together",
+     "sense": "WN_n_04465334",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "property",
+   "relation": "LENGTH",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "LENGTH DEFINITION the property of being the extent of something from beginning to end; \"the editor limited the length of my article to 500 words\"",
+     "sense": "WN_n_04510238",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "property",
+   "relation": "ATTRIBUTE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "ATTRIBUTE SYNONYM PROPERTY",
+     "sense": "WN_n_05233756",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "purpose",
+   "relation": "FUNCTION",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "FUNCTION SYNONYM PURPOSE",
+     "sense": "WN_n_04526450",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "quadrate",
+   "relation": "SQUARE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "SQUARE SYNONYM QUADRATE",
+     "sense": "WN_a_02058696",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "quality",
+   "relation": "ATMOSPHERE",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "ATMOSPHERE DEFINITION a distinctive but intangible quality surrounding a person or thing; \"an air of mystery\"; \"the house had a neglected air\"; \"an atmosphere of defeat pervaded the candidate's headquarters\"; \"the place had an aura of romance\"",
+     "sense": "WN_n_04095596",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "quality",
+   "relation": "VALUE",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "VALUE DEFINITION the quality (positive or negative) that renders something desirable or valuable; \"the Shakespearean Shylock is of dubious value in the modern world\"",
+     "sense": "WN_n_04515694",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "quantity",
+   "relation": "VALUE",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "VALUE DEFINITION a numerical quantity measured or assigned or computed; \"the value assigned was 16 milliseconds\"",
+     "sense": "WN_n_05241239",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "quicken",
+   "relation": "SPEED",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "SPEED SYNONYM QUICKEN",
+     "sense": "WN_v_00456347",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a noun in the dictionary: can't be 'the ___ of X'"
+  },
+  {
+   "word": "race",
+   "relation": "SPEED",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "SPEED SYNONYM RACE",
+     "sense": "WN_v_02121054",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "radical",
+   "relation": "GROUP",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "GROUP SYNONYM RADICAL",
+     "sense": "WN_n_11924617",
+     "note": "a synonym from another sense of the word"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "raft",
+   "relation": "MASS",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "MASS SYNONYM RAFT",
+     "sense": "WN_n_11070943",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "raised",
+   "relation": "ELEVATION",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "ELEVATION DEFINITION a raised or elevated geological formation",
+     "sense": "WN_n_08056070",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a noun in the dictionary: can't be 'the ___ of X'"
+  },
+  {
+   "word": "raising",
+   "relation": "ELEVATION",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "ELEVATION SYNONYM RAISING",
+     "sense": "WN_n_06757186",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "rate",
+   "relation": "SPEED",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "SPEED DEFINITION a rate (usually rapid) at which something happens; \"the project advanced with gratifying speed\"",
+     "sense": "WN_n_04434348",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "rate",
+   "relation": "VALUE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "VALUE SYNONYM RATE",
+     "sense": "WN_v_00691650",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "ratio",
+   "relation": "SPEED",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "SPEED DEFINITION the ratio of the focal length to the diameter of a (camera) lens system",
+     "sense": "WN_n_11118377",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "reason",
+   "relation": "CAUSE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "CAUSE SYNONYM REASON",
+     "sense": "WN_n_06107661",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "rectangle",
+   "relation": "SQUARE",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "SQUARE DEFINITION (geometry) a plane rectangle with four equal sides and four right angles; a four-sided regular polygon; \"you can compute the area of a square if you know the length of its sides\"",
+     "sense": "WN_n_11176595",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "region",
+   "relation": "AREA",
+   "conf": 0.38,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "AREA DEFINITION a particular geographical region of indefinite boundary (usually serving some special purpose or distinguished by its people or culture or geography); \"it was a mountainous area\"; \"Bible country\"",
+     "sense": "WN_n_07830585",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    },
+    {
+     "how": "synonym",
+     "fact": "AREA SYNONYM REGION",
+     "sense": "WN_n_04600443",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "already names a relation (or is a known alias)"
+  },
+  {
+   "word": "region",
+   "relation": "HAS_PART",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "PART SYNONYM REGION",
+     "sense": "WN_n_07925397",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "already names a relation (or is a known alias)"
+  },
+  {
+   "word": "relating",
+   "relation": "WN_PERTAINYM",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "definition head, first sense",
+     "fact": "PERTAINYM DEFINITION meaning relating to or pertaining to",
+     "sense": "WN_n_05713228",
+     "sense_fits": [],
+     "note": "no sense fits; the dictionary's first noun sense"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "respect",
+   "relation": "VALUE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "VALUE SYNONYM RESPECT",
+     "sense": "WN_v_00725868",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "restricting",
+   "relation": "DIET",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "DIET DEFINITION the act of restricting your food intake (or your intake of particular foods)",
+     "sense": "WN_n_01075171",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a noun in the dictionary: can't be 'the ___ of X'"
+  },
+  {
+   "word": "role",
+   "relation": "FUNCTION",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym, first sense",
+     "fact": "FUNCTION SYNONYM ROLE",
+     "sense": "WN_n_00721106",
+     "note": "no sense fits; the dictionary's first noun sense"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "role",
+   "relation": "HAS_PART",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym, first sense",
+     "fact": "PART SYNONYM ROLE",
+     "sense": "WN_n_00721106",
+     "note": "no sense fits; the dictionary's first noun sense"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "routine",
+   "relation": "FUNCTION",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "FUNCTION SYNONYM ROUTINE",
+     "sense": "WN_n_05940556",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "rules",
+   "relation": "ATC_CODE",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "CODE DEFINITION a set of rules or principles or laws (especially written ones)",
+     "sense": "WN_n_06024970",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "run",
+   "relation": "FUNCTION",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "FUNCTION SYNONYM RUN",
+     "sense": "WN_v_01576673",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "rush",
+   "relation": "SPEED",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "SPEED SYNONYM RUSH",
+     "sense": "WN_v_02121054",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "sample",
+   "relation": "SYSTEM",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "SYSTEM DEFINITION (physical chemistry) a sample of matter in which substances in different phases are in equilibrium; \"in a static system, oil cannot be replaced by water on a surface\"; \"a system generating hydrogen peroxide\"",
+     "sense": "WN_n_12289290",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "satisfying",
+   "relation": "SQUARE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "SQUARE SYNONYM SATISFYING",
+     "sense": "WN_a_02578750",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a noun in the dictionary: can't be 'the ___ of X'"
+  },
+  {
+   "word": "scheme",
+   "relation": "SYSTEM",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "SYSTEM SYNONYM SCHEME",
+     "sense": "WN_n_07771949",
+     "note": "a synonym from another sense of the word"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "seat",
+   "relation": "CAPITAL",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "CAPITAL DEFINITION a seat of government",
+     "sense": "WN_n_07848756",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "section",
+   "relation": "HAS_PART",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "PART SYNONYM SECTION",
+     "sense": "WN_n_05252360",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "section",
+   "relation": "LENGTH",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "definition head, first sense",
+     "fact": "LENGTH DEFINITION a section of something that is long and narrow; \"a length of timber\"; \"a length of tubing\"",
+     "sense": "WN_n_03031123",
+     "sense_fits": [],
+     "note": "no sense fits; the dictionary's first noun sense"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "selection",
+   "relation": "DIET",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "DIET DEFINITION a prescribed selection of foods",
+     "sense": "WN_n_06950327",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "separate",
+   "relation": "CLASS",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "CLASS SYNONYM SEPARATE",
+     "sense": "WN_v_00685112",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "separate",
+   "relation": "HAS_PART",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "PART SYNONYM SEPARATE",
+     "sense": "WN_v_01608640",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "sequence",
+   "relation": "FUNCTION",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "FUNCTION DEFINITION a set sequence of steps, part of larger computer program",
+     "sense": "WN_n_05940556",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "sequence",
+   "relation": "MASS",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "MASS DEFINITION a sequence of prayers constituting the Christian Eucharistic rite; \"the priest said Mass\"",
+     "sense": "WN_n_06420520",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "series",
+   "relation": "ATC_CODE",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "CODE DEFINITION a series of letters, numbers or symbols assigned to something for the purpose of classification or identification",
+     "sense": "WN_n_12815281",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "series",
+   "relation": "CAUSE",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "CAUSE DEFINITION a series of actions advancing a principle or tending toward a particular end; \"he supported populist campaigns\"; \"they worked in the cause of world peace\"; \"the team was ready for a drive toward the pennant\"; \"the movement to end slavery\"; \"contributed to the war effort\"",
+     "sense": "WN_n_00798788",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "serve",
+   "relation": "FUNCTION",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "FUNCTION SYNONYM SERVE",
+     "sense": "WN_v_02752882",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "share",
+   "relation": "HAS_PART",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "PART SYNONYM SHARE",
+     "sense": "WN_n_00787878",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "sight",
+   "relation": "MASS",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "MASS SYNONYM SIGHT",
+     "sense": "WN_n_11070943",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "size",
+   "relation": "LENGTH",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "LENGTH DEFINITION size of the gap between two places; \"the distance from New York to Chicago\"; \"he determined the length of the shortest line segment joining the two points\"",
+     "sense": "WN_n_04506677",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "already names a relation (or is a known alias)"
+  },
+  {
+   "word": "size",
+   "relation": "DENSITY",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "definition head, first sense",
+     "fact": "DENSITY DEFINITION the amount per unit size",
+     "sense": "WN_n_04314488",
+     "sense_fits": [],
+     "note": "no sense fits; the dictionary's first noun sense"
+    }
+   ],
+   "status": "rejected",
+   "why": "already names a relation (or is a known alias)"
+  },
+  {
+   "word": "slew",
+   "relation": "MASS",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "MASS SYNONYM SLEW",
+     "sense": "WN_n_11070943",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "solid",
+   "relation": "SQUARE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "SQUARE SYNONYM SOLID",
+     "sense": "WN_a_02578750",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "sort",
+   "relation": "CLASS",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "CLASS SYNONYM SORT",
+     "sense": "WN_v_00685112",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "source",
+   "relation": "AUTHOR",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym, first sense",
+     "fact": "AUTHOR SYNONYM SOURCE",
+     "sense": "WN_n_08647289",
+     "note": "no sense fits; the dictionary's first noun sense"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "spate",
+   "relation": "MASS",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "MASS SYNONYM SPATE",
+     "sense": "WN_n_11070943",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "speech",
+   "relation": "OFFICIAL_LANGUAGE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "LANGUAGE SYNONYM SPEECH",
+     "sense": "WN_n_05032210",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "speeding",
+   "relation": "SPEED",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym, first sense",
+     "fact": "SPEED SYNONYM SPEEDING",
+     "sense": "WN_n_00327676",
+     "note": "no sense fits; the dictionary's first noun sense"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "sphere",
+   "relation": "AREA",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "AREA SYNONYM SPHERE",
+     "sense": "WN_n_11815894",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "split",
+   "relation": "HAS_PART",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "PART SYNONYM SPLIT",
+     "sense": "WN_v_02091923",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "squared",
+   "relation": "SQUARE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "SQUARE SYNONYM SQUARED",
+     "sense": "WN_a_02058696",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a noun in the dictionary: can't be 'the ___ of X'"
+  },
+  {
+   "word": "squarely",
+   "relation": "SQUARE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "SQUARE SYNONYM SQUARELY",
+     "sense": "WN_r_00051856",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a noun in the dictionary: can't be 'the ___ of X'"
+  },
+  {
+   "word": "squarish",
+   "relation": "SQUARE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "SQUARE SYNONYM SQUARISH",
+     "sense": "WN_a_02058696",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a noun in the dictionary: can't be 'the ___ of X'"
+  },
+  {
+   "word": "stack",
+   "relation": "MASS",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "MASS SYNONYM STACK",
+     "sense": "WN_n_11070943",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "start",
+   "relation": "HAS_PART",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "PART SYNONYM START",
+     "sense": "WN_v_02075789",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "already names a relation (or is a known alias)"
+  },
+  {
+   "word": "state",
+   "relation": "DEPTH",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "DEPTH DEFINITION (usually plural) a low moral state; \"he had sunk to the depths of addiction\"",
+     "sense": "WN_n_11742397",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "already names a relation (or is a known alias)"
+  },
+  {
+   "word": "stature",
+   "relation": "HEIGHT",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "HEIGHT SYNONYM STATURE",
+     "sense": "WN_n_04377449",
+     "note": "a synonym from another sense of the word"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "status",
+   "relation": "CITIZENSHIP",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "CITIZENSHIP DEFINITION the status of a citizen with rights and duties",
+     "sense": "WN_n_11252413",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "stimulant",
+   "relation": "SPEED",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "SPEED DEFINITION a central nervous system stimulant that increases energy and decreases appetite; used to treat narcolepsy and some forms of depression",
+     "sense": "WN_n_02084691",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "stimulate",
+   "relation": "CAUSE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "CAUSE SYNONYM STIMULATE",
+     "sense": "WN_v_00804540",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a noun in the dictionary: can't be 'the ___ of X'"
+  },
+  {
+   "word": "stop",
+   "relation": "PERIOD",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym, first sense",
+     "fact": "PERIOD SYNONYM STOP",
+     "sense": "WN_n_06210103",
+     "note": "no sense fits; the dictionary's first noun sense"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "straight",
+   "relation": "SQUARE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "SQUARE SYNONYM STRAIGHT",
+     "sense": "WN_a_00613233",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "straightarrow(a)",
+   "relation": "SQUARE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "SQUARE SYNONYM STRAIGHTARROW(A)",
+     "sense": "WN_a_02335484",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a content word"
+  },
+  {
+   "word": "stratum",
+   "relation": "CLASS",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "CLASS SYNONYM STRATUM",
+     "sense": "WN_n_07365144",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "structure",
+   "relation": "SYSTEM",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "SYSTEM DEFINITION an organized structure for arranging or classifying; \"he changed the arrangement of the topics\"; \"the facts were familiar but it was in the organization of them that he was original\"; \"he tried to understand their system of classification\"",
+     "sense": "WN_n_05108199",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "structure",
+   "relation": "AREA",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "definition head, first sense",
+     "fact": "AREA DEFINITION a part of a structure having some specific characteristic or function; \"the spacious cooking area provided plenty of room for servants\"",
+     "sense": "WN_n_02116422",
+     "sense_fits": [],
+     "note": "no sense fits; the dictionary's first noun sense"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "style",
+   "relation": "GENRE",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "GENRE DEFINITION a style of expressing yourself in writing",
+     "sense": "WN_n_06479520",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "subject",
+   "relation": "AREA",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "AREA DEFINITION a subject of study; \"it was his area of specialization\"; \"areas of interest include \u2026\"",
+     "sense": "WN_n_05199120",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "subprogram",
+   "relation": "FUNCTION",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "FUNCTION SYNONYM SUBPROGRAM",
+     "sense": "WN_n_05940556",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "subroutine",
+   "relation": "FUNCTION",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "FUNCTION SYNONYM SUBROUTINE",
+     "sense": "WN_n_05940556",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "substantial",
+   "relation": "SQUARE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "SQUARE SYNONYM SUBSTANTIAL",
+     "sense": "WN_a_02578750",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a noun in the dictionary: can't be 'the ___ of X'"
+  },
+  {
+   "word": "such",
+   "relation": "FUNCTION",
+   "conf": 0.38499999999999995,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "FUNCTION DEFINITION a relation such that one thing is dependent on another; \"height is a function of age\"; \"price is a function of supply and demand\"",
+     "sense": "WN_n_11077781",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    },
+    {
+     "how": "definition head",
+     "fact": "FUNCTION DEFINITION (mathematics) a mathematical relation such that each element of a given set (the domain of the function) is associated with an element of another set (the range of the function)",
+     "sense": "WN_n_11080451",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a noun in the dictionary: can't be 'the ___ of X'"
+  },
+  {
+   "word": "suit",
+   "relation": "CAUSE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "CAUSE SYNONYM SUIT",
+     "sense": "WN_n_01190155",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "summit",
+   "relation": "ELEVATION",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "ELEVATION SYNONYM SUMMIT",
+     "sense": "WN_n_11239140",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "summit",
+   "relation": "HEIGHT",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "HEIGHT SYNONYM SUMMIT",
+     "sense": "WN_n_11239140",
+     "note": "a synonym from another sense of the word"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "superior",
+   "relation": "CAPITAL",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "CAPITAL SYNONYM SUPERIOR",
+     "sense": "WN_a_02359953",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "superlative",
+   "relation": "ELEVATION",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "ELEVATION SYNONYM SUPERLATIVE",
+     "sense": "WN_n_11239140",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "superlative",
+   "relation": "HEIGHT",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "HEIGHT SYNONYM SUPERLATIVE",
+     "sense": "WN_n_11239140",
+     "note": "a synonym from another sense of the word"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "swiftness",
+   "relation": "SPEED",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "SPEED SYNONYM SWIFTNESS",
+     "sense": "WN_n_04434348",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "system",
+   "relation": "OFFICIAL_LANGUAGE",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "LANGUAGE DEFINITION a system of words used to name things in a particular discipline; \"legal terminology\"; \"biological nomenclature\"; \"the language of sociology\"",
+     "sense": "WN_n_05694446",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "already names a relation (or is a known alias)"
+  },
+  {
+   "word": "system",
+   "relation": "ATC_CODE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "definition head, first sense",
+     "fact": "CODE DEFINITION a coding system used for transmitting messages requiring brevity or secrecy",
+     "sense": "WN_n_05745970",
+     "sense_fits": [],
+     "note": "no sense fits; the dictionary's first noun sense"
+    }
+   ],
+   "status": "rejected",
+   "why": "already names a relation (or is a known alias)"
+  },
+  {
+   "word": "systematic",
+   "relation": "OFFICIAL_LANGUAGE",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "LANGUAGE DEFINITION a systematic means of communicating by the use of sounds or conventional symbols; \"he taught foreign languages\"; \"the language introduced is standard throughout the text\"; \"the speed with which a program can be executed depends on the language in which it is written\"",
+     "sense": "WN_n_05672232",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a noun in the dictionary: can't be 'the ___ of X'"
+  },
+  {
+   "word": "taken",
+   "relation": "PERIOD",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "PERIOD DEFINITION the interval taken to complete one cycle of a regularly repeating phenomenon",
+     "sense": "WN_n_12588208",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a noun in the dictionary: can't be 'the ___ of X'"
+  },
+  {
+   "word": "tallness",
+   "relation": "HEIGHT",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "HEIGHT SYNONYM TALLNESS",
+     "sense": "WN_n_04514371",
+     "note": "a synonym from another sense of the word"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "terminology",
+   "relation": "OFFICIAL_LANGUAGE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "LANGUAGE SYNONYM TERMINOLOGY",
+     "sense": "WN_n_05694446",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "text",
+   "relation": "OFFICIAL_LANGUAGE",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "LANGUAGE DEFINITION the text of a popular song or musical-comedy number; \"his compositions always started with the lyrics\"; \"he wrote both words and music\"; \"the song uses colloquial language\"",
+     "sense": "WN_n_06437984",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "tightness",
+   "relation": "DENSITY",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "DENSITY SYNONYM TIGHTNESS",
+     "sense": "WN_n_04465334",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "tiptop",
+   "relation": "ELEVATION",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "ELEVATION SYNONYM TIPTOP",
+     "sense": "WN_n_11239140",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "tiptop",
+   "relation": "HEIGHT",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "HEIGHT SYNONYM TIPTOP",
+     "sense": "WN_n_11239140",
+     "note": "a synonym from another sense of the word"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "tongue",
+   "relation": "CURRENCY",
+   "conf": 0.6,
+   "via": [
+    {
+     "how": "examples",
+     "subjects": [
+      "RUSSIA",
+      "SWEDEN"
+     ],
+     "n": 2,
+     "note": "the answer was this relation's value for each of these"
+    }
+   ],
+   "status": "ambiguous",
+   "why": "also proposed for OFFICIAL_LANGUAGE"
+  },
+  {
+   "word": "tongue",
+   "relation": "OFFICIAL_LANGUAGE",
+   "conf": 0.6,
+   "via": [
+    {
+     "how": "examples",
+     "subjects": [
+      "RUSSIA",
+      "SWEDEN"
+     ],
+     "n": 2,
+     "note": "the answer was this relation's value for each of these"
+    }
+   ],
+   "status": "ambiguous",
+   "why": "also proposed for CURRENCY"
+  },
+  {
+   "word": "tool",
+   "relation": "SQUARE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "definition head, first sense",
+     "fact": "SQUARE DEFINITION a hand tool consisting of two straight arms at right angles; used to construct or test right angles; \"the carpenter who built this room must have lost his square\"",
+     "sense": "WN_n_03664191",
+     "sense_fits": [],
+     "note": "no sense fits; the dictionary's first noun sense"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "top",
+   "relation": "ELEVATION",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "ELEVATION SYNONYM TOP",
+     "sense": "WN_n_11239140",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "top",
+   "relation": "HEIGHT",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "HEIGHT SYNONYM TOP",
+     "sense": "WN_n_11239140",
+     "note": "a synonym from another sense of the word"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "treasure",
+   "relation": "VALUE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "VALUE SYNONYM TREASURE",
+     "sense": "WN_v_02323637",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "two",
+   "relation": "GROUP",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "GROUP DEFINITION (chemistry) two or more atoms bound together as a single unit and forming part of a molecule",
+     "sense": "WN_n_11924617",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "unit",
+   "relation": "ATMOSPHERE",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "ATMOSPHERE DEFINITION a unit of pressure: the pressure that will support a column of mercury 760 mm high at sea level and 0 degrees centigrade",
+     "sense": "WN_n_11007385",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "already names a relation (or is a known alias)"
+  },
+  {
+   "word": "unit",
+   "relation": "PERIOD",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "PERIOD DEFINITION a unit of geological time during which a system of rocks formed; \"ganoid fishes swarmed during the earlier geological periods\"",
+     "sense": "WN_n_12548932",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "already names a relation (or is a known alias)"
+  },
+  {
+   "word": "universe",
+   "relation": "POPULATION",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "POPULATION SYNONYM UNIVERSE",
+     "sense": "WN_n_05412977",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "upper",
+   "relation": "SPEED",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "SPEED SYNONYM UPPER",
+     "sense": "WN_n_02084691",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "uppercase",
+   "relation": "CAPITAL",
+   "conf": 0.32999999999999996,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "CAPITAL SYNONYM UPPERCASE",
+     "sense": "WN_n_06190469",
+     "note": "no sense of the word fits"
+    },
+    {
+     "how": "synonym",
+     "fact": "CAPITAL SYNONYM UPPERCASE",
+     "sense": "WN_a_01477202",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "use",
+   "relation": "FUNCTION",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "FUNCTION SYNONYM USE",
+     "sense": "WN_n_04526450",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "valuate",
+   "relation": "VALUE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "VALUE SYNONYM VALUATE",
+     "sense": "WN_v_00712910",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a noun in the dictionary: can't be 'the ___ of X'"
+  },
+  {
+   "word": "velocity",
+   "relation": "SPEED",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "SPEED SYNONYM VELOCITY",
+     "sense": "WN_n_12581053",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "voice",
+   "relation": "HAS_PART",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "PART SYNONYM VOICE",
+     "sense": "WN_n_06417607",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "volume",
+   "relation": "MASS",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "MASS SYNONYM VOLUME",
+     "sense": "WN_n_04476391",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "wad",
+   "relation": "MASS",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "MASS SYNONYM WAD",
+     "sense": "WN_n_11070943",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "wealth",
+   "relation": "CAPITAL",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "CAPITAL DEFINITION wealth in the form of money or property owned by a person or business and human resources of economic value",
+     "sense": "WN_n_10642026",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "weather",
+   "relation": "ATMOSPHERE",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "ATMOSPHERE DEFINITION the weather or climate at some place; \"the atmosphere was thick with fog\"",
+     "sense": "WN_n_11822125",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "wholesome",
+   "relation": "SQUARE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "SQUARE SYNONYM WHOLESOME",
+     "sense": "WN_a_02578750",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a noun in the dictionary: can't be 'the ___ of X'"
+  },
+  {
+   "word": "wingspread",
+   "relation": "WINGSPAN",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym, first sense",
+     "fact": "WINGSPAN SYNONYM WINGSPREAD",
+     "sense": "WN_n_04507726",
+     "note": "no sense fits; the dictionary's first noun sense"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "words",
+   "relation": "OFFICIAL_LANGUAGE",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "LANGUAGE SYNONYM WORDS",
+     "sense": "WN_n_06437984",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "not a content word"
+  },
+  {
+   "word": "work",
+   "relation": "FUNCTION",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "FUNCTION SYNONYM WORK",
+     "sense": "WN_v_01576673",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "writer",
+   "relation": "AUTHOR",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "AUTHOR SYNONYM WRITER",
+     "sense": "WN_n_09294646",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "writes",
+   "relation": "AUTHOR",
+   "conf": 0.35,
+   "via": [
+    {
+     "how": "definition head",
+     "fact": "AUTHOR DEFINITION writes (books or stories or articles or the like) professionally (for pay)",
+     "sense": "WN_n_09294646",
+     "sense_fits": [],
+     "note": "this sense doesn't fit the relation"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  },
+  {
+   "word": "year",
+   "relation": "CLASS",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "CLASS SYNONYM YEAR",
+     "sense": "WN_n_07581339",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "already names a relation (or is a known alias)"
+  },
+  {
+   "word": "zip",
+   "relation": "SPEED",
+   "conf": 0.3,
+   "via": [
+    {
+     "how": "synonym",
+     "fact": "SPEED SYNONYM ZIP",
+     "sense": "WN_v_02117675",
+     "note": "no sense of the word fits"
+    }
+   ],
+   "status": "rejected",
+   "why": "too little support"
+  }
+ ]
+}

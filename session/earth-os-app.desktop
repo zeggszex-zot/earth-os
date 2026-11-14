@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=EARTH OS
+GenericName=Desktop Shell
+Comment=Run EARTH OS in a window
+Exec=earth-os --windowed
+TryExec=earth-os
+Icon=earth-os
+Terminal=false
+Type=Application
+Categories=System;Utility;
+Keywords=earthos;shell;assistant;crt;

@@ -1,0 +1,26 @@
+{
+ "format": "cdos-plugin/1",
+ "name": "sensor.thermometer",
+ "version": "1.0.0",
+ "entry": "plugin.py:TMP117",
+ "source": "TI TMP117 datasheet: 16-bit register, 7.8125 m°C per count, -55 to +150 °C, ±0.1 °C from -20 to +50 °C",
+ "capability": {
+  "summary": "TMP117 temperature sensor: register counts -> degrees Celsius, with range and accuracy",
+  "inputs": {"raw": {"type": "int", "required": true}},
+  "output": {"type": "temperature"},
+  "deterministic": true,
+  "cost": {"memory_mb": 0.1, "cpu": "low"},
+  "writes_state": false,
+  "requires": [],
+  "optional": false,
+  "fallback": "none",
+  "errors": ["INVALID_INPUT"],
+  "modules": ["plugin.py"]
+ },
+ "examples": [
+  {"input": {"raw": 3200}, "output": {"temperature_c": 25.0, "valid": true, "accuracy_c": 0.1}},
+  {"input": {"raw": 8960}, "output": {"temperature_c": 70.0, "valid": true, "accuracy_c": 0.15}},
+  {"input": {"raw": -32768}, "output": {"temperature_c": -256.0, "valid": false, "accuracy_c": 0.15}},
+  {"input": {"raw": 32767}, "output": {"temperature_c": 255.9921875, "valid": false, "accuracy_c": 0.15}}
+ ]
+}

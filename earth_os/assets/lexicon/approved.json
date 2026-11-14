@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "about": "Words a person approved from the CDOS Dictionary Bridge (docs/ESI_ARCHITECTURE.md §7). Written by tools/esi_bridge.py approve/reject; every entry is re-checked each time it is read.",
+  "approved": [],
+  "rejected": []
+}

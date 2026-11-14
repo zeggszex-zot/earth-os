@@ -1,0 +1,35 @@
+[Unit]
+Description=CDOS Growth Engine: find unanswered questions, prepare and evaluate candidates (never promotes)
+Documentation=file://@PREFIX@/current/docs/PLATFORM_0_2.md
+After=local-fs.target cdos-api.service
+
+[Service]
+Type=oneshot
+User=@USER@
+Group=@USER@
+WorkingDirectory=@PREFIX@/current
+ExecStart=@PYTHON@ -m computer.growth --config @CONFIG@/config.toml auto
+Environment=PYTHONUNBUFFERED=1
+# Training is background work: low priority, half a core, idle I/O, bounded time.
+Nice=15
+CPUQuota=50%
+IOSchedulingClass=idle
+TimeoutStartSec=4h
+StateDirectory=cdos
+ConfigurationDirectory=cdos-computer
+RestrictAddressFamilies=AF_UNIX
+IPAddressDeny=any
+PrivateDevices=yes
+NoNewPrivileges=yes
+ProtectSystem=strict
+ReadWritePaths=@STATE@
+ProtectHome=yes
+PrivateTmp=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictNamespaces=yes
+LockPersonality=yes
+CapabilityBoundingSet=
+SystemCallArchitectures=native
+UMask=0027

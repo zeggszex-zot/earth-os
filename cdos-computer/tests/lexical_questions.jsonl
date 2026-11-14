@@ -1,0 +1,37 @@
+{"kind": "define", "question": "What does happy mean?", "gold": ["joy or pleasure"], "expect": "answered"}
+{"kind": "define", "question": "what's the meaning of the word glad", "gold": ["joy and pleasure"], "expect": "answered"}
+{"kind": "define", "question": "define puppy", "gold": ["a young dog"], "expect": "answered"}
+{"kind": "define", "question": "can you tell me what canine means", "gold": ["fissiped mammals"], "expect": "answered"}
+{"kind": "define", "question": "carnivore definition", "gold": ["flesh-eating"], "expect": "answered"}
+{"kind": "define", "question": "what is the definition of cheerful", "gold": ["good spirits"], "expect": "answered"}
+{"kind": "sense", "question": "what does bank mean, as in a river", "gold": ["sloping land"], "not": ["financial"], "expect": "answered"}
+{"kind": "sense", "question": "what does bank mean when talking about money", "gold": ["financial institution"], "not": ["sloping"], "expect": "answered"}
+{"kind": "synonym", "question": "What's another word for happy?", "gold": ["glad"], "expect": "answered"}
+{"kind": "synonym", "question": "give me a synonym for big", "gold": ["large"], "expect": "answered"}
+{"kind": "synonym", "question": "small synonyms", "gold": ["little"], "expect": "answered"}
+{"kind": "synonym", "question": "what are some other words for unhappy", "gold": ["sad"], "expect": "answered"}
+{"kind": "antonym", "question": "What is the opposite of happy?", "gold": ["unhappy"], "expect": "answered"}
+{"kind": "antonym", "question": "antonym of big", "gold": ["small"], "expect": "answered"}
+{"kind": "antonym", "question": "what's the opposite word for sad", "gold": ["glad"], "expect": "answered"}
+{"kind": "hypernym", "question": "what kind of thing is a dog", "gold": ["canine"], "expect": "answered"}
+{"kind": "hypernym", "question": "what is a poodle a type of", "gold": ["dog"], "expect": "answered"}
+{"kind": "hypernym", "question": "what category does red belong to", "gold": ["color"], "expect": "answered"}
+{"kind": "hyponym", "question": "what are some kinds of dog", "gold": ["poodle"], "expect": "answered"}
+{"kind": "hyponym", "question": "name some types of color", "gold": ["red"], "expect": "answered"}
+{"kind": "derivation", "question": "what words are related to happy", "gold": ["happiness"], "expect": "answered"}
+{"kind": "example", "question": "use happy in a sentence", "gold": ["a happy smile"], "expect": "answered"}
+{"kind": "lex_chain", "question": "what does the opposite of happy mean", "gold": ["sadness or sorrow"], "expect": "answered"}
+{"kind": "lex_chain", "question": "define the opposite of big", "gold": ["below average"], "expect": "answered"}
+{"kind": "lex_chain", "question": "what is a synonym for the opposite of happy", "gold": ["sad"], "expect": "answered"}
+{"kind": "lex_yes", "question": "is glad a synonym of happy", "gold": ["yes"], "expect": "answered"}
+{"kind": "lex_yes", "question": "does large mean the same as big", "gold": ["yes"], "expect": "answered"}
+{"kind": "lex_yes", "question": "is small the opposite of big", "gold": ["yes"], "expect": "answered"}
+{"kind": "lex_yes", "question": "is a dog an animal", "gold": ["yes"], "expect": "answered"}
+{"kind": "lex_yes", "question": "is a puppy a kind of dog", "gold": ["yes"], "expect": "answered"}
+{"kind": "lex_no", "question": "is sad a synonym of happy", "gold": [], "expect": "unsupported"}
+{"kind": "lex_no", "question": "is big the opposite of happy", "gold": [], "expect": "unsupported"}
+{"kind": "soft", "question": "what does colour mean", "gold": ["visual attribute"], "expect": "answered"}
+{"kind": "soft", "question": "what does joyful mean", "gold": ["joy or pleasure"], "expect": "answered"}
+{"kind": "soft", "question": "define happier", "gold": ["joy or pleasure"], "expect": "answered"}
+{"kind": "lex_count", "question": "how many meanings does bank have", "gold": ["2"], "expect": "answered"}
+{"kind": "missing", "question": "what is the opposite of dog", "gold": [], "expect": "unsupported"}

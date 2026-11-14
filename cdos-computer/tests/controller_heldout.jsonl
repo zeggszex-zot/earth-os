@@ -1,0 +1,42 @@
+{"kind": "hop", "question": "What do owls eat?", "gold": ["mice"], "expect": "answered"}
+{"kind": "hop", "question": "owl diet", "gold": ["mice"], "expect": "answered"}
+{"kind": "hop", "question": "food of a blue whale", "gold": ["krill"], "expect": "answered"}
+{"kind": "hop", "question": "france capital?", "gold": ["paris"], "expect": "answered"}
+{"kind": "hop", "question": "capital city for spain please", "gold": ["madrid"], "expect": "answered"}
+{"kind": "hop", "question": "germany currency", "gold": ["euro"], "expect": "answered"}
+{"kind": "hop", "question": "what language do they speak in france", "gold": ["french"], "expect": "answered"}
+{"kind": "hop", "question": "berlin population size", "gold": ["3,800,000"], "expect": "answered"}
+{"kind": "hop", "question": "which continent has france in it", "gold": ["europe"], "expect": "answered"}
+{"kind": "hop", "question": "how tall's the eiffel tower", "gold": ["330"], "expect": "answered"}
+{"kind": "hop", "question": "eiffel tower height in metres", "gold": ["330"], "expect": "answered"}
+{"kind": "chain", "question": "how many people in france's capital", "gold": ["2,100,000"], "expect": "answered"}
+{"kind": "chain", "question": "population for the german capital", "gold": ["3,800,000"], "expect": "answered"}
+{"kind": "compare", "question": "jupiter vs saturn, which is heavier", "gold": ["Jupiter"], "expect": "answered"}
+{"kind": "compare", "question": "who's bigger: earth or the moon", "gold": ["Earth"], "expect": "answered"}
+{"kind": "compare", "question": "bigger planet, saturn or earth?", "gold": ["Saturn"], "expect": "answered"}
+{"kind": "compare", "question": "which one's taller the eiffel tower or the brandenburg gate", "gold": ["Eiffel Tower"], "expect": "answered"}
+{"kind": "reverse", "question": "name the things that orbit the sun", "gold": ["Jupiter"], "expect": "answered"}
+{"kind": "reverse", "question": "anything orbiting saturn?", "gold": ["Titan"], "expect": "answered"}
+{"kind": "reverse", "question": "list the countries that border france", "gold": ["Germany"], "expect": "answered"}
+{"kind": "test", "question": "whales are mammals, right?", "gold": ["yes"], "expect": "answered"}
+{"kind": "test", "question": "would you say an owl is a bird", "gold": ["yes"], "expect": "answered"}
+{"kind": "test_no", "question": "is it true that sharks are mammals", "gold": [], "expect": "unsupported"}
+{"kind": "test", "question": "berlin is in germany, isn't it", "gold": ["yes"], "expect": "answered"}
+{"kind": "explain", "question": "whale breathing - how does it work", "gold": ["lungs"], "expect": "answered"}
+{"kind": "explain", "question": "what do birds breathe with", "gold": ["lungs"], "expect": "answered"}
+{"kind": "count", "question": "number of moons jupiter has", "gold": ["95"], "expect": "answered"}
+{"kind": "count", "question": "jupiter satellites, how many", "gold": ["4"], "expect": "answered"}
+{"kind": "define", "question": "meaning: cheerful", "gold": ["good spirits"], "expect": "answered"}
+{"kind": "define", "question": "i don't know what carnivore means", "gold": ["flesh-eating"], "expect": "answered"}
+{"kind": "define", "question": "puppy - what's that", "gold": ["young dog"], "expect": "answered"}
+{"kind": "synonym", "question": "say happy a different way", "gold": ["glad"], "expect": "answered"}
+{"kind": "synonym", "question": "other ways to say big", "gold": ["large"], "expect": "answered"}
+{"kind": "antonym", "question": "sad is the opposite of what", "gold": ["glad"], "expect": "answered"}
+{"kind": "antonym", "question": "reverse of small", "gold": ["big"], "expect": "answered"}
+{"kind": "hyponym", "question": "different dogs", "gold": ["poodle"], "expect": "answered"}
+{"kind": "hyponym", "question": "examples of colors", "gold": ["red"], "expect": "answered"}
+{"kind": "hypernym", "question": "a poodle is what sort of animal", "gold": ["dog"], "expect": "answered"}
+{"kind": "example", "question": "happy used in a sentence", "gold": ["a happy smile"], "expect": "answered"}
+{"kind": "missing", "question": "what's the currency of madrid", "gold": [], "expect": "unsupported"}
+{"kind": "missing", "question": "spain's population of birds", "gold": [], "expect": "unsupported"}
+{"kind": "missing", "question": "glad opposite word", "gold": [], "expect": "unsupported"}

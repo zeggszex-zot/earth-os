@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=EARTH OS
+Comment=EARTH OS green-phosphor shell, with the CDOS engine
+Exec=/usr/bin/earth-os-session
+TryExec=/usr/bin/earth-os-session
+Type=Application
+DesktopNames=EARTHOS
+Keywords=earthos;shell;crt;

@@ -1,0 +1,18 @@
+[Unit]
+Description=EARTH OS shell
+Documentation=man:earth-os(1)
+PartOf=graphical-session.target
+After=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/earth-os
+Restart=on-failure
+RestartSec=2
+# The shell is the session on a CDOS machine; if it dies repeatedly, let the
+# display manager notice rather than thrashing.
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+[Install]
+WantedBy=graphical-session.target

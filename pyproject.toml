@@ -1,0 +1,60 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "earth-os"
+version = "2.0.0"
+description = "EARTH OS: a green-phosphor desktop shell for Linux with Earth Mind, one coordinated intelligence over CDOS, the Companion, the system and game worlds"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "GPL-3.0-or-later" }
+keywords = ["earth-os", "shell", "wayland", "gtk4", "voice-assistant", "crt"]
+classifiers = [
+    "Environment :: X11 Applications :: GTK",
+    "Intended Audience :: End Users/Desktop",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Topic :: Desktop Environment",
+]
+
+# PyGObject and pycairo are intentionally *not* listed here.  On every distro
+# they belong to the system package manager (python3-gi, python3-gi-cairo,
+# gir1.2-gtk-4.0); installing them from PyPI into a venv builds them against
+# headers that may not match the running GTK.  See docs/INSTALL.md.
+dependencies = []
+
+[project.optional-dependencies]
+vosk = ["vosk>=0.3.45"]
+dev = ["pytest>=7"]
+
+[project.scripts]
+earth-os = "earth_os.cli:main"
+
+[tool.setuptools]
+packages = [
+    "earth_os",
+    "earth_os.widgets",
+    "earth_os.screens",
+    "earth_os.voice",
+    "earth_os.agent",
+    "earth_os.platform",
+    "earth_os.companion",
+    "earth_os.mind",
+    "earth_os.mind.game",
+    "earth_os.evolution",
+]
+
+[tool.setuptools.package-data]
+earth_os = [
+    "assets/*.ini",
+    "assets/*.xml",
+    "assets/fonts/*.ttf",
+    "assets/fonts/*.txt",
+    "assets/palettes/*.lxcp",
+    "assets/lang/*.lng",
+    "assets/lexicon/*",
+    "assets/sounds/*.wav",
+    "mind/personalities/*.json",
+    "mind/worlds/*.json",
+]

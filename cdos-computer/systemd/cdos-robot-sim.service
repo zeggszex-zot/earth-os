@@ -1,0 +1,26 @@
+[Unit]
+Description=CDOS simulated robot (a client of the local API; it moves only on approved commands)
+Documentation=file://@PREFIX@/current/docs/PLATFORM_0_2.md
+After=cdos-api.service
+Requires=cdos-api.service
+
+[Service]
+Type=simple
+User=@USER@
+Group=@USER@
+WorkingDirectory=@PREFIX@/current
+ExecStart=@PYTHON@ -m computer.robotics simrobot --config @CONFIG@/config.toml --realtime --raw-temperature
+Restart=on-failure
+RestartSec=10
+RestrictAddressFamilies=AF_UNIX
+IPAddressDeny=any
+PrivateDevices=yes
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+CapabilityBoundingSet=
+SystemCallArchitectures=native
+
+[Install]
+WantedBy=multi-user.target

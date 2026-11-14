@@ -1,0 +1,279 @@
+{
+  "format": "cdos-computer-rules/1",
+  "knowledge": {
+    "disjoint": [
+      {
+        "rule_id": "disjoint.animal_classes",
+        "classes": [
+          "MAMMAL",
+          "BIRD",
+          "FISH",
+          "REPTILE",
+          "AMPHIBIAN",
+          "INSECT"
+        ],
+        "why": "an animal belongs to only one of these classes"
+      },
+      {
+        "rule_id": "disjoint.living_kingdoms",
+        "classes": [
+          "ANIMAL",
+          "PLANT"
+        ],
+        "why": "nothing is both an animal and a plant"
+      },
+      {
+        "rule_id": "disjoint.sky_bodies",
+        "classes": [
+          "STAR",
+          "PLANET",
+          "NATURAL_SATELLITE"
+        ],
+        "why": "a star, a planet and a moon are different kinds of body"
+      }
+    ],
+    "complete": [
+      {
+        "rule_id": "complete.orbits",
+        "relation": "ORBITS",
+        "max": 1,
+        "why": "a body orbits one thing directly (what that thing orbits is followed onward: Titan, Saturn, the Sun)"
+      }
+    ],
+    "functional": [
+      {
+        "rule_id": "functional.energy_capacity",
+        "relation": "ENERGY_CAPACITY",
+        "why": "a battery has one rated energy capacity at a time"
+      },
+      {
+        "rule_id": "functional.battery_capacity",
+        "relation": "BATTERY_CAPACITY",
+        "why": "a battery has one rated capacity at a time"
+      },
+      {
+        "rule_id": "functional.rated_charge",
+        "relation": "RATED_CHARGE",
+        "why": "a battery has one rated charge at a time"
+      },
+      {
+        "rule_id": "functional.nominal_voltage",
+        "relation": "NOMINAL_VOLTAGE",
+        "why": "a battery has one nominal voltage at a time"
+      }
+    ]
+  },
+  "pathways": {
+    "knowledge": [
+      {
+        "rule_id": "knowledge.navigate_first",
+        "when": {
+          "equals": [
+            "stage",
+            "start"
+          ]
+        },
+        "then": {
+          "action": "navigate"
+        },
+        "priority": 100,
+        "why": "a checked plan before the one-shot lookup"
+      },
+      {
+        "rule_id": "knowledge.conflict_is_said",
+        "when": {
+          "all": [
+            {
+              "equals": [
+                "stage",
+                "navigated"
+              ]
+            },
+            {
+              "equals": [
+                "nav_status",
+                "conflict"
+              ]
+            }
+          ]
+        },
+        "then": {
+          "action": "say_navigator"
+        },
+        "priority": 95,
+        "why": "the corpus disagrees with itself: say so, and don't let the lookup pick a side"
+      },
+      {
+        "rule_id": "knowledge.navigator_answers",
+        "when": {
+          "all": [
+            {
+              "equals": [
+                "stage",
+                "navigated"
+              ]
+            },
+            {
+              "fact": "nav_now"
+            }
+          ]
+        },
+        "then": {
+          "action": "say_navigator"
+        },
+        "priority": 90,
+        "why": "chains, comparisons, yes/no and the like are the navigator's questions"
+      },
+      {
+        "rule_id": "knowledge.then_lookup",
+        "when": {
+          "equals": [
+            "stage",
+            "navigated"
+          ]
+        },
+        "then": {
+          "action": "lookup"
+        },
+        "priority": 80,
+        "why": "simple questions, or the navigator found nothing it should say first"
+      },
+      {
+        "rule_id": "knowledge.health_needs_a_person",
+        "when": {
+          "all": [
+            {
+              "equals": [
+                "stage",
+                "looked_up"
+              ]
+            },
+            {
+              "equals": [
+                "intent",
+                "health"
+              ]
+            }
+          ]
+        },
+        "then": {
+          "action": "say_lookup",
+          "args": {
+            "tail": "health"
+          }
+        },
+        "priority": 70,
+        "why": "facts if there are any, then a doctor, nurse or pharmacist"
+      },
+      {
+        "rule_id": "knowledge.money_needs_an_expert",
+        "when": {
+          "all": [
+            {
+              "equals": [
+                "stage",
+                "looked_up"
+              ]
+            },
+            {
+              "equals": [
+                "intent",
+                "money"
+              ]
+            }
+          ]
+        },
+        "then": {
+          "action": "say_lookup",
+          "args": {
+            "tail": "money"
+          }
+        },
+        "priority": 70,
+        "why": "facts if there are any, never the coins, then a real expert"
+      },
+      {
+        "rule_id": "knowledge.lookup_answers",
+        "when": {
+          "all": [
+            {
+              "equals": [
+                "stage",
+                "looked_up"
+              ]
+            },
+            {
+              "fact": "lookup_spoken"
+            }
+          ]
+        },
+        "then": {
+          "action": "say_lookup"
+        },
+        "priority": 60,
+        "why": "the lookup matched what was asked"
+      },
+      {
+        "rule_id": "knowledge.navigator_as_backup",
+        "when": {
+          "all": [
+            {
+              "equals": [
+                "stage",
+                "looked_up"
+              ]
+            },
+            {
+              "fact": "nav_backup"
+            }
+          ]
+        },
+        "then": {
+          "action": "say_navigator",
+          "args": {
+            "which": "backup"
+          }
+        },
+        "priority": 50,
+        "why": "the lookup found nothing it could say, the navigator did"
+      },
+      {
+        "rule_id": "knowledge.corpus_unreachable",
+        "when": {
+          "all": [
+            {
+              "equals": [
+                "stage",
+                "looked_up"
+              ]
+            },
+            {
+              "not": {
+                "fact": "corpus_ready"
+              }
+            }
+          ]
+        },
+        "then": {
+          "action": "say_unreachable"
+        },
+        "priority": 40,
+        "why": "no corpus, no facts: don't guess"
+      },
+      {
+        "rule_id": "knowledge.admit_unknown",
+        "when": {
+          "equals": [
+            "stage",
+            "looked_up"
+          ]
+        },
+        "then": {
+          "action": "say_unknown"
+        },
+        "priority": 0,
+        "why": "nothing found: say so, never guess"
+      }
+    ]
+  }
+}

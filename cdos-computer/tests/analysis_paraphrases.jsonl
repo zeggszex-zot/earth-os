@@ -1,0 +1,26 @@
+{"id": "p_runtime_1", "turns": [{"q": "If I hook a 5 watt gadget up to a 50 Wh pack, how long will it last?", "expect": "answered", "gold": ["8.5 hours"]}]}
+{"id": "p_runtime_2", "turns": [{"q": "What's the battery life of a 20000 mAh 3.7 V power bank powering a 10 W lamp?", "expect": "answered", "gold": ["6.3 hours"]}]}
+{"id": "p_runtime_3", "turns": [{"q": "runtime of a 100Wh battery with a 25W load", "expect": "answered", "gold": ["3.4 hours"]}]}
+{"id": "p_runtime_4", "turns": [{"q": "Computer: how long would a 12 volt 7 amp hour battery keep a 6 watt router running?", "expect": "answered", "gold": ["11.9 hours"]}]}
+{"id": "p_runtime_5", "turns": [{"q": "how many hours can a 60 Wh laptop battery last at 15 watts", "expect": "answered", "gold": ["3.4 hours"]}]}
+{"id": "p_runtime_6", "turns": [{"q": "How long can a 50 Wh battery run a 5 W device?", "expect": "answered", "gold": ["8.5 hours"]}, {"q": "now double the load", "expect": "answered", "gold": ["4.3 hours"]}, {"q": "suppose the battery is 200 Wh instead", "expect": "answered", "gold": ["17 hours"]}]}
+{"id": "p_runtime_7", "turns": [{"q": "How long can a 50 Wh battery run a 5 W device?", "expect": "answered", "gold": ["8.5 hours"]}, {"q": "what if it were 95% efficient?", "expect": "answered", "gold": ["9.5 hours"]}]}
+{"id": "p_runtime_8", "turns": [{"q": "how long will my battery last", "expect": "clarify", "gold": ["battery"]}, {"q": "about 40 Wh", "expect": "clarify", "gold": ["power"]}, {"q": "it draws 4 watts", "expect": "answered", "gold": ["8.5 hours"]}]}
+{"id": "p_runtime_9", "turns": [{"q": "How long can the owl battery power a Raspberry Pi Zero 2 W?", "expect": "answered", "gold": ["12.6 hours"]}]}
+{"id": "p_runtime_10", "turns": [{"q": "How long can a 30 Wh battery run a Raspberry Pi 4?", "expect": "clarify", "gold": ["3 watts", "6.4 watts"]}, {"q": "idle", "expect": "answered", "gold": ["8.5 hours"]}]}
+{"id": "p_daily_1", "turns": [{"q": "how many kWh per day does a 1500 W heater use if it's on for 4 hours a day?", "expect": "answered", "gold": ["6 kilowatt-hours"]}]}
+{"id": "p_daily_2", "turns": [{"q": "daily energy for a 10 watt router left on all day", "expect": "clarify", "gold": ["hours"]}]}
+{"id": "p_daily_3", "turns": [{"q": "What's the energy consumption per day of a 45 W fridge that runs 10 hours a day?", "expect": "answered", "gold": ["450 watt-hours"]}]}
+{"id": "p_energy_1", "turns": [{"q": "how much energy is used by a 100 W TV in 3 hours", "expect": "answered", "gold": ["300 watt-hours"]}]}
+{"id": "p_power_1", "turns": [{"q": "how many watts is 12 V at 3 A?", "expect": "answered", "gold": ["36 watts"]}]}
+{"id": "p_power_2", "turns": [{"q": "what's the wattage of a 5 volt 500 mA charger", "expect": "answered", "gold": ["2.5 watts"]}]}
+{"id": "p_calc_1", "turns": [{"q": "How many times larger is Jupiter than Earth?", "expect": "answered", "gold": ["11 times"]}]}
+{"id": "p_calc_2", "turns": [{"q": "what's the combined population of Germany and Spain", "expect": "answered", "gold": ["132,000,000"]}]}
+{"id": "p_calc_3", "turns": [{"q": "How much heavier is Jupiter than Saturn?", "expect": "answered", "gold": ["kilograms heavier"]}]}
+{"id": "p_calc_4", "turns": [{"q": "France and Germany's population combined?", "expect": "answered", "gold": ["152,000,000"]}]}
+{"id": "p_calc_5", "turns": [{"q": "what is the difference in radius between Titan and Ganymede", "expect": "answered", "gold": ["59 kilometres"]}]}
+{"id": "p_calc_6", "turns": [{"q": "how many times more massive is the sun than jupiter", "expect": "answered", "gold": ["1,048 times"]}]}
+{"id": "p_unsup_1", "turns": [{"q": "how densely populated is Germany", "expect": "unsupported"}]}
+{"id": "p_unsup_2", "turns": [{"q": "how many times taller is the eiffel tower than jupiter", "expect": "unsupported"}]}
+{"id": "p_pass_1", "turns": [{"q": "How long is a blue whale?", "expect": "passthrough", "gold": ["30 metres"]}]}
+{"id": "p_pass_2", "turns": [{"q": "what is 3 times 7", "expect": "passthrough", "gold": ["21"]}]}

@@ -1,0 +1,45 @@
+<GRAMMAR LANGID="409">
+
+  <!-- "Constant" definitions -->
+  <DEFINE>
+    <ID NAME="Initiator" VAL="1"/>
+	<ID NAME="MainCommands" VAL="2"/>
+	<ID NAME="SystemDrives" VAL="3"/>
+  </DEFINE>
+
+  <!-- Rule definitions -->
+    <RULE NAME="Init" ID="Initiator" TOPLEVEL="ACTIVE">
+    <L>
+      <P>computer</P>
+    </L>
+  </RULE>
+  
+  <RULE NAME="Commands" ID="MainCommands" TOPLEVEL="ACTIVE">
+    <L>
+      <P>access</P>
+      <P>menu</P>
+      <P>my computer</P>
+	  <P>settings</P>
+	  <P>engineering</P>
+	  <P>my documents</P>
+	  <p>my pictures</p>
+	  <P>web browser</P>
+	  <P>my music</P>
+	  <P>programs</P>
+	  <P>deactivate</P>
+	  <P>specify parameters</P>
+	  <P>log off</P>
+	  <P>system browser</P>
+	  <P>home</P>
+	  <P>list programs</P>
+	  <P>shut down</P>
+	  <P>back</P>
+	</L>
+  </RULE>
+  
+   <RULE NAME="Drives" ID="SystemDrives" TOPLEVEL="ACTIVE">
+    <L>
+		<P>notepad</P>
+    </L>
+  </RULE>
+</GRAMMAR>

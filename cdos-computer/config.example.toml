@@ -1,0 +1,107 @@
+# CDOS computer settings.  Copy to config.toml and change what you like.
+
+name = "CDOS"               # the computer's name
+user = "user"               # what the computer calls you
+# corpus = "/home/pi/cdos-computer/data"   # the cdos-web data/ folder (default: ./data)
+corpus_integrity = "verify"   # check data/'s content hash at start-up; every answer reports a mismatch
+                              # "strict": also refuse to answer from a corpus that fails | "trust": skip the check
+                              # (faster start-up on a Pi; answers then say "trusted", never "verified")
+
+method = "coins"            # "coins" (traditional three-coin odds) or "yarrow" (yarrow-stalk odds)
+knowledge_aside = true      # "should I visit Jupiter?" -> one known fact about Jupiter first
+
+# Mini LM (llama.cpp's llama-server).  The computer works fine without it.
+llm_endpoint = "http://127.0.0.1:8080"   # or another machine on your network, e.g. "http://192.168.1.20:8080"
+llm_mode = "precall"        # "precall": the computer runs the sampler, the LM words it  |  "tools": the LM calls consult_iching itself  |  "off"
+llm_max_words = 70
+llm_timeout = 45
+
+# Navigator: multi-step questions ("the population of the capital of France", "which is bigger,
+# Jupiter or Saturn", "is a whale a mammal") answered by a checked plan over the corpus.
+navigator = "auto"          # "auto" (the navigator takes the questions the plain lookup can't) | "always" | "off"
+navigator_planner = "rules" # "rules"
+                            # "lm":      a small model writes the plan; rules are the fallback
+                            # "propose": the model writes the plan AND the sentence; the sentence is used only
+                            #            if the executor's evidence backs every number, name and the answer itself
+                            # "direct":  a distilled model answers from its weights; the rules' run checks it
+# navigator_endpoint = "http://127.0.0.1:8081"   # the planner model's server, if not the same as llm_endpoint
+# navigator_fewshot = false # for a model fine-tuned with tools/make_navigator_data.py
+
+# The relation lexicon: words the corpus's own dictionary says mean a relation ("food" -> DIET, "tongue" ->
+# OFFICIAL_LANGUAGE), each checked against the graph and kept with its evidence.  The corpus isn't changed.
+#   python3 tools/learn_lexicon.py --corpus data --out lexicon.json --show
+# relation_lexicon = "lexicon.json"
+
+# The learned controller: a ~200 KB network that picks the plan shape for questions the rules have no pattern
+# for ("owl diet", "jupiter vs saturn, which is heavier", "meaning: cheerful").  No model server, plain Python.
+# Train it on your corpus first:  python3 tools/train_controller.py --corpus data --out controller.json
+# navigator_controller = "controller.json"
+# navigator_controller_min_p = 0.08   # raise (e.g. 0.3) for fewer, surer answers
+
+# The neural core (computer/neural, docs/NEURAL_CORE.md): the same kind of network, trained into staging, evaluated
+# against the rules and an untrained baseline, and activated only with --approve.  The computer loads only the active
+# model; a missing, corrupt or incompatible one is skipped and the rules answer as before.
+#   python3 -m computer.neural train    --corpus data --registry models/neural
+#   python3 -m computer.neural evaluate --corpus data --registry models/neural --model <id> --heldout my_questions.jsonl
+#   python3 -m computer.neural promote  --registry models/neural --model <id> --approve
+# neural_registry = "models/neural"
+# neural_min_p = 0.08
+# neural_experience = true            # log predictions and checked outcomes to models/neural/experience/
+
+# Neural Platform 0.2 (docs/PLATFORM_0_2.md).  Everything here is off or empty by default; tools/install_services.sh
+# writes a config with these set for a /etc + /var/lib install.
+# The Growth Engine (python3 -m computer.growth): finds questions the computer couldn't answer, makes tasks, trains and
+# evaluates candidates from a person's answers.  It never promotes and never writes data/.
+# growth_approval = "manual"          # the only policy there is
+# growth_auto_run = true              # `growth auto` (the daily timer) also runs tasks a person has answered
+# growth_heldout = ["my_questions.jsonl"]          # hand-written held-out questions every candidate is measured on
+# growth_regression = ["must_still_answer.jsonl"]  # questions that must not get worse
+# Capability plugins (computer/plugins.py): one folder each with plugin.json + code; checked like a built-in
+# capability, refused with a reason (never fatal).  Plugins are code: keep this folder writable by an admin only.
+# plugins_dir = "plugins"
+# Robotics, simulation only (computer/robotics): sensor state in, a candidate motion out, checked by the envelope.
+# robotics = true
+# robot_safety_file = ""              # empty = computer/data/robot_safety.json
+# robotics_journal = "robotics/decisions.jsonl"
+
+# The Governor (computer/governor.py; docs/GOVERNOR.md): who may do what, the persistent emergency stop, the audit.
+# Without a policy nobody can clear the stop or promote a model.  Start from governor.example.json.
+# governor_policy = "/etc/cdos-computer/governor.json"   # root-owned: it says who the operators are
+# governor_dir = "governor"                              # audit.jsonl, audit.head.json, estop.json
+
+# The local API (python3 -m computer.services.api): a Unix socket, or a port on 127.0.0.1 only.
+# api_socket = "/run/cdos/api.sock"
+# api_tcp_port = 0
+
+# Compute engine (computer/compute.py, README "The compute engine").  Measure with tools/bench_compute.py and
+# tools/compute_report.py before you trust a setting.
+compute_profile = "balanced"      # "eco" (no mini LM, fewer plans) | "balanced" | "priority" | "auto" (eco when hot/busy)
+# compute_hot_c = 70.0            # auto: eco from this CPU temperature...
+# compute_cool_c = 62.0           # ...back to balanced below this
+# controller_precision = "int8"   # the learned controller in int8: ~5x less RAM, same choices on the test sets
+# compute_backend = "auto"        # "auto" (a validated CCPU, else python) | "python" | "numpy" | "ccpu"
+# compute_ccpu_driver = "ccpu_driver:Driver"
+# llm_endpoint_priority = "http://192.168.1.20:8080"   # priority: a bigger model, e.g. on a NUC
+
+# Pathways and knowledge rules (computer/data/rules.json): the order the knowledge path tries things, and the stated
+# assumptions a "no" rests on.  Check a file with:  python3 -m computer.rules my_rules.json
+# rules_file = "my_rules.json"
+
+# Analysis (computer/analysis.py): "how long can a 50 Wh battery run a 5 W device?", "and at half the load?",
+# "the combined population of France and Germany".  Every assumption is said; missing inputs are asked for.
+analysis = true
+analysis_efficiency = 0.85        # the conversion efficiency assumed when none is given (the answer says so)
+diagnostics = true                # "what is the processor temperature?", "system status"
+state_file = "computer.state.json"     # the open calculation survives a restart (atomic writes, only when it changes)
+state_max_age_minutes = 60        # an older saved calculation is no longer a follow-up's context
+
+crisis_line = "In the US you can call or text 988, any time."
+
+# Body
+voice = "auto"              # "piper", "espeak", "print" or "auto"
+# mic_device = "plughw:1,0" # if arecord's default isn't your mic (see: arecord -l)
+gpio_button = 17            # press and hold to talk
+gpio_tilt = 27              # tilt/shake switch
+gpio_eye_left = 12
+gpio_eye_right = 13
+idle_saying_minutes = 0     # e.g. 45: outputs a stored aphorism after 45 idle minutes

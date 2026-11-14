@@ -1,0 +1,184 @@
+#!/bin/sh
+# EARTH OS session launcher.
+#
+# Starts a minimal Wayland compositor and runs the shell inside it as the only
+# client, so the LCARS screen *is* the session rather than a window on someone
+# else's desktop.  Tries compositors in order of how well they suit a kiosk:
+#
+#   cage    - single-client kiosk compositor, the best fit
+#   labwc   - stacking compositor, useful if you want launched apps to have
+#             real windows over the shell
+#   sway    - if it is already what the machine has
+#   weston  - reference compositor, last resort
+#
+# With no compositor available it falls back to running the shell directly,
+# which works when an X or Wayland session is already running.
+#
+# Environment:
+#   EARTH_OS_COMPOSITOR   force a specific compositor
+#   EARTH_OS_ARGS         extra arguments passed to the shell
+set -eu
+
+SHELL_BIN="${EARTH_OS_BIN:-earth-os}"
+SHELL_ARGS="${EARTH_OS_ARGS:-}"
+
+command -v "$SHELL_BIN" >/dev/null 2>&1 || {
+    echo "earth-os: shell binary '$SHELL_BIN' not found on PATH" >&2
+    exit 1
+}
+
+# Wayland/session hints the toolkit and clients expect.
+export XDG_SESSION_TYPE=wayland
+export XDG_CURRENT_DESKTOP=EARTHOS
+export XDG_SESSION_DESKTOP=earth-os
+export GDK_BACKEND="${GDK_BACKEND:-wayland,x11}"
+export QT_QPA_PLATFORM="${QT_QPA_PLATFORM:-wayland;xcb}"
+export MOZ_ENABLE_WAYLAND=1
+export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+
+pick_compositor() {
+    if [ -n "${EARTH_OS_COMPOSITOR:-}" ]; then
+        echo "$EARTH_OS_COMPOSITOR"
+        return
+    fi
+    # sway first: it is the only one of these whose IPC can place a window at
+    # an exact rectangle, which is what puts programs inside the LCARS frame
+    # instead of over the top of it.  labwc can host windows but not position
+    # them from outside.  cage is a single-client kiosk, so a program launched
+    # from the shell cannot be seen at all — last resort, not first choice.
+    for candidate in sway labwc weston cage; do
+        if command -v "$candidate" >/dev/null 2>&1; then
+            echo "$candidate"
+            return
+        fi
+    done
+    echo ""
+}
+
+COMPOSITOR="$(pick_compositor)"
+
+# A session bus, or half the desktop silently does nothing.
+#
+# GNOME Terminal, Files, the xdg-desktop-portal, notifications and anything
+# else D-Bus activated do not start by running the binary — the binary asks a
+# service on the session bus to do it. With no bus, that request goes nowhere
+# and the program simply never appears, with no error anywhere.
+#
+# A full desktop session sets this up for you. A bare compositor does not, so
+# the session has to do it itself.
+DBUS_WRAP=""
+if [ -z "${DBUS_SESSION_BUS_ADDRESS:-}" ] && command -v dbus-run-session >/dev/null 2>&1; then
+    DBUS_WRAP="dbus-run-session --"
+fi
+
+# Hand the environment to the user systemd instance too, so services started
+# later inherit the display and the bus rather than guessing.
+export_environment() {
+    if command -v systemctl >/dev/null 2>&1; then
+        systemctl --user import-environment \
+            WAYLAND_DISPLAY DISPLAY XDG_SESSION_TYPE XDG_CURRENT_DESKTOP \
+            XDG_SESSION_DESKTOP DBUS_SESSION_BUS_ADDRESS SWAYSOCK \
+            >/dev/null 2>&1 || true
+    fi
+}
+
+# When the shell exits — DEACTIVATE, Ctrl+Q, or a crash — the compositor must
+# exit too.  Leaving it running with no client gives a black screen and a
+# cursor, with no way out but a TTY, which is an alarming thing to hand
+# someone.  Ending the compositor returns them to the login screen instead.
+#
+# The compositor launches this wrapper rather than the shell directly.
+RUNNER=""
+make_runner() {
+    RUNNER="$(mktemp)"
+    {
+        echo '#!/bin/sh'
+        echo "\"$SHELL_BIN\" $SHELL_ARGS"
+        echo 'status=$?'
+        echo '# The shell has stopped. End the session rather than leaving a'
+        echo '# blank screen with no way back.'
+        echo 'if [ -n "${SWAYSOCK:-}" ] && command -v swaymsg >/dev/null 2>&1; then'
+        echo '    swaymsg exit >/dev/null 2>&1'
+        echo 'fi'
+        echo 'pkill -x labwc >/dev/null 2>&1'
+        echo 'pkill -x weston >/dev/null 2>&1'
+        echo 'exit $status'
+    } >"$RUNNER"
+    chmod 0755 "$RUNNER"
+}
+
+case "$COMPOSITOR" in
+    cage)
+        # cage already exits when its only client does, so no wrapper needed.
+        exec $DBUS_WRAP cage -s -- "$SHELL_BIN" $SHELL_ARGS
+        ;;
+    labwc)
+        make_runner
+        trap 'rm -f "$RUNNER"' EXIT
+        exec $DBUS_WRAP labwc -s "$RUNNER"
+        ;;
+    sway)
+        # sway tiles by default, which halves the shell the moment anything
+        # else opens.  The shipped config floats everything so the shell can
+        # place programs inside its own frame instead.  It is copied to the
+        # user's config directory on first run so it can be edited.
+        CONF_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/earth-os"
+        CONF="$CONF_DIR/sway.conf"
+
+        TEMPLATE=""
+        for candidate in \
+            "$(dirname "$0")/../share/earth-os/sway.conf" \
+            /usr/share/earth-os/sway.conf \
+            /usr/local/share/earth-os/sway.conf
+        do
+            if [ -f "$candidate" ]; then
+                TEMPLATE="$candidate"
+                break
+            fi
+        done
+
+        config_version() {
+            [ -f "$1" ] || { echo 0; return; }
+            v=$(sed -n 's/^# earth-os-config-version: *//p' "$1" | head -n1)
+            echo "${v:-0}"
+        }
+
+        if [ -n "$TEMPLATE" ]; then
+            mkdir -p "$CONF_DIR"
+            if [ ! -f "$CONF" ]; then
+                cp "$TEMPLATE" "$CONF"
+            elif [ "$(config_version "$CONF")" -lt "$(config_version "$TEMPLATE")" ] 2>/dev/null; then
+                # An older copy would keep a broken keybinding forever, which
+                # is how someone ends up in a session with no terminal.
+                cp "$CONF" "$CONF.bak"
+                cp "$TEMPLATE" "$CONF"
+            fi
+        fi
+        if [ -f "$CONF" ]; then
+            exec $DBUS_WRAP sway -c "$CONF"
+        fi
+        # No template found: a minimal inline config that still floats, and
+        # still ends the session when the shell stops.
+        make_runner
+        CONF="$(mktemp)"
+        trap 'rm -f "$CONF" "$RUNNER"' EXIT
+        cat >"$CONF" <<EOF
+output * bg #000000 solid_color
+default_border none
+default_floating_border none
+for_window [app_id=".*"] floating enable, border none
+for_window [class=".*"] floating enable, border none
+exec "$RUNNER"
+EOF
+        exec $DBUS_WRAP sway -c "$CONF"
+        ;;
+    weston)
+        make_runner
+        trap 'rm -f "$RUNNER"' EXIT
+        exec $DBUS_WRAP weston --shell=kiosk-shell.so -- "$RUNNER"
+        ;;
+    *)
+        echo "earth-os: no Wayland compositor found, running directly" >&2
+        exec "$SHELL_BIN" $SHELL_ARGS
+        ;;
+esac

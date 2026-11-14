@@ -1,0 +1,44 @@
+{"category": "possessive", "text": "my computer is struggling because several programs are consuming memory", "expect": "performance_report", "concepts": ["computer", "slow", "program", "use", "memory"], "attach": ["user>computer"], "not_attach": ["user>memory"]}
+{"category": "possessive", "text": "programs are consuming my memory", "expect": "top_memory", "concepts": ["program", "use", "memory"], "attach": ["user>memory"], "not_attach": []}
+{"category": "possessive", "text": "my laptop is taking up a lot of memory", "expect": "memory_report", "concepts": ["computer", "use", "memory"], "attach": ["user>computer"], "not_attach": ["user>memory"]}
+{"category": "possessive", "text": "what is using my ram", "expect": "top_memory", "concepts": ["use", "memory"], "attach": ["user>memory"], "not_attach": []}
+{"category": "possessive", "text": "is my disk full", "expect": "hardware.disk", "concepts": ["disk", "capacity"], "attach": ["user>disk"], "not_attach": []}
+{"category": "possessive", "text": "how hot is my processor", "expect": "hardware.temperature", "concepts": ["hot", "cpu"], "attach": ["user>cpu"], "not_attach": []}
+{"category": "possessive", "text": "what is your name", "expect": "system.hostname", "concepts": ["call"], "attach": ["computer>call"], "not_attach": []}
+{"category": "possessive", "text": "what is my name", "expect": "user.identity", "concepts": ["call"], "attach": ["user>call"], "not_attach": []}
+{"category": "possessive", "text": "my program is using too much memory", "expect": "memory_report", "concepts": ["program", "use", "memory"], "attach": ["user>program"], "not_attach": ["user>memory"]}
+{"category": "possessive", "text": "is your memory full", "expect": "hardware.memory", "concepts": ["memory", "capacity"], "attach": ["computer>memory"], "not_attach": []}
+{"category": "possessive", "text": "my free memory is low", "expect": "hardware.memory", "concepts": ["memory"], "attach": ["user>memory"], "not_attach": []}
+{"category": "possessive", "text": "my wifi keeps dropping", "expect": "network.wireless", "concepts": ["wifi", "network"], "attach": ["user>wifi"], "not_attach": []}
+{"category": "multiple subjects", "text": "the browser and the editor are both using lots of memory", "expect": "memory_report", "concepts": ["use", "memory"], "attach": [], "not_attach": []}
+{"category": "multiple subjects", "text": "my computer and my phone are both slow", "expect": "performance_report", "concepts": ["computer", "slow"], "attach": ["user>computer", "user>phone"], "not_attach": []}
+{"category": "multiple subjects", "text": "the cpu is busy and the memory is full", "expect": "performance_report", "concepts": ["cpu", "load", "memory", "capacity"], "attach": [], "not_attach": []}
+{"category": "multiple subjects", "text": "the fan is loud and the laptop is hot", "expect": "hardware.temperature", "concepts": ["computer", "hot"], "attach": [], "not_attach": []}
+{"category": "multiple subjects", "text": "chrome is eating memory while the disk is almost full", "expect": "performance_report", "concepts": ["use", "memory", "disk", "capacity"], "attach": [], "not_attach": []}
+{"category": "memory vs cpu", "text": "what is using the most cpu", "expect": "performance_report", "concepts": ["use", "cpu"], "attach": [], "not_attach": []}
+{"category": "memory vs cpu", "text": "which program is using the most processor", "expect": "performance_report", "concepts": ["program", "use", "cpu"], "attach": [], "not_attach": []}
+{"category": "memory vs cpu", "text": "what is using the most memory", "expect": "top_memory", "concepts": ["use", "memory"], "attach": [], "not_attach": []}
+{"category": "memory vs cpu", "text": "is it the cpu or the memory", "expect": "performance_report", "concepts": ["cpu", "memory"], "attach": [], "not_attach": []}
+{"category": "memory vs cpu", "text": "the processor is maxed out", "expect": "hardware.cpu_load", "concepts": ["cpu", "load"], "attach": [], "not_attach": []}
+{"category": "memory vs cpu", "text": "memory usage is high but cpu is idle", "expect": "memory_report", "concepts": ["memory", "load", "cpu"], "attach": [], "not_attach": []}
+{"category": "memory vs cpu", "text": "cpu usage is high but memory is fine", "expect": "performance_report", "concepts": ["cpu", "load", "memory"], "attach": [], "not_attach": []}
+{"category": "missing vocabulary", "text": "my computer is struggling", "expect": "performance_report", "concepts": ["computer", "slow"], "attach": ["user>computer"], "not_attach": []}
+{"category": "missing vocabulary", "text": "the machine is choking", "expect": "performance_report", "concepts": ["computer", "slow"], "attach": [], "not_attach": []}
+{"category": "missing vocabulary", "text": "the laptop is freezing up", "expect": "performance_report", "concepts": ["computer", "slow"], "attach": [], "not_attach": []}
+{"category": "missing vocabulary", "text": "my pc is bogged down", "expect": "performance_report", "concepts": ["computer", "slow"], "attach": ["user>computer"], "not_attach": []}
+{"category": "missing vocabulary", "text": "how much juice is left", "expect": "hardware.battery", "concepts": ["battery"], "attach": [], "not_attach": []}
+{"category": "missing vocabulary", "text": "how toasty is the cpu", "expect": "hardware.temperature", "concepts": ["hot", "cpu"], "attach": [], "not_attach": []}
+{"category": "ambiguous", "text": "the computer is running", "expect": "-", "concepts": ["computer"], "attach": [], "not_attach": []}
+{"category": "ambiguous", "text": "i am running a program", "expect": "-", "concepts": ["program"], "attach": [], "not_attach": []}
+{"category": "ambiguous", "text": "my memory is terrible", "expect": "-", "concepts": ["memory"], "attach": ["user>memory"], "not_attach": []}
+{"category": "ambiguous", "text": "i ran out of memory", "expect": "memory_report", "concepts": ["memory"], "attach": [], "not_attach": []}
+{"category": "ambiguous", "text": "what's the load on the cpu", "expect": "hardware.cpu_load", "concepts": ["load", "cpu"], "attach": [], "not_attach": []}
+{"category": "ambiguous", "text": "how is the charge", "expect": "hardware.battery", "concepts": ["battery"], "attach": [], "not_attach": []}
+{"category": "ambiguous", "text": "how hot is it outside", "expect": "-", "concepts": ["hot"], "attach": [], "not_attach": []}
+{"category": "negation and context", "text": "don't tell me the memory, tell me the cpu", "expect": "hardware.cpu_load", "concepts": ["memory", "cpu"], "attach": [], "not_attach": []}
+{"category": "negation and context", "text": "memory is fine, why is the computer slow", "expect": "performance_report", "concepts": ["memory", "computer", "slow"], "attach": [], "not_attach": []}
+{"category": "negation and context", "text": "it's not the memory, the cpu is slow", "expect": "performance_report", "concepts": ["memory", "cpu", "slow"], "attach": [], "not_attach": []}
+{"category": "negation and context", "text": "never mind the memory", "expect": "-", "concepts": ["memory"], "attach": [], "not_attach": []}
+{"category": "negation and context", "text": "don't lock my screen", "expect": "-", "concepts": ["screen"], "attach": ["user>screen"], "not_attach": []}
+{"category": "negation and context", "text": "why isn't my wifi working", "expect": "network.wireless", "concepts": ["wifi"], "attach": ["user>wifi"], "not_attach": []}
+{"category": "negation and context", "text": "my computer isn't slow anymore", "expect": "-", "concepts": ["computer", "slow"], "attach": ["user>computer"], "not_attach": []}

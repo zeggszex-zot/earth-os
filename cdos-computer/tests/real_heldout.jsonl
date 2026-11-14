@@ -1,0 +1,40 @@
+{"kind": "milestone", "question": "What is the food of a blue whale?", "gold": ["carnivore"], "expect": "answered"}
+{"kind": "milestone", "question": "What does a blue whale eat?", "gold": ["carnivore"], "expect": "answered"}
+{"kind": "milestone", "question": "What is a blue whale's diet?", "gold": ["carnivore"], "expect": "answered"}
+{"kind": "lexicon", "question": "what food does a giraffe eat", "gold": ["herbivore"], "expect": "answered"}
+{"kind": "lexicon", "question": "food of a brown bear", "gold": ["omnivore"], "expect": "answered"}
+{"kind": "lexicon", "question": "what is the environment of a polar bear", "gold": ["arctic"], "expect": "answered"}
+{"kind": "lexicon", "question": "where does a kangaroo live", "gold": ["grassland"], "expect": "answered"}
+{"kind": "lexicon", "question": "what is the home of a bat", "gold": ["cave"], "expect": "answered"}
+{"kind": "lexicon", "question": "what money is used in japan", "gold": ["yen"], "expect": "answered"}
+{"kind": "lexicon", "question": "kenya's money", "gold": ["shilling"], "expect": "answered"}
+{"kind": "lexicon", "question": "what tongue do they speak in brazil", "gold": ["portuguese"], "expect": "answered"}
+{"kind": "lexicon", "question": "the language of egypt", "gold": ["arabic"], "expect": "answered"}
+{"kind": "lexicon", "question": "what is the capital city of peru", "gold": ["lima"], "expect": "answered"}
+{"kind": "lexicon", "question": "what is the chief city of canada", "gold": ["ottawa"], "expect": "answered"}
+{"kind": "lexicon", "question": "which continent is kenya on", "gold": ["africa"], "expect": "answered"}
+{"kind": "lexicon", "question": "how many moons does mars have", "gold": ["2"], "expect": "answered"}
+{"kind": "lexicon", "question": "how many satellites does neptune have", "gold": ["16"], "expect": "answered"}
+{"kind": "plain", "question": "what is the capital of italy", "gold": ["rome"], "expect": "answered"}
+{"kind": "plain", "question": "what currency does india use", "gold": ["rupee"], "expect": "answered"}
+{"kind": "plain", "question": "what is the habitat of an eagle", "gold": ["mountain"], "expect": "answered"}
+{"kind": "plain", "question": "what is the official language of mexico", "gold": ["spanish"], "expect": "answered"}
+{"kind": "direction", "question": "what orbits mars", "gold": ["phobos"], "expect": "answered"}
+{"kind": "direction", "question": "what does io orbit", "gold": ["jupiter"], "expect": "answered"}
+{"kind": "direction", "question": "anything orbiting jupiter?", "gold": ["io"], "expect": "answered"}
+{"kind": "direction", "question": "deimos orbits what", "gold": ["mars"], "expect": "answered"}
+{"kind": "dictionary", "question": "what is the opposite of hot", "gold": ["cold"], "expect": "answered"}
+{"kind": "dictionary", "question": "what kind of animal is a dog", "gold": ["canine"], "expect": "answered"}
+{"kind": "dictionary", "question": "another word for big", "gold": ["large"], "expect": "answered"}
+{"kind": "dictionary", "question": "what does carnivore mean", "gold": ["flesh"], "expect": "answered"}
+{"kind": "unknown", "question": "what is the food of japan", "gold": [], "expect": "unsupported"}
+{"kind": "unknown", "question": "what currency does a lion use", "gold": [], "expect": "unsupported"}
+{"kind": "unknown", "question": "what is the capital of jupiter", "gold": [], "expect": "unsupported"}
+{"kind": "unknown", "question": "what does a koala drink", "gold": [], "expect": "unsupported"}
+{"kind": "unknown", "question": "what is the money of a giraffe", "gold": [], "expect": "unsupported"}
+{"kind": "unknown", "question": "what orbits venus", "gold": [], "expect": "unsupported"}
+{"kind": "unknown", "question": "what is the environment of canada", "gold": [], "expect": "unsupported"}
+{"kind": "unknown", "question": "what language does a wolf speak", "gold": [], "expect": "unsupported"}
+{"kind": "unknown", "question": "what is the tongue of a giraffe", "gold": [], "expect": "unsupported"}
+{"kind": "unknown", "question": "what is the height of brazil", "gold": [], "expect": "unsupported"}
+{"kind": "unknown", "question": "who is the president of narnia", "gold": [], "expect": "unsupported"}

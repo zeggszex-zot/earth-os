@@ -1,0 +1,20 @@
+LCARS x32 Language File
+<Language:"Standard">
+		myStartMenu = "START MENU"
+        myComp = "MY COMPUTER"
+        mySettings = "SETTINGS"
+        myEngineering = "ENGINEERING"
+        myModeSelect = "MODE SELECT"
+        myDeactivate = "DEACTIVATE"
+        myAlert = "RED ALERT"
+        myDestruct = "AUTO DESTRUCT"
+        myPhoto = "PHOTO VIEWER"
+        myButtonManager = "MANAGE PERSONAL PROGRAMS"
+        myUserButtons = "PERSONAL PROGRAMS"
+        myDocuments = "MY DOCUMENTS"
+        myPictures = "MY PICTURES"
+        myBrowser = "BROWSER"
+        ShowTrayButton = "SHOW TRAY ICONS"
+        myOSK = "OSK"
+        mySpeech = "SPEECH"
+</Language>

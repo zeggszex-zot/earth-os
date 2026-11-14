@@ -1,0 +1,16 @@
+{"question": "what money does france use", "gold": ["euro"], "expect": "answered"}
+{"question": "the money of sweden", "gold": ["krona"], "expect": "answered"}
+{"question": "what money do they use in russia", "gold": ["ruble"], "expect": "answered"}
+{"question": "nigeria money", "gold": ["naira"], "expect": "answered"}
+{"question": "what is the home of a tiger", "gold": ["forest"], "expect": "answered"}
+{"question": "the home of a dolphin", "gold": ["ocean"], "expect": "answered"}
+{"question": "zebra home", "gold": ["savanna"], "expect": "answered"}
+{"question": "what is the home of a penguin", "gold": ["antarctic"], "expect": "answered"}
+{"question": "what tongue is spoken in china", "gold": ["mandarin"], "expect": "answered"}
+{"question": "the tongue of sweden", "gold": ["swedish"], "expect": "answered"}
+{"question": "tongue of russia", "gold": ["russian"], "expect": "answered"}
+{"question": "what is the grub of a tiger", "gold": ["carnivore"], "expect": "answered"}
+{"question": "grub of an elephant", "gold": ["herbivore"], "expect": "answered"}
+{"question": "what is the landmass of france", "gold": ["europe"], "expect": "answered"}
+{"question": "kenya's money", "gold": ["shilling"], "expect": "answered"}
+{"question": "what is the home of a bat", "gold": ["cave"], "expect": "answered"}

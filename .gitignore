@@ -1,0 +1,18 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Conformance output: machine-specific, regenerate with `make conformance`
+reports/
+cdos-conformance.py
+
+# Build products
+dist/
+build/
+*.tar.gz
+
+# CDOS Computer writes its answer log beside its own code when run embedded
+# with a config that names no log_file (as the routing audit's reproductions did).
+cdos-computer/computer.log.jsonl
