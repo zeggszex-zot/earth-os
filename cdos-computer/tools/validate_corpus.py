@@ -21,7 +21,6 @@ from __future__ import annotations
 import argparse
 import gzip
 import json
-import re
 import sys
 import time
 from collections import Counter
@@ -30,11 +29,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from computer.corpus import Corpus, fnv1a, key_of  # noqa: E402
-
-KINDS = {"S", "N", "T", "D"}
-DATE = re.compile(r"^-?\d+(?:-\d{2}(?:-\d{2})?)?(?:T.*)?$")     # any number of year digits: -4527000000 is a date
-DEEP_TIME = re.compile(r"^-?\d{5,}")
-YEAR = re.compile(r"^-?\d+$")
+from computer.pfrow import DATE, DEEP_TIME, KINDS, YEAR, field_problems  # noqa: E402,F401
 
 
 def lines(path: Path):
@@ -86,26 +81,10 @@ def validate(base: Path, loads: int = 3, sample: int = 8) -> dict:
             dup[line] += 1
             if fnv1a(subj) % meta["s_shards"] != n:
                 problem("subject in the wrong s shard", f"{subj} in {p.name}")
-            if kind not in KINDS:
-                problem("unknown kind", line[:120])
-            if kind == "N":
-                try:
-                    float(value.replace(",", ""))
-                except ValueError:
-                    problem("N value isn't a number", line[:120])
-            if kind == "D" and not DATE.match(value.strip()):
-                problem("D value isn't a date", line[:120])
-            elif kind == "D" and DEEP_TIME.match(value.strip()):
+            for name in field_problems(kind, value, start, until, conf):     # shared with acquire (pfrow)
+                problem(name, line[:120])
+            if kind == "D" and DATE.match(value.strip()) and DEEP_TIME.match(value.strip()):
                 deep_time += 1                     # valid (a geological year), counted so a reader knows they exist
-            for y in (start, until):
-                if y and not YEAR.match(y):
-                    problem("start/until isn't a year", line[:120])
-            if conf:
-                try:
-                    if not 0 <= float(conf) <= 1:
-                        problem("confidence outside 0..1", line[:120])
-                except ValueError:
-                    problem("confidence isn't a number", line[:120])
             if kind == "S":
                 forward[(key_of(value), subj, rel, start, until)] += 1
     for p in v_files:

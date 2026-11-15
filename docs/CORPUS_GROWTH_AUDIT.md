@@ -47,10 +47,29 @@ The audit below is kept as written on 2026-11-14. What has changed since:
   `verify` = build + `validate_corpus` + the 73 review cases, failing only
   when a case that passed on the last verified build no longer does.
   `build_shards.py` reads a guarded corpus under the shared lock. The real
-  `corpus.pf` is not guarded yet: `init` on it is a separate, deliberate
-  step.
+  `corpus.pf` was guarded on 2026-11-15 (`init`, generation 1, one backup)
+  and verified the same day: the 54 review cases that pass are the baseline.
+- **Phase 2, the pipeline core, is built** (`cdos-computer/computer/acquire/`,
+  `python3 -m computer.acquire {status,plan,run,show,integrate}`, root
+  `~/cdos/acquire`). Approved sources only (Q1: `approved_by`/`approved_at`
+  in `sources.toml`); downloads resume with HTTP Range, are size- and
+  bandwidth-limited, and are verified by sha256 before use (failures are
+  quarantined); runs go parse → map → normalise → validate → dedupe →
+  conflicts → `staging/<source>/<run>/` with every rejected record logged
+  and counts reconciled. `integrate` refuses: nothing writes `corpus.pf`.
+  The fact key and row checks are shared by the build, the validator and
+  the pipeline (`computer/pfrow.py`), with `ENTITY=` in the key (Q3); the
+  real corpus still builds to `sha256:87ee23f5…`. A new row with `ENTITY=`
+  is also a duplicate of the same fact in the master without one (a legacy
+  row, until Q2 re-imports its source).
 
 **Open items found on 2026-11-15:**
+
+- **Before anything with `ENTITY=` is integrated:** the reader shows every
+  qualifier except one that starts with `SENSE=` (`Fact.sentence`), so it
+  would say "entity wd:q1150" aloud. It must skip `ENTITY=` too, and the
+  qualifier column needs a stated separator for more than one qualifier
+  (the pipeline uses a space).
 
 - **"Is X a kind of Y" when only an opposite is known.** After D1, "is
   midnight a kind of noon" is answered "The opposite of noon is midnight."

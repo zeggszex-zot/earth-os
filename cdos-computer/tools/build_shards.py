@@ -57,12 +57,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from computer.corpus import content_hash, fnv1a, key_of  # noqa: E402
 from computer.corpus_guard import CorpusGuard  # noqa: E402
+from computer import pfrow  # noqa: E402
+from computer.pfrow import SYNSET_ID, TEXT_RELS  # noqa: E402,F401
 
-TEXT_RELS = {"DEFINITION", "EXAMPLE", "DESCRIPTION"}
 RELABEL = {"ANTONYM": "HYPERNYM", "HYPERNYM": "HYPONYM", "WORDNET_POINTER_!": "WN_ANTONYM",
            "WORDNET_POINTER_&": "WN_SIMILAR_TO"}
-SYNSET_ID = re.compile(r"^WN_[a-z]_\d{8}$")
-QID = re.compile(r"^Q\d+$")
+QID =re.compile(r"^Q\d+$")
 QID_SOURCE = re.compile(r"^(Q\d+)/")
 # Wikidata quantity units the import left as ids.  Only ones checked against Wikidata; the rest stay hidden (phrase.py).
 WD_UNITS = {"WD_Q613726": "YOTTAGRAM", "WD_Q180892": "SOLAR_MASS", "WD_Q651336": "JUPITER_MASS",
@@ -166,16 +166,9 @@ def _build(src, out, s_shards=256, v_shards=256, fix_wordnet=False, fix_wikidata
                 report["Wikidata unit ids named"] += 1
         if fix_keys and subj != key_of(subj):
             report["subjects stored under their lookup key"] += 1
-            subj = key_of(subj)
-        if rel in TEXT_RELS:
-            kind = "T"
-        start = int(vf) if vf not in ("", "0") else None
-        until = int(vu) if vu not in ("", "0") else None
-        if stype == "OEWN" and SYNSET_ID.match(sid) and not qual:
-            qual = f"SENSE={sid}"
-        sense = re.search(r"SENSE=\S+", qual or "")
-        key = (subj, rel, key_of(value) if fix_keys and kind == "S" else value, unit, start, until,
-               sense.group(0) if sense else "")      # one word, two senses: two facts
+        # The last steps and the fact key are shared with the validator and computer/acquire (computer/pfrow.py)
+        subj, kind, start, until, qual = pfrow.finish(subj, rel, kind, value, vf, vu, stype, sid, qual, fix_keys)
+        key = pfrow.fact_key(subj, rel, kind, value, unit, start, until, qual, fix_keys)
         if key in seen:
             report["dropped: duplicate after repair"] += 1
             continue
