@@ -586,6 +586,15 @@ class Navigator:
             pseudo = [Fact(r["subject"], r["relation"], "S", it.key, conf=r["conf"]) for r in self.corpus.reverse(it.key)]
             rels = self.match_relations(pseudo, rel)
             hits = [Item(f.subject, f) for f in self.corpus.reverse_facts(it.key, year, self.min_conf, rels)] if rels else []
+            # A relation that holds both ways: the thing's own rows answer too ("France SHARES_BORDER_WITH Monaco"
+            # says Monaco borders France), each cited as stored; the rule is recorded with the answer.
+            for r in rels or [rel]:
+                sym = self.knowledge.symmetric.get(r)
+                if sym:
+                    own = [Item(key_of(f.value), f) for f in self.facts(it.key, year) if f.relation == r]
+                    if own:
+                        hits += own
+                        self.rules_used.append(sym.rule_id)
             if hits:
                 if src.step.op == "FIND":
                     src.items = [it]
@@ -1122,9 +1131,14 @@ class Navigator:
             return f"I think you mean {w}."
         return f"I don't have {said} on its own, but I have {w}."
 
-    @staticmethod
-    def _say_who(items) -> str:
+    def _say_who(self, items) -> str:
         facts = [i.fact for i in items]
+        if facts[0].relation in self.knowledge.symmetric:
+            # Said from the side of the thing asked about, so it reads right whichever row each name came from
+            about = {key_of(i.fact.value) if key_of(i.fact.subject) == i.key else key_of(i.fact.subject) for i in items}
+            names = sorted({i.key for i in items})
+            return (f"{listing([name_of(k) for k in sorted(about)])} {rel_text(facts[0].relation)} "
+                    f"{listing([name_of(n) for n in names])}.")
         if re.match(r"^(LOCATED|PART_OF|MADE_OF|NAMED_AFTER|MEMBER_OF)", facts[0].relation):
             names = sorted({f.subject for f in facts})
             verb = "are" if len(names) > 1 else "is"
@@ -1135,7 +1149,10 @@ class Navigator:
             by = {}
             for f in facts:
                 by.setdefault(f.subject, []).append(f)
-            return " ".join(sentence(sub, fs[0].relation, fs) for sub, fs in sorted(by.items())[:5])
+            said = " ".join(sentence(sub, fs[0].relation, fs) for sub, fs in sorted(by.items())[:5])
+            rest = sorted(by)[5:]
+            # Never cut a list short in silence: the ones not said in full are named
+            return said + (f" Also: {listing([name_of(n) for n in rest])}." if rest else "")
         return phrase_block({"reverse": facts[0].relation, "subject": facts[0].value,
                              "names": sorted({f.subject for f in facts})})
 

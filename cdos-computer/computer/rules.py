@@ -261,6 +261,15 @@ class Complete:
 
 
 @dataclass
+class Symmetric:
+    """A relation that holds both ways (if A shares a border with B, B shares one with A): "which countries border
+    France" can be answered from France's own rows as well as from the rows that point at France."""
+    rule_id: str
+    relation: str
+    why: str
+
+
+@dataclass(frozen=True)
 class Functional:
     """A relation with one applicable value at a time (a battery's rated energy capacity).  Two values that both
     hold in the year asked about (Fact.holds: a value whose period has ended, or hasn't begun, doesn't apply) and
@@ -277,6 +286,7 @@ class Knowledge:
     disjoint: list[Disjoint] = field(default_factory=list)
     complete: dict[str, Complete] = field(default_factory=dict)
     functional: dict[str, Functional] = field(default_factory=dict)
+    symmetric: dict[str, Symmetric] = field(default_factory=dict)
 
     def disjoint_pair(self, mine: set, theirs: set):
         """A rule and two classes (a in mine, b in theirs, a != b) that nothing can both be, or None."""
@@ -299,8 +309,8 @@ class Knowledge:
 
 
 def parse_knowledge(raw: dict) -> Knowledge:
-    if not isinstance(raw, dict) or set(raw) - {"disjoint", "complete", "functional"}:
-        raise RuleError("knowledge has disjoint, complete and functional lists")
+    if not isinstance(raw, dict) or set(raw) - {"disjoint", "complete", "functional", "symmetric"}:
+        raise RuleError("knowledge has disjoint, complete, functional and symmetric lists")
     k, seen = Knowledge(), set()
     for d in raw.get("disjoint", []):
         if set(d) - {"rule_id", "classes", "why"} or not isinstance(d.get("classes"), list) or len(d["classes"]) < 2:
@@ -330,6 +340,13 @@ def parse_knowledge(raw: dict) -> Knowledge:
             raise RuleError(f"functional rule {f['rule_id']}: rule_id or relation used twice")
         seen.add(f["rule_id"])
         k.functional[f["relation"]] = Functional(f["rule_id"], f["relation"], f["why"])
+    for y in raw.get("symmetric", []):
+        if set(y) != {"rule_id", "relation", "why"} or not all(isinstance(y[x], str) and y[x] for x in y):
+            raise RuleError(f"symmetric rule {y.get('rule_id')}: needs rule_id, relation and why")
+        if y["rule_id"] in seen or y["relation"] in k.symmetric:
+            raise RuleError(f"symmetric rule {y['rule_id']}: rule_id or relation used twice")
+        seen.add(y["rule_id"])
+        k.symmetric[y["relation"]] = Symmetric(y["rule_id"], y["relation"], y["why"])
     return k
 
 

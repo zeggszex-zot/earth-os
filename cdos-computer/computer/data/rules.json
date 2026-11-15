@@ -61,6 +61,13 @@
         "relation": "NOMINAL_VOLTAGE",
         "why": "a battery has one nominal voltage at a time"
       }
+    ],
+    "symmetric": [
+      {
+        "rule_id": "symmetric.shares_border_with",
+        "relation": "SHARES_BORDER_WITH",
+        "why": "if one country shares a border with another, the other shares it too"
+      }
     ]
   },
   "pathways": {
