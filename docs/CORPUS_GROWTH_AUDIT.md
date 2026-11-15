@@ -34,6 +34,25 @@ The audit below is kept as written on 2026-11-14. What has changed since:
   python3.12): Earth OS 1338 run, OK (4 skipped, 1 expected failure);
   `cdos-computer` 512 run, OK (97 skipped, 92 of them for numpy).
 - `corpus.pf` still hashes to `f17a638f…a792f425`.
+- **D1 is fixed** (`592983c`): the `--fix-wordnet` repair applies to OEWN
+  rows only. Built with `--fix-wordnet --fix-wikidata --fix-keys`, the
+  served corpus changes in exactly 425 rows (Wikidata `HYPERNYM` →
+  `ANTONYM`); its version is now `sha256:87ee23f5…`. The `cdos-computer`
+  suite is 516 run, OK (97 skipped).
+
+**Open items found on 2026-11-15:**
+
+- **"Is X a kind of Y" when only an opposite is known.** After D1, "is
+  midnight a kind of noon" is answered "The opposite of noon is midnight."
+  It no longer says a false "yes", but it does not answer the yes/no
+  question either.
+- **Five impossible-question cases in the real-corpus review.**
+  `test_real_corpus.test_every_failure_is_classified` (run with `CDOS_DATA`
+  set to a built `data/`) fails on W8, X1, X2, X3 and X6 ("what is the
+  capital of jupiter" and the like): each is answered with a plain
+  "NOT FOUND: no matching fact in the corpus…", which the review counts as
+  a fail. It fails identically before and after D1, so it predates that
+  change. The normal suite skips it because no `data/` folder exists.
 
 ---
 
