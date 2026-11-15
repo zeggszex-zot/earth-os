@@ -81,7 +81,7 @@ def validate(base: Path, loads: int = 3, sample: int = 8) -> dict:
             dup[line] += 1
             if fnv1a(subj) % meta["s_shards"] != n:
                 problem("subject in the wrong s shard", f"{subj} in {p.name}")
-            for name in field_problems(kind, value, start, until, conf):     # shared with acquire (pfrow)
+            for name in field_problems(kind, value, start, until, conf, qual):   # shared with acquire (pfrow)
                 problem(name, line[:120])
             if kind == "D" and DATE.match(value.strip()) and DEEP_TIME.match(value.strip()):
                 deep_time += 1                     # valid (a geological year), counted so a reader knows they exist

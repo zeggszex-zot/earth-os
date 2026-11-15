@@ -30,6 +30,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 
+from . import qualifiers as Q
 from .calc import calculate
 from .clock import current_year
 from .corpus import NOT_KNOWLEDGE
@@ -636,8 +637,8 @@ def _rel(rel: str) -> str:
 
 
 def _qual(x: Quantity) -> str:
-    if x.fact and x.fact.get("qual"):
-        return x.fact["qual"].split("=", 1)[-1].lower().replace("_", " ")
+    if x.fact and Q.shown(x.fact.get("qual")):
+        return " ".join(v for _, v in Q.qualifiers(Q.shown(x.fact["qual"]))).lower().replace("_", " ")
     return _rel(x.fact["relation"]) if x.fact else x.text
 
 

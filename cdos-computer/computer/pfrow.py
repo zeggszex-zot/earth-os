@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import re
 
+from computer import qualifiers as Q
 from computer.corpus import key_of
 
 COLUMNS = ("subject", "relation", "kind", "value", "unit", "valid_from", "valid_until", "source_type", "source_id",
@@ -20,11 +21,9 @@ DEEP_TIME = re.compile(r"^-?\d{5,}")
 YEAR = re.compile(r"^-?\d+$")
 TEXT_RELS = {"DEFINITION", "EXAMPLE", "DESCRIPTION"}
 SYNSET_ID = re.compile(r"^WN_[a-z]_\d{8}$")
-SENSE = re.compile(r"SENSE=\S+")
-ENTITY = re.compile(r"ENTITY=\S+")
 
 
-def field_problems(kind: str, value: str, start: str, until: str, conf: str) -> list[str]:
+def field_problems(kind: str, value: str, start: str, until: str, conf: str, qual: str = "") -> list[str]:
     """The validator's checks on one row's fields, as the names of the problems found (empty: none)."""
     out = []
     if kind not in KINDS:
@@ -45,6 +44,8 @@ def field_problems(kind: str, value: str, start: str, until: str, conf: str) -> 
                 out.append("confidence outside 0..1")
         except ValueError:
             out.append("confidence isn't a number")
+    if Q.problems(qual):
+        out.append("qualifier isn't KEY=VALUE[;KEY=VALUE...]")
     return out
 
 
@@ -65,7 +66,6 @@ def finish(subj, rel, kind, value, vf, vu, stype, sid, qual, fix_keys):
 def fact_key(subj, rel, kind, value, unit, start, until, qual, fold_values) -> tuple:
     """Two rows with the same key are one fact.  One word with two senses (SENSE=), or one name for two things
     (ENTITY=, Q3), stays two facts."""
-    sense = SENSE.search(qual or "")
-    entity = ENTITY.search(qual or "")
+    sense, entity = Q.get(qual, "SENSE"), Q.get(qual, "ENTITY")
     return (subj, rel, key_of(value) if fold_values and kind == "S" else value, unit, start, until,
-            sense.group(0) if sense else "", entity.group(0) if entity else "")
+            f"SENSE={sense}" if sense else "", f"ENTITY={entity}" if entity else "")

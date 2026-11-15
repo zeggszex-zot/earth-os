@@ -120,11 +120,12 @@ The audit below is kept as written on 2026-11-14. What has changed since:
 
 **Open items found on 2026-11-15:**
 
-- **Before anything with `ENTITY=` is integrated:** the reader shows every
-  qualifier except one that starts with `SENSE=` (`Fact.sentence`), so it
-  would say "entity wd:q1150" aloud. It must skip `ENTITY=` too, and the
-  qualifier column needs a stated separator for more than one qualifier
-  (the pipeline uses a space).
+- **Closed: qualifiers.** The column holds `KEY=VALUE` separated by `;`
+  (`computer/qualifiers.py`); every existing row is one qualifier under it,
+  and the validator now checks the form. `SENSE=` and `ENTITY=` say which
+  fact a row is and are never said: a row with them answers exactly as the
+  same row without them (`tests/test_qualifiers.py`), while content
+  qualifiers (`REFERENCE=`, `MODE=`, …) still shape the answer.
 
 - **"Is X a kind of Y" when only an opposite is known.** After D1, "is
   midnight a kind of noon" is answered "The opposite of noon is midnight."

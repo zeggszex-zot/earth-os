@@ -9,6 +9,13 @@ from __future__ import annotations
 
 import re
 
+from . import qualifiers as Q
+
+
+def said(qual: str) -> str:
+    """Content qualifiers as words: "REFERENCE=SUN;STAGE=ADULT" -> "reference sun, stage adult"."""
+    return ", ".join(f"{k} {v}".lower().replace("_", " ") for k, v in Q.qualifiers(qual))
+
 CONCEPT_RELS = {"IS_A", "CATEGORY", "CLASS", "ATTRIBUTE", "DIET", "HYPERNYM", "HYPONYM", "PARITY", "SYNONYM",
                 "ANTONYM", "WN_ANTONYM", "WN_SIMILAR_TO", "DERIVATION", "PHASE", "STATE"}
 VERB_START = re.compile(r"^(HAS|IS|ORBITS|LOCATED|PART|MEMBER|NAMED|FOUNDED_BY|CONTAINS|BORDERS|FLOWS|SHARES|USES|PRODUCES|CONVERTS|WN_)")
@@ -160,19 +167,20 @@ def sentence(subject: str, rel: str, facts) -> str:
         if len(facts) > 1 and all(f.start is not None for f in facts):
             facts = [max(facts, key=lambda f: f.start)]
         parts = [f"{num(f.value)}{' ' + unit_of(f.unit) if unit_of(f.unit) else ''}{when(f)}" for f in facts[:3]]
-        if len({f.qual for f in facts[:3]}) > 1:
+        # Only the content qualifiers are said or compared: SENSE= and ENTITY= say which fact a row is (qualifiers.py)
+        shown = [Q.shown(f.qual) for f in facts[:3]]
+        if len(set(shown)) > 1:
             # Values with different qualifiers (idle 3 W, load 6.4 W): each value keeps its own, so a qualifier is
             # never said of the wrong value.
-            parts = [p + (f" ({f.qual.lower().replace('=', ' ').replace('_', ' ')})" if f.qual else "")
-                     for p, f in zip(parts, facts[:3])]
+            parts = [p + (f" ({said(q)})" if q else "") for p, q in zip(parts, shown)]
             return f"{S}'s {rel_text(rel)} is {', or '.join(parts)}."
-        ref = re.match(r"REFERENCE=(.+)$", f0.qual or "", re.I)
+        ref = next((v for k, v in Q.qualifiers(shown[0]) if k.upper() == "REFERENCE"), "")
         rw = rel_text(rel)
-        qual = f" ({f0.qual.lower().replace('=', ' ').replace('_', ' ')})" if f0.qual else ""
+        qual = f" ({said(shown[0])})" if shown[0] else ""
         if ref and VERB_END.search(rel):
-            rw, qual = f"{rw} {name_of(ref.group(1))}", ""
+            rw, qual = f"{rw} {name_of(ref)}", ""
         elif ref:
-            rw, qual = f"{rw} (relative to {name_of(ref.group(1))})", ""
+            rw, qual = f"{rw} (relative to {name_of(ref)})", ""
         return f"{S}'s {rw} is {', or '.join(parts)}{qual}."
     uniq = _uniq(value_of(f) + when(f) for f in facts if f.value != subject)[:10]
     if not uniq:

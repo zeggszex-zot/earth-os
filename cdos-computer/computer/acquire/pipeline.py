@@ -27,6 +27,7 @@ from computer.corpus import key_of
 from computer.governor import AuditLog, sha256_file, utc
 
 from .. import pfrow
+from .. import qualifiers as Q
 from . import DEFAULT_MASTER, DEFAULT_ROOT, INTEGRATE_OFF, AcquireError, registry
 from .fetch import Fetcher
 from .index import MasterIndex, key_hash
@@ -196,15 +197,15 @@ class Acquirer:
                     reject(n, sid_, "map", "source-id", "no source_id: every row keeps its original id", raw)
                     continue
                 rel, stype = src.relations[rel], src.source_type
-                if src.entity and not pfrow.ENTITY.search(qual):
-                    qual = (qual + " " if qual else "") + f"ENTITY={src.entity}:{sid_.split('/')[0]}"
+                if src.entity and not Q.get(qual, "ENTITY"):
+                    qual = (qual + Q.SEPARATOR if qual else "") + f"ENTITY={src.entity}:{sid_.split('/')[0]}"
                 # normalise: trimmed above; no bound is written 0; nothing else is changed
                 kind, vf, vu = kind.upper(), vf or "0", vu or "0"
                 if not subj or not value:
                     reject(n, sid_, "normalise", "empty", "the subject or the value is empty", raw)
                     continue
                 # validate: the validator's own checks
-                problems = pfrow.field_problems(kind, value, vf, vu, conf)
+                problems = pfrow.field_problems(kind, value, vf, vu, conf, qual)
                 if problems:
                     reject(n, sid_, "validate", problems[0], "; ".join(problems), raw)
                     continue

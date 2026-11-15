@@ -414,7 +414,7 @@ DECLARATIONS = [
        {"question": {"type": "str", "required": True}, **YEAR}, ENVELOPE, det=True, mem=15,
        requires=["file:data/meta.json", "capability:system.clock"],
        errors=["MISSING_FACT", "UNKNOWN_ENTITY", "CORPUS_INTEGRITY"],
-       modules=["computer.corpus"]),
+       modules=["computer.corpus", "computer.qualifiers"]),
     _d("planner.rules", "1.2.0", "question -> plans, by deterministic patterns",
        {"question": {"type": "str", "required": True}}, {"type": "plans"}, det=True, errors=["INVALID_INPUT"],
        modules=["computer.planner"]),

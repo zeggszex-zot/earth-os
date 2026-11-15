@@ -20,6 +20,7 @@ from collections import OrderedDict
 from dataclasses import dataclass
 from pathlib import Path
 
+from . import qualifiers as Q
 from .clock import current_year
 
 PRONOUNS = {"it", "its", "it's", "they", "them", "their", "that", "this", "he", "she",
@@ -201,8 +202,8 @@ class Fact:
         else:
             s = f"{self.subject} {rel} {self.value}"
         extra = []
-        if self.qual and not self.qual.startswith("SENSE="):      # a WordNet sense id is bookkeeping, not content
-            extra.append(self.qual.lower().replace("=", " "))
+        # SENSE= and ENTITY= say which fact this is, not anything about it (computer/qualifiers.py): never said
+        extra += [f"{k} {v}".lower() for k, v in Q.qualifiers(Q.shown(self.qual))]
         if self.start is not None or self.until is not None:
             extra.append(" ".join(x for x in (f"from {self.start}" if self.start is not None else "",
                                               f"until {self.until}" if self.until is not None else "") if x))

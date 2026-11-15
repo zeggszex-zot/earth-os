@@ -29,6 +29,7 @@ from collections import defaultdict
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
+from . import qualifiers as Q
 from .clock import current_year
 from .corpus import HINT_ALIASES, LEXICAL_RELS, META, STOP, Corpus, key_of, rel_words
 
@@ -49,8 +50,7 @@ SCHEMA_RELS = {"IS_FUNCTIONAL", "HAS_UNIT", "SYNSET", "DESCRIPTION", "ALSO_KNOWN
 
 def sense_of(f) -> str:
     """The WordNet sense a fact belongs to (tools/build_shards.py keeps it as SENSE=...), or ''."""
-    q = f.qual or ""
-    return q[6:] if q.startswith("SENSE=") else ""
+    return Q.get(f.qual, "SENSE")
 
 
 @dataclass
