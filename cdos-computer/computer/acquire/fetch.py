@@ -125,6 +125,17 @@ class Fetcher:
         self.journal.append({"event": "quarantined", "source": src.id, "file": dst.name, "why": why})
         return dst
 
+    def keep(self, src: Source, rel: str, data: bytes) -> Path:
+        """An API collection's file (computer/acquire/wikidata.py), written whole under collect/<source>/ and nowhere
+        else: the collector itself can't write files any other way."""
+        base = (self.root / "collect" / src.id).resolve()
+        path = (base / rel).resolve()
+        if base not in path.parents:
+            raise AcquireError(f"{src.id}: {rel!r} isn't inside {base}")
+        path.parent.mkdir(parents=True, exist_ok=True)
+        write_atomic(path, data)
+        return path
+
     def fetch_all(self, src: Source) -> dict[str, Fetched]:
         """Every file of the source, verified: {"": Fetched} for a single url, else {input name: Fetched}."""
         if src.unpinned:

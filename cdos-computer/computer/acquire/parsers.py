@@ -8,6 +8,8 @@ from __future__ import annotations
 
 import gzip
 import io
+import json
+import re
 import xml.etree.ElementTree as ET
 import zipfile
 from collections import defaultdict
@@ -368,4 +370,161 @@ def _known(x: str) -> bool:
         return True
 
 
-PARSERS = {"pf": parse_pf, "gwa_xml": parse_gwa_xml, "geonames": parse_geonames}
+
+# Wikidata units -> the corpus's unit codes (computer/phrase.py UNIT_WORDS, computer/quantity.py CORPUS_UNITS, and
+# the legacy rows' U and M_PER_S), each with the English label the unit item must have: a snapshot whose label for
+# one of these ids differs is refused, so a wrong id here can't put a wrong unit on a number.
+WIKIDATA_UNITS = {
+    "Q11573": ("M", "metre"), "Q828224": ("KM", "kilometre"), "Q174728": ("CM", "centimetre"),
+    "Q174789": ("MM", "millimetre"), "Q712226": ("KM2", "square kilometre"), "Q25343": ("M2", "square metre"),
+    "Q11570": ("KG", "kilogram"), "Q41803": ("G", "gram"), "Q191118": ("T", "tonne"), "Q25235": ("HOURS", "hour"),
+    "Q573": ("DAYS", "day"), "Q577": ("YEARS", "year"), "Q1092296": ("YEARS", "annum"),
+    "Q25267": ("C", "degree Celsius"), "Q11579": ("K", "kelvin"), "Q42289": ("F", "degree Fahrenheit"),
+    "Q844211": ("KG_PER_M3", "kilogram per cubic metre"), "Q182429": ("M_PER_S", "metre per second"),
+    "Q483261": ("U", "dalton"),
+}
+# A quantity whose unit makes it a different relation: a mass in daltons is an atomic mass (legacy did the same).
+BY_UNIT = {("P2067", "U"): "P2067_atomic"}
+GREGORIAN, EARTH = "Q1985727", "Q2"
+
+
+def _wd_year(t) -> str:
+    """A qualifier's year (P580/P582/P585), or "" when it hasn't one: before year 1, or less precise than a year."""
+    if not isinstance(t, dict) or int(t.get("precision", 0)) < 9:
+        return ""
+    m = re.match(r"^\+0*([1-9][0-9]*)-", str(t.get("time", "")))
+    return m.group(1) if m else ""
+
+
+def _wd_time(t) -> tuple[str, str]:
+    """(value, "") or ("", why): YYYY, YYYY-MM or YYYY-MM-DD, as the legacy rows wrote dates."""
+    m = re.match(r"^([+-])0*([0-9]+)-([0-9]{2})-([0-9]{2})T", str(t.get("time", "")))
+    prec = int(t.get("precision", 0))
+    if not m:
+        return "", "time: not a date"
+    if m.group(1) == "-" or m.group(2) == "0":
+        return "", "time-bce: a date before year 1 (the reader doesn't say those yet)"
+    if prec < 9:
+        return "", "time-precision: less precise than a year"
+    if str(t.get("calendarmodel", "")).rsplit("/", 1)[-1] != GREGORIAN and prec > 9:
+        return "", "time-julian: a Julian month or day (the year alone would be kept; this isn't converted)"
+    y, mo, d = m.group(2), m.group(3), m.group(4)
+    return (y if prec == 9 else f"{y}-{mo}" if prec == 10 else f"{y}-{mo}-{d}"), ""
+
+
+def parse_wikidata_snapshot(files: dict, cap: int = MAX_XML_BYTES) -> Iterator[tuple[int, list | None, str, str]]:
+    """A snapshot collected by computer/acquire/wikidata.py: one JSON line each for the header, the labels, the
+    redirects and the entities.  Rows have the legacy import's shape and ids (source_id Q<n>/P<n>, Q<n>/description,
+    Q<n>/sitelinks) so a generation swap replaces them, but every value is a name, never a Q-id (D3):
+
+        <label>  P<n>         S/N/D  <the value's English label | amount | date | lat,lon>  <unit code>  from  until
+        <label>  description  T      <the English description>
+        <label>  sitelinks    N      <how many Wikipedia (and sister) pages it has>
+
+    from/until are the years of the statement's P580/P585 and P582.  Deprecated statements, unknown or unnamed
+    values, units not in WIKIDATA_UNITS, coordinates on another globe, dates before year 1 and statements about the
+    entity itself are rejected with a reason, never written as ids.  Every row carries ENTITY=gn:<id> (an item
+    linked one to one with a staged GeoNames place, so both sources' rows are one thing) or ENTITY=wd:Q<n>."""
+    path = files["snapshot"] if isinstance(files, dict) else files
+    labels: dict[str, str] = {}
+    n, units_checked = 0, False
+    with gzip.open(path, "rt", encoding="utf-8") as fh:
+        for line in _capped(fh, cap):
+            n += 1
+            try:
+                o = json.loads(line)
+            except ValueError:
+                yield n, None, "unreadable: not a JSON line", line[:200]
+                continue
+            kind = o.get("type")
+            if kind == "label":
+                labels[o["id"]] = o["label"]
+                continue
+            if kind in ("snapshot", "redirect"):
+                continue
+            if kind != "entity":
+                yield n, None, f"unreadable: a line of type {kind!r}", line[:200]
+                continue
+            if not units_checked:                  # the labels come first: they're all read by the first entity
+                units_checked = True
+                for q, (_, want) in WIKIDATA_UNITS.items():
+                    if q in labels and labels[q] != want:
+                        raise AcquireError(f"the snapshot labels unit {q} {labels[q]!r}, not {want!r}: "
+                                           "WIKIDATA_UNITS is wrong for it, and no row is written with a unit that "
+                                           "may be wrong")
+            yield from _wikidata_rows(n, o, labels)
+
+
+def _capped(fh, cap: int):
+    total = 0
+    for line in fh:
+        total += len(line)
+        if total > cap:
+            raise AcquireError(f"the snapshot is over {cap:,} characters decompressed")
+        if line.strip():
+            yield line
+
+
+def _wikidata_rows(n: int, o: dict, labels: dict):
+    q, subj, ent = o["id"], o.get("label", ""), o["entity"]
+    if not subj:
+        yield n, None, "no-label: the entity has no English label (its rows aren't written under its id)", q
+        return
+
+    def row(rel, kind, value, unit="", vf="", vu="", sid=""):
+        return [subj, rel, kind, value, unit, vf or "0", vu or "0", "WIKIDATA", sid, "1.0", f"ENTITY={ent}"]
+
+    if o.get("description"):
+        yield n, row("description", "T", o["description"], sid=f"{q}/description"), "", f"{q} description"
+    if o.get("sitelinks"):
+        yield n, row("sitelinks", "N", str(o["sitelinks"]), sid=f"{q}/sitelinks"), "", f"{q} sitelinks"
+    for p, stmts in o.get("claims", {}).items():
+        if p == "P1566":
+            continue
+        for s in stmts:
+            raw = f"{q} {p} {json.dumps(s.get('value'), ensure_ascii=False)[:150]}"
+            if s.get("rank") == "deprecated":
+                yield n, None, "deprecated: Wikidata marks the statement wrong or superseded", raw
+                continue
+            v = s.get("value")
+            if v is None:
+                yield n, None, "no-value: an unknown value or none", raw
+                continue
+            quals = s.get("qualifiers") or {}
+            start = next((y for k in ("P580", "P585") for t in quals.get(k, []) if (y := _wd_year(t))), "")
+            until = next((y for t in quals.get("P582", []) if (y := _wd_year(t))), "")
+            rel, unit, why = p, "", ""
+            if isinstance(v, dict) and "id" in v:                                  # an item
+                if v["id"] == q:
+                    yield n, None, "self-reference: a statement about the entity naming itself", raw
+                    continue
+                kind, value = "S", labels.get(v["id"], "")
+                why = "" if value else f"no-label: {v['id']} has no English label"
+            elif isinstance(v, dict) and "amount" in v:                            # a quantity
+                kind, value = "N", str(v["amount"]).lstrip("+")
+                u = str(v.get("unit", "1")).rsplit("/", 1)[-1]
+                if u != "1":
+                    unit = WIKIDATA_UNITS.get(u, ("", ""))[0]
+                    why = "" if unit else f"unit: {u} ({labels.get(u, 'no label')}) isn't a unit the corpus has"
+                rel = BY_UNIT.get((p, unit), p)
+            elif isinstance(v, dict) and "time" in v:                              # a date
+                kind = "D"
+                value, why = _wd_time(v)
+            elif isinstance(v, dict) and "latitude" in v:                          # a place on a globe
+                kind, value = "S", f"{v['latitude']},{v['longitude']}"
+                globe = str(v.get("globe", "")).rsplit("/", 1)[-1]
+                why = "" if globe == EARTH else f"globe: a coordinate on {globe} ({labels.get(globe, 'no label')})"
+            elif isinstance(v, dict) and "text" in v:                              # monolingual text
+                kind, value = "S", str(v["text"])
+            elif isinstance(v, str):
+                kind, value = "S", v
+            else:
+                kind, value, why = "S", "", "value: a kind of value this importer doesn't read"
+            if why:
+                yield n, None, why, raw
+                continue
+            yield n, row(rel, kind, value, unit, start, until, f"{q}/{p}"), "", raw
+
+
+PARSERS = {"pf": parse_pf, "gwa_xml": parse_gwa_xml, "geonames": parse_geonames,
+           "wikidata_snapshot": parse_wikidata_snapshot}

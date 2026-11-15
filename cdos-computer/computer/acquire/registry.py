@@ -15,6 +15,11 @@
                                                  # `pin` downloads it (never parsing it) and prints its sha256, and a
                                                  # run refuses until a person has copied that sha256 here (approval)
     replaces     = { source_type = "OEWN", source_id = "^WN_[nvar]_[0-9]{8}$" }
+    collect      = { api = "https://www.wikidata.org/w/api.php", sparql = "https://query.wikidata.org/sparql",
+                     user_agent = "…", batch = 50, maxlag = 5, geonames = "geonames",
+                     legacy = { source_type = "WIKIDATA", source_id = "^Q[0-9]+/" } }
+                                                 # optional: the source is collected from an API (computer/acquire/
+                                                 # wikidata.py) into a snapshot, which its one input then names
     hold_homonyms = false                        # optional: true holds back the rows of a name that stands for several
                                                  # things (held.pf), for a source whose rows can't be told apart
                                                  # optional: the generation this source replaces (Q2); those master
@@ -71,6 +76,7 @@ class Source:
     replaces: dict = field(default_factory=dict)
     inputs: dict = field(default_factory=dict)       # name -> {"url", "sha256"}; empty for a single-url source
     hold_homonyms: bool = False                      # hold back names that stand for several things (held.pf)
+    collect: dict = field(default_factory=dict)      # how an API source is collected (computer/acquire/wikidata.py)
     raw: dict = field(default_factory=dict, compare=False)
 
     def targets(self) -> dict[str, "Source"]:
@@ -108,7 +114,7 @@ def _check(sid: str, d: dict) -> Source:
         bad("missing " + ", ".join(missing) + (" (it isn't approved)" if any(k.startswith("approved") for k in missing)
                                                else ""))
     unknown = set(d) - set(REQUIRED) - {"url", "sha256", "checksum_url", "entity", "bandwidth", "replaces", "inputs",
-                                        "hold_homonyms"}
+                                        "hold_homonyms", "collect"}
     if unknown:
         bad(f"unknown field(s) {sorted(unknown)}")
     if not SOURCE_TYPE.match(str(d["source_type"])):
@@ -155,6 +161,31 @@ def _check(sid: str, d: dict) -> Source:
             re.compile(str(rep["source_id"]))
         except re.error as e:
             bad(f"replaces.source_id isn't a regular expression: {e}")
+    col = d.get("collect") or {}
+    if col:
+        if not isinstance(col, dict) or set(col) != {"api", "sparql", "user_agent", "batch", "maxlag", "geonames",
+                                                     "legacy"}:
+            bad("collect must have exactly api, sparql, user_agent, batch, maxlag, geonames and legacy")
+        for k in ("api", "sparql"):
+            if urlparse(str(col[k])).scheme != "https":
+                bad(f"collect.{k} must be an https url")
+        if not str(col["user_agent"]).strip() or "@" in str(col["user_agent"]):
+            bad("collect.user_agent must say who runs it, without an email address unless a person put one there")
+        if not isinstance(col["batch"], int) or not 1 <= col["batch"] <= 50:
+            bad("collect.batch must be 1 to 50 (the API's limit for one request)")
+        if not isinstance(col["maxlag"], int) or not 1 <= col["maxlag"] <= 10:
+            bad("collect.maxlag must be 1 to 10 seconds")
+        if not SOURCE_ID.match(str(col["geonames"])):
+            bad("collect.geonames must name a source")
+        leg = col["legacy"]
+        if not isinstance(leg, dict) or set(leg) != {"source_type", "source_id"}:
+            bad("collect.legacy must be { source_type = \"...\", source_id = \"<regular expression>\" }")
+        try:
+            re.compile(str(leg["source_id"]))
+        except re.error as e:
+            bad(f"collect.legacy.source_id isn't a regular expression: {e}")
+        if list(inputs) != ["snapshot"]:
+            bad("a collected source has one input, snapshot: the file the collection writes")
     if not isinstance(d.get("hold_homonyms", False), bool):
         bad("hold_homonyms must be true or false")
     for k in ("max_bytes", "bandwidth"):
@@ -166,7 +197,7 @@ def _check(sid: str, d: dict) -> Source:
                   max_bytes=d["max_bytes"], approved_by=str(d["approved_by"]), approved_at=str(d["approved_at"]),
                   sha256=sha, checksum_url=curl, entity=str(d.get("entity", "")),
                   bandwidth=int(d.get("bandwidth", 0)), replaces=dict(rep), inputs=inputs,
-                  hold_homonyms=bool(d.get("hold_homonyms", False)), raw=dict(d))
+                  hold_homonyms=bool(d.get("hold_homonyms", False)), collect=dict(col), raw=dict(d))
 
 
 def load(path: Path) -> tuple[dict[str, Source], dict[str, str]]:
