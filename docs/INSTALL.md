@@ -55,7 +55,7 @@ Other options:
 ```sh
 sudo ./install.sh --no-session      # system-wide, no login-screen entry
 PREFIX=/usr/local sudo ./install.sh # somewhere other than /usr
-PYTHON=/usr/bin/python3.12 sudo ./install.sh   # a specific interpreter
+PYTHON=/usr/bin/python3.13 sudo ./install.sh   # a specific interpreter
 ```
 
 ## Recommended

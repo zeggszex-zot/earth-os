@@ -119,7 +119,7 @@ keeps it. The gate is mechanical:
 
 ```
 1. the diff touches only earth_os/platform/
-2. /usr/bin/python3.12 -m unittest discover -s tests -q   passes
+2. /usr/bin/python3 -m unittest discover -s tests -q      passes
 3. tests/test_boundary.py                                  allowance not raised
 4. tools/conformance.py --compare before.json after.json   no capability disagreed
 5. git commit, with that output in the message

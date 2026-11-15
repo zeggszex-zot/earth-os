@@ -201,7 +201,7 @@ Add a word to `CONCEPTS` (or a phrase to `MULTIWORD`) in `earth_os/lexical.py`,
 then:
 
 ```bash
-/usr/bin/python3.12 -m unittest tests.test_esi tests.test_corpus -q
+/usr/bin/python3 -m unittest tests.test_esi tests.test_corpus -q
 python3 tools/esi_measure.py tests/esi_dev.jsonl --show
 python3 tools/esi_measure.py tests/esi_heldout.jsonl
 ```

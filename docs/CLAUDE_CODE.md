@@ -51,7 +51,7 @@ claude                  # once, in a terminal, to sign in (or set ANTHROPIC_API_
 earth-os --doctor     # "claude code ... ok"
 ```
 
-The gate needs `/usr/bin/python3.12` (AGENTS.md: a green run on the wrong
+The gate needs `/usr/bin/python3`, the system interpreter (AGENTS.md: a green run on the wrong
 interpreter is worse than a red one). Without it nothing can be verified, so
 nothing is kept.
 
@@ -88,7 +88,7 @@ was not Claude's. Commit or stash your own edits first.
 1. nothing human-write-only was touched → `policy.PROTECTED`
 2. `platform/` and `capability_corpus.py` were not both changed → a new
    capability is rung 3, and a person grants those
-3. `/usr/bin/python3.12 -m unittest discover -s tests -q` passes — which renders
+3. `/usr/bin/python3 -m unittest discover -s tests -q` passes — which renders
    every screen at four resolutions, so green means the interface still draws
 4. the suite did not shrink to get there
 5. **one** commit, with the verification output in its message
@@ -157,7 +157,7 @@ enabled     = true
 command     = "claude"               # path or name of the Claude Code CLI
 model       = ""                     # blank = Claude Code's default
 workspace   = ""                     # see "Where the changes go"
-python      = "/usr/bin/python3.12"  # the gate's interpreter
+python      = "/usr/bin/python3"     # the gate's interpreter
 auto_verify = true
 ```
 

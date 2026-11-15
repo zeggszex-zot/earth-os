@@ -43,7 +43,7 @@ from .trends import Sample, Trends
 #: Panels that show the process list, and so are worth taking it for.
 PROCESS_PANELS = ("health", "capabilities", "diagnostics")
 
-SUITE = "/usr/bin/python3.12 -m unittest discover -s tests -q passes"
+SUITE = "/usr/bin/python3 -m unittest discover -s tests -q passes"
 
 
 class EvolutionCenter:

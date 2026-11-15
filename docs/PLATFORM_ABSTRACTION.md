@@ -327,9 +327,9 @@ Tests verify:
 
 Current coverage: **59 platform tests**, within a suite of **288, all passing**.
 
-Run with Python 3.12 (`/usr/bin/python3.12 -m unittest discover -s tests -q`);
-PyGObject's extension is built for 3.12, so the GTK-touching modules fail to
-import under 3.11. See `docs/PLATFORM_AUDIT.md`.
+Run with the system interpreter (`/usr/bin/python3 -m unittest discover -s tests -q`);
+PyGObject's extension is built for it, so under any other interpreter the
+GTK-touching modules fail to import. See AGENTS.md and `docs/PLATFORM_AUDIT.md`.
 
 ## Integration with CDOS Core
 

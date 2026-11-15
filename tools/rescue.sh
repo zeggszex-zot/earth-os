@@ -113,7 +113,7 @@ fi
 
 # ------------------------------------------------- the measurement, once ----
 if [ -n "$TREE" ] && [ -f "$TREE/tools/conformance.py" ]; then
-    PY=/usr/bin/python3.12
+    PY=/usr/bin/python3
     [ -x "$PY" ] || PY="$(command -v python3 || echo python3)"
     say "measuring this machine before it stops existing..."
     if "$PY" "$TREE/tools/conformance.py" --json "$BOX/conformance-ubuntu.json" \

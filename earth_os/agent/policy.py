@@ -72,12 +72,9 @@ ALLOWED_TOOLS: Tuple[str, ...] = (
     f"mcp__{MCP_NAME}__screenshot",
     "Bash(git status:*)", "Bash(git diff:*)", "Bash(git log:*)",
     "Bash(git show:*)", "Bash(ls:*)",
-    "Bash(/usr/bin/python3.12 -m unittest:*)",
-    "Bash(python3.12 -m unittest:*)",
-    "Bash(/usr/bin/python3.12 tools/screenshot.py:*)",
-    "Bash(python3.12 tools/screenshot.py:*)",
-    "Bash(/usr/bin/python3.12 tools/gallery.py:*)",
-    "Bash(python3.12 tools/gallery.py:*)",
+    "Bash(/usr/bin/python3 -m unittest:*)",
+    "Bash(/usr/bin/python3 tools/screenshot.py:*)",
+    "Bash(/usr/bin/python3 tools/gallery.py:*)",
 )
 
 #: Refused outright, never even offered. The gate is the only thing that

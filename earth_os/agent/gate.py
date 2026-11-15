@@ -7,7 +7,7 @@ The document specified the gate as five steps. This is those steps::
 
     1. the diff touches nothing human-write-only       -> policy.PROTECTED
     2. the diff does not move the boundary              -> policy.BOUNDARY_PAIR
-    3. the full suite passes under python3.12           -> Gate.test_command
+    3. the full suite passes under /usr/bin/python3     -> Gate.test_command
     4. the suite did not shrink to get there            -> the recorded count
     5. git commit, with that output in the message      -> Gate._accept
 
@@ -39,7 +39,7 @@ from typing import List, Optional
 from . import policy
 from .workspace import Workspace, WorkspaceError
 
-DEFAULT_PYTHON = "/usr/bin/python3.12"
+DEFAULT_PYTHON = "/usr/bin/python3"
 
 #: Where the size of the last accepted suite is kept. Inside ``.git`` so it is
 #: not part of any change the agent could make.

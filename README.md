@@ -174,7 +174,7 @@ wording = "ollama"           # who puts CDOS's facts into sentences; "none" is f
 [claude]
 command     = "claude"       # Claude Code CLI; sign in once from a terminal
 workspace   = ""             # blank = this checkout or ~/.local/share/earth-os/src
-python      = "/usr/bin/python3.12"   # what the gate verifies changes with
+python      = "/usr/bin/python3"      # what the gate verifies changes with
 
 [[programs]]                 # extra buttons on the program index
 label = "TERMINAL"

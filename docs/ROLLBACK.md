@@ -79,7 +79,7 @@ git log --oneline earth-os-1.0.0-memory3..main
 | `earth-os-1.0.0-memory3` | Earth OS 1.0.0 exactly as it arrived, including the uncommitted work that was in the archive |
 
 `git revert <commit>` undoes one of them and keeps the history; run
-`/usr/bin/python3.12 -m unittest discover -s tests -q` afterwards.
+`/usr/bin/python3 -m unittest discover -s tests -q` afterwards.
 
 ## What 2.0 leaves on the machine
 

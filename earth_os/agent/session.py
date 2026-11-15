@@ -59,20 +59,20 @@ Read AGENTS.md before changing anything. Its rules are enforced by tests.
 
 HOW YOUR CHANGES ARE KEPT
 - After each of your turns, the CDOS gate judges everything you changed:
-  it runs the full suite with /usr/bin/python3.12 (which renders every screen
+  it runs the full suite with /usr/bin/python3 (which renders every screen
   at four resolutions). Green -> one commit is made. Red -> the change is set
   aside with git stash. Do not commit, stash or reset yourself; you cannot.
 - These files are human-write-only and any change touching them is rejected:
   {", ".join(policy.PROTECTED)}.
 - Never edit earth_os/platform/ and earth_os/capability_corpus.py together.
 - Run the suite yourself before finishing:
-  /usr/bin/python3.12 -m unittest discover -s tests -q
+  /usr/bin/python3 -m unittest discover -s tests -q
 - An accepted change takes effect when the person presses RELOAD INTERFACE.
 
 SEEING THE INTERFACE
 - mcp__cdos__screenshot renders the RUNNING shell to a PNG; Read the path.
 - To see your EDITED code, render it headlessly and Read the PNG:
-  /usr/bin/python3.12 tools/screenshot.py --only main --size 1600x1000 --out /tmp/cdos-claude-shots
+  /usr/bin/python3 tools/screenshot.py --only main --size 1600x1000 --out /tmp/cdos-claude-shots
 
 CONTROLLING THE SHELL (mcp__cdos__*)
 - status, screens, go, say, palettes, set_palette, capabilities, invoke.

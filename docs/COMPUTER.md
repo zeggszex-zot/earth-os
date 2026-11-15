@@ -143,7 +143,7 @@ Linux mechanism.
 ## Running the tests
 
 ```sh
-/usr/bin/python3.12 -m unittest tests.test_computer_link -v
+/usr/bin/python3 -m unittest tests.test_computer_link -v
 ```
 
 Twelve of them start the real `cdos-api` from `../cdos-computer` in its own

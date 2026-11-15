@@ -297,8 +297,8 @@ DEFAULTS: Dict[str, Any] = {
         # Blank = this checkout if it is a git tree, else
         # ~/.local/share/earth-os/src (created on first request).
         "workspace": "",
-        # The interpreter the gate runs the suite under. AGENTS.md: 3.12+.
-        "python": "/usr/bin/python3.12",
+        # The interpreter the gate runs the suite under. AGENTS.md: the system one.
+        "python": "/usr/bin/python3",
         # Judge every turn's changes as soon as it finishes.
         "auto_verify": True,
     },
@@ -466,7 +466,7 @@ enabled     = true
 command     = "claude"             # the Claude Code CLI; sign in once from a terminal
 model       = ""                   # blank = Claude Code's default
 workspace   = ""                   # blank = this checkout, or ~/.local/share/earth-os/src
-python      = "/usr/bin/python3.12" # what the gate runs the suite under
+python      = "/usr/bin/python3"   # what the gate runs the suite under
 auto_verify = true                 # judge each turn's changes when it finishes
 
 # The System Evolution Center: what Earth OS is doing, what needs improvement,

@@ -245,7 +245,7 @@ except ImportError:
     HAVE_CAIRO = False
 
 
-@unittest.skipUnless(HAVE_CAIRO, "the shell needs pycairo and GTK bindings; run with /usr/bin/python3.12")
+@unittest.skipUnless(HAVE_CAIRO, "the shell needs pycairo and GTK bindings; run with /usr/bin/python3")
 class ShellIntegration(unittest.TestCase):
     """The shell routes these sentences to the ledger, and the model sees it."""
 
