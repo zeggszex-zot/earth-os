@@ -55,9 +55,9 @@ ROWS = [
 ]
 
 
-def write_pf(path):
+def write_pf(path, rows=ROWS):
     lines = ["# test corpus", "# subject\trelation\tkind\tvalue\tunit\tvalid_from\tvalid_until\tsource_type\tsource_id\tconfidence\tqualifiers"]
-    for s, r, v, st, sid in ROWS:
+    for s, r, v, st, sid in rows:
         lines.append("\t".join([s, r, "S", v, "", "0", "0", st, sid, "0.95", ""]))
     Path(path).write_text("\n".join(lines) + "\n")
 
@@ -73,6 +73,45 @@ build_shards.build(PF, RAW, 8, 8, fix_wordnet=False, log=lambda *a: None)
 
 def ask(c, q):
     return navigate(q, [RulePlanner(c)], Navigator(c))[1]
+
+
+# The same dictionary, beside rows from other sources that use the relation names the WordNet repair renames.
+OTHER_SOURCES = [
+    ("MIDNIGHT", "ANTONYM", "noon", "WIKIDATA", "Q12143/P461"),        # Wikidata "opposite of": a real antonym
+    ("CAT", "HYPERNYM", "feline", "MANUAL", "schema"),                  # a hypernym that means hypernym
+]
+MIXED_PF = Path(TMP.name) / "mixed.pf"
+write_pf(MIXED_PF, ROWS + OTHER_SOURCES)
+MIXED = Path(TMP.name) / "data-mixed"
+build_shards.build(MIXED_PF, MIXED, 8, 8, fix_wordnet=True, log=lambda *a: None)
+
+
+class TestTheWordNetRepairIsOnlyForWordNet(unittest.TestCase):
+    """D1 (docs/CORPUS_GROWTH_AUDIT.md §4): --fix-wordnet renamed ANTONYM and HYPERNYM for every source, so 425
+    Wikidata "opposite of" facts were served as HYPERNYM (MIDNIGHT HYPERNYM noon).  The swapped labels are the OEWN
+    import's; another source's rows keep the relation they were written with."""
+
+    def setUp(self):
+        self.c = Corpus(MIXED).load()
+
+    def rel(self, key):
+        return {(f.relation, f.value) for f in self.c.facts_for(key)}
+
+    def test_another_sources_antonym_stays_an_antonym(self):
+        self.assertIn(("ANTONYM", "noon"), self.rel("MIDNIGHT"))
+        self.assertNotIn(("HYPERNYM", "noon"), self.rel("MIDNIGHT"))
+
+    def test_another_sources_hypernym_stays_a_hypernym(self):
+        self.assertIn(("HYPERNYM", "feline"), self.rel("CAT"))
+        self.assertNotIn(("HYPONYM", "feline"), self.rel("CAT"))
+
+    def test_the_oewn_rows_are_still_repaired(self):
+        self.assertIn(("HYPERNYM", "organism"), self.rel("ANIMAL"))
+        self.assertIn(("HYPONYM", "puppy"), self.rel("DOG"))
+        self.assertIn(("WN_ANTONYM", "unhappy"), self.rel("HAPPY"))
+
+    def test_the_opposite_is_answered_as_an_opposite(self):
+        self.assertEqual(ask(self.c, "what is the opposite of midnight").text, "The opposite of midnight is noon.")
 
 
 class TestBuild(unittest.TestCase):

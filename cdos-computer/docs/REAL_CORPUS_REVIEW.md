@@ -25,6 +25,12 @@ not an exhaustive check.
 | Test suite | 350 passed, 4 skipped (25 regression tests in `test_real_corpus_fixes.py`, 5 in `test_validate_corpus.py`, 1 data-gated in `test_real_corpus.py`) |
 | Production files | unchanged: `corpus.pf` sha256 and all 514 shard/meta checksums of both builds verified after the review |
 
+**Since this review (2026-11-15): D1.** `build_shards.py --fix-wordnet` relabelled `ANTONYM`/`HYPERNYM` for every
+source, so 425 Wikidata "opposite of" facts were served as `HYPERNYM`. The repair now applies to OEWN rows only
+(`docs/CORPUS_GROWTH_AUDIT.md` §4). The same `corpus.pf`, built with `--fix-wordnet --fix-wikidata --fix-keys`, now
+gives version `sha256:87ee23f5366d87d59385f089b92462035a92fd3d2bfa1dd792bfccb59c2211dd` and 130 relations
+(`ANTONYM` is new). The other 1,210,166 served rows are unchanged, and so are all 73 review answers.
+
 ## 1. How the corpus was loaded, and what was left alone
 
 - **What was supplied.** The upload contained `corpus.pf` only, with no shards. The shards were built once,
