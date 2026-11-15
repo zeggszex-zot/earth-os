@@ -1,0 +1,165 @@
+{
+  "format": "edie-profile/1",
+  "name": "pg-latex",
+  "description": "Project Gutenberg LaTeX books typeset by the Distributed Proofreaders LaTeX team (first target: #33283, Calculus Made Easy). Roles are what each macro means; 'args' is only the fallback pattern, used when the book's own preamble does not define the macro readably.",
+  "macros": {
+    "Chapter": {
+      "role": "heading",
+      "kind": "chapter",
+      "level": 1,
+      "args": "omm",
+      "verified": true,
+      "why": "the brief documents \\Chapter{I}{Title}, \\Chapter[Running Head]{II}{Title}, and the same split across a line break",
+      "seen": "33283-t.tex preamble line 388"
+    },
+    "ChapterStar": {
+      "role": "heading",
+      "kind": "chapter",
+      "level": 1,
+      "args": "om",
+      "seen": "33283-t.tex preamble line 432"
+    },
+    "AltChapter": {
+      "role": "heading",
+      "kind": "chapter",
+      "level": 1,
+      "args": "om",
+      "seen": "33283-t.tex preamble line 407"
+    },
+    "Section": {
+      "role": "heading",
+      "kind": "section",
+      "level": 2,
+      "args": "om",
+      "seen": "33283-t.tex preamble line 451"
+    },
+    "Subsection": {
+      "role": "heading",
+      "kind": "subsection",
+      "level": 3,
+      "args": "m",
+      "seen": "33283-t.tex preamble line 459"
+    },
+    "Paragraph": {
+      "role": "heading",
+      "kind": "paragraph",
+      "level": 4,
+      "args": "m",
+      "seen": "33283-t.tex preamble line 464"
+    },
+    "Case": {
+      "role": "heading",
+      "kind": "case",
+      "level": 5,
+      "args": "m",
+      "seen": "33283-t.tex preamble line 472"
+    },
+    "Example": {
+      "role": "heading",
+      "kind": "example",
+      "level": 5,
+      "args": "m",
+      "seen": "33283-t.tex preamble line 475"
+    },
+    "Figure": {
+      "role": "figure",
+      "block": true,
+      "args": "omm",
+      "seen": "33283-t.tex preamble line 660",
+      "fields": [
+        "width",
+        "file",
+        "number"
+      ],
+      "fields_for": "omm",
+      "why": "33283-t.tex line 659: Usage: \\\\Figure[optional width]{File name}{Fig number}"
+    },
+    "Graphic": {
+      "role": "figure",
+      "block": false,
+      "args": "om",
+      "seen": "33283-t.tex preamble line 651",
+      "fields": [
+        "width",
+        "file"
+      ],
+      "fields_for": "om"
+    },
+    "Figures": {
+      "role": "figure",
+      "block": true,
+      "args": "ommmm",
+      "fields": [
+        "width",
+        "file",
+        "file",
+        "number",
+        "number"
+      ],
+      "fields_for": "ommmm",
+      "seen": "33283-t.tex preamble line 669",
+      "why": "side-by-side pair: \\\\Figures[width]{file 1}{file 2}{number 1}{number 2}"
+    }
+  },
+  "environments": {
+    "verbatim": [
+      "PGtext"
+    ],
+    "math": []
+  },
+  "drop_macros": {
+    "label": "m",
+    "index": "m",
+    "pagebreak": "o",
+    "nopagebreak": "o",
+    "newpage": "",
+    "clearpage": "",
+    "cleardoublepage": "",
+    "vspace": "m",
+    "hspace": "m",
+    "vfill": "",
+    "hfill": "",
+    "noindent": "",
+    "indent": "",
+    "smallskip": "",
+    "medskip": "",
+    "bigskip": "",
+    "par": "",
+    "phantomsection": "",
+    "addcontentsline": "mmm",
+    "markboth": "mm",
+    "markright": "m",
+    "thispagestyle": "m",
+    "pagestyle": "m",
+    "setlength": "mm",
+    "addtolength": "mm",
+    "pdfbookmark": "omm",
+    "Pagelabel": "m",
+    "pagelabel": "m",
+    "PageSep": "m",
+    "pagenumbering": "m",
+    "centering": "",
+    "raggedright": "",
+    "protect": "",
+    "relax": "",
+    "null": "",
+    "linebreak": "o",
+    "nolinebreak": "o",
+    "enlargethispage": "m",
+    "footnotemark": "o"
+  },
+  "image_dirs": [
+    "images",
+    "."
+  ],
+  "image_extensions": [
+    "",
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".pdf",
+    ".eps",
+    ".svg",
+    ".gif"
+  ]
+}

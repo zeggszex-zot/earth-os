@@ -1,0 +1,104 @@
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% %
+%                                                                         %
+% The Project Gutenberg EBook of a Test Book, by A. Fixture               %
+%                                                                         %
+% Title: A Test Book Shaped Like Calculus Made Easy                       %
+%        Being a fixture for EDIE                                         %
+%                                                                         %
+% Author: A. Fixture                                                      %
+%                                                                         %
+% Release Date: November 14, 2026 [EBook #99999]                          %
+%                                                                         %
+% Language: English                                                       %
+%                                                                         %
+% Character set encoding: UTF-8                                           %
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% %
+\documentclass[12pt]{book}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{fancyvrb}
+\DefineVerbatimEnvironment{PGtext}{Verbatim}{fontsize=\small}
+
+\makeatletter
+% \Chapter[running head]{number}{title}; the running head is optional.
+\newcommand{\Chapter}{\@ifnextchar[{\@Chapter}{\@@Chapter}}
+\def\@Chapter[#1]#2#3{\chapter*{#2. #3}\markboth{#1}{#1}}
+\def\@@Chapter#1#2{\@Chapter[#2]{#1}{#2}}
+\makeatother
+\newcommand{\ChapterStar}[2][]{\chapter*{#2}\markboth{#1}{#1}}
+\newcommand{\AltChapter}[3][]{\chapter*{#2. #3}}
+\newcommand{\Section}[1]{\section*{#1}}
+\newcommand{\Subsection}[1]{\subsection*{#1}}
+\newcommand{\Paragraph}[1]{\paragraph*{#1}}
+\newcommand{\Case}[1]{\par\textit{Case #1.}}
+\newcommand{\Example}[1]{\par\textit{Example #1.}}
+\newcommand{\Figure}[2][]{\begin{center}\includegraphics[#1]{./images/#2}\end{center}}
+\newcommand{\Graphic}[2]{\includegraphics[width=#1]{./images/#2}}
+\newcommand{\Pagelabel}[1]{\label{page:#1}}
+
+\title{A Test Book}
+\author{A. Fixture}
+
+\begin{document}
+
+\begin{PGtext}
+The Project Gutenberg EBook. Braces here are not LaTeX: { and } and \Chapter{IX}{Not a Chapter}
+\end{PGtext}
+
+\ChapterStar[Prologue]{Prologue}
+
+What one fool can do, another can.  Costs 5\% more, with \{braces\} and \$1.
+
+\Chapter{I}{To Deliver You from the Preliminary Terrors.}
+
+The preliminary terror is the symbol $dx$, and the sign $\int$ which is merely
+a long~$S$.
+% \Chapter{X}{A Chapter That Is Only a Comment} with a stray } brace
+Thus $\int dx$ means the sum of all the little bits of~$x$.
+
+\Chapter[On Different Degrees of Smallness]{II}{On Different Degrees of\\
+Smallness.}
+
+\Section{Small quantities of the {\itshape very} {first {order}}}
+We shall find that
+\[
+  \frac{dy}{dx} = \frac{\alpha + \beta}{\gamma}
+\]
+continues the same paragraph, and $$\int_0^1 x\,dx = \tfrac{1}{2}$$ does too.
+
+\Chapter[Relative Growing]
+{III}{On Relative Growings.}
+
+\Subsection{Growing quantities}
+\Paragraph{Case of a square.}
+Let $x$ grow.
+\Case{1}
+Here
+\begin{align*}
+  y + dy &= (x + dx)^2 \\
+  dy &= 2x\,dx + (dx)^2.
+\end{align*}
+
+\Example{(1)}
+Differentiate $y = x^{n}$.
+\Figure[2in]{fig1}
+
+A small diagram \Graphic{0.5in}{fig2} sits in the text, and one sits in mathematics:
+$\Graphic{0.3in}{fig3} = \dfrac{dy}{dx}$.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=2in]{images/fig4}
+  \caption{Fig.~4. A curve and its slope.}
+  \label{fig:curve}
+\end{figure}
+
+\Figure{fig99}
+
+\AltChapter[Alt]{XV}{How to Deal with Sines and Cosines}
+\Pagelabel{162}
+\begin{equation}
+  \frac{d(\sin\theta)}{d\theta} = \cos\theta
+\end{equation}
+
+\end{document}
