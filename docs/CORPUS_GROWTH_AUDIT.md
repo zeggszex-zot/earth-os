@@ -123,6 +123,27 @@ The audit below is kept as written on 2026-11-14. What has changed since:
   report how many names stand for more than one place (D4). `GEONAMES` is
   ranked with Wikidata, and the registry refuses a source type the reader
   doesn't rank.
+- **GeoNames run on real data (2026-11-15), staged only.** Pinned and
+  approved: `countryInfo.txt` (`79f8f59e…`), `admin1CodesASCII.txt`
+  (`2e4867f5…`), `cities15000.zip` (`ce7a4055…`). 211,859 records:
+  190,091 staged, 20,204 held back, 1,541 duplicates (1,440 of them facts
+  the corpus already has as legacy Wikidata rows), 23 rejected (region codes
+  missing from the admin1 file). The first run showed two flaws, now fixed:
+  the dedupe index read legacy Wikidata values as bare ids (D3), so names
+  "conflicted" with ids; it now reads the master through the build's own
+  row pass (`computer/served.py`, shared by the build, which is unchanged:
+  same version, all 514 files identical). And places that share a name
+  were compared with each other; comparisons are now by name, relation and
+  `ENTITY`. 1,338 names stand for more than one place (Richmond ×9,
+  Springfield ×8, …): their rows are **held back** (`held.pf`) until the
+  reader can tell places apart (D4); a test build had answered "Springfield's
+  population is 114,394, or 170,188, or 59,680". Remaining: 399 conflicts
+  (CURRENCY 104, mostly GeoNames' short names such as "Dollar" against
+  Wikidata's "Eastern Caribbean dollar"; AREA 129 and POPULATION 137, real
+  differences between sources; CONTINENT 17) and 74 comparisons marked
+  ambiguous. Not yet answered from these rows: "what time zone is X in"
+  (no phrasing for `TIMEZONE`) and "what country is Lyon in" (the reader's
+  country question doesn't use the new `LOCATED_IN` rows).
 
 **Also found on 2026-11-15:**
 

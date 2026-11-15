@@ -5,7 +5,9 @@
     staging/<source>/<run>/delta.pf          the rows that passed, in the source's order, PF format
                           /rejects.jsonl     one line per rejected record: line, source_id, stage, code, why, raw
                           /conflicts.jsonl   a functional relation given a different value than the master has
-                          /report.json       counts (read = staged + rejected + duplicate), inputs, licence, hashes
+                          /held.pf           rows of a name that stands for several things in this run (ENTITY=),
+                                             held back until the reader can tell them apart (D4)
+                          /report.json       counts (read = staged + held + rejected + duplicate), inputs, hashes
     staging/<source>/.<run>.part/            a run in progress; renamed into place only after report.json
 
 Failure is data: a record that can't be parsed, mapped or validated is rejected with its reason, never repaired by
@@ -33,6 +35,8 @@ from .fetch import Fetcher
 from .index import MasterIndex, key_hash
 from .parsers import PARSERS
 
+HELD_HEADER = ("# held back by computer.acquire: these names stand for more than one thing in this run (ENTITY=), and "
+               "the reader can't yet tell them apart (D4)\n# " + "\t".join(pfrow.COLUMNS) + "\n")
 DELTA_HEADER = ("# staged by computer.acquire; not part of the corpus until integrated (off: Q1)\n"
                 "# " + "\t".join(pfrow.COLUMNS) + "\n")
 
@@ -176,12 +180,12 @@ class Acquirer:
         seen: set[bytes] = set()
         run_vals = defaultdict(list)
         entities = defaultdict(set)              # name -> the things it names, for the homonym count (D4)
-        conflicts = 0
+        candidates = []                          # possible conflicts; labelled once every name's entities are known
 
-        with open(part / "delta.pf", "w", encoding="utf-8") as delta, \
-                open(part / "rejects.jsonl", "w", encoding="utf-8") as rej, \
-                open(part / "conflicts.jsonl", "w", encoding="utf-8") as con:
-            delta.write(DELTA_HEADER)
+        # Rows that pass every check go to passed.tmp first: whether a name stands for several things is only known
+        # at the end, and those rows are held back (held.pf), not staged, until the reader can tell them apart (D4).
+        with open(part / "passed.tmp", "w", encoding="utf-8") as passed, \
+                open(part / "rejects.jsonl", "w", encoding="utf-8") as rej:
 
             def reject(n, sid_, stage, code_, why, raw):
                 counts["rejected"] += 1
@@ -231,28 +235,56 @@ class Acquirer:
                     counts["duplicate_of_a_row_without_entity"] += 1
                     continue
                 seen.add(h)
-                # conflicts: recorded, never resolved here
+                # conflicts: recorded, never resolved here.  Within the run, only the same thing is compared with
+                # itself (name, relation and ENTITY); the master's rows carry no ENTITY, so they're compared by name.
+                entity = Q.get(fqual, "ENTITY")
                 if rel in functional and start is None and until is None:
                     existing = [("master", k, v) for k, v in self.index.values(fsubj, rel)] + \
-                               [("this run", k, v) for k, v in run_vals[(fsubj, rel)]]
+                               [("this run", k, v) for k, v in run_vals[(fsubj, rel, entity)]]
                     if existing and not any(same_value(fkind, value, v) for _, _, v in existing):
-                        conflicts += 1
-                        con.write(json.dumps({"line": n, "source_id": sid_, "subject": fsubj, "relation": rel,
-                                              "value": value, "existing": [{"in": w, "value": v}
-                                                                           for w, _, v in existing]},
-                                             ensure_ascii=False, sort_keys=True) + "\n")
-                    run_vals[(fsubj, rel)].append((fkind, value))
-                delta.write("\t".join((subj, rel, kind, value, unit, vf, vu, stype, sid_, conf, qual)) + "\n")
-                counts["staged"] += 1
-                if Q.get(fqual, "ENTITY"):
-                    entities[fsubj].add(Q.get(fqual, "ENTITY"))
-            for fh in (delta, rej, con):
+                        candidates.append({"line": n, "source_id": sid_, "subject": fsubj, "relation": rel,
+                                           "value": value, "entity": entity,
+                                           "existing": [{"in": w, "value": v} for w, _, v in existing]})
+                    run_vals[(fsubj, rel, entity)].append((fkind, value))
+                passed.write(fsubj + "\t" + "\t".join((subj, rel, kind, value, unit, vf, vu, stype, sid_, conf,
+                                                        qual)) + "\n")
+                if entity:
+                    entities[fsubj].add(entity)
+            for fh in (passed, rej):
                 fh.flush()
                 os.fsync(fh.fileno())
 
+        ambiguous = {k for k, v in entities.items() if len(v) > 1}
+        with open(part / "passed.tmp", encoding="utf-8") as passed, \
+                open(part / "delta.pf", "w", encoding="utf-8") as delta, \
+                open(part / "held.pf", "w", encoding="utf-8") as held:
+            delta.write(DELTA_HEADER)
+            held.write(HELD_HEADER)
+            for line in passed:
+                fsubj, row = line.split("\t", 1)
+                if fsubj in ambiguous:
+                    held.write(row)
+                    counts["held"] += 1
+                else:
+                    delta.write(row)
+                    counts["staged"] += 1
+            for fh in (delta, held):
+                fh.flush()
+                os.fsync(fh.fileno())
+        (part / "passed.tmp").unlink()
+        kinds = Counter()
+        with open(part / "conflicts.jsonl", "w", encoding="utf-8") as con:
+            for c in candidates:
+                c["kind"] = "ambiguous" if c["subject"] in ambiguous else "conflict"
+                kinds[c["kind"]] += 1
+                con.write(json.dumps(c, ensure_ascii=False, sort_keys=True) + "\n")
+            con.flush()
+            os.fsync(con.fileno())
+
         without_entity = counts["duplicate_of_a_row_without_entity"]
-        counts = {k: counts[k] for k in ("read", "staged", "rejected", "duplicate")}
-        counts["conflicts"] = conflicts
+        counts = {k: counts[k] for k in ("read", "staged", "held", "rejected", "duplicate")}
+        counts["conflicts"] = kinds["conflict"]
+        counts["ambiguous_comparisons"] = kinds["ambiguous"]
         report = {
             "format": "cdos-acquire-run/1", "run": run_id, "source": src.id, "at": utc(self.wall()),
             "source_type": src.source_type, "licence": src.licence, "attribution": src.attribution,
@@ -271,7 +303,8 @@ class Acquirer:
             "names_with_several_entities": sum(1 for v in entities.values() if len(v) > 1),
             "names_with_several_entities_examples": sorted(
                 ([k, len(v)] for k, v in entities.items() if len(v) > 1), key=lambda x: (-x[1], x[0]))[:10],
-            "reconciled": counts["read"] == counts["staged"] + counts["rejected"] + counts["duplicate"],
+            "held_names": len(ambiguous),
+            "reconciled": counts["read"] == counts["staged"] + counts["held"] + counts["rejected"] + counts["duplicate"],
             "delta_sha256": sha256_file(part / "delta.pf"),
             "integrated": False,
         }

@@ -271,7 +271,9 @@ class TestRun(AcquireCase):
     def test_every_planted_case_ends_where_it_should(self):
         before = self.master_state()
         r = self.acq().run("example")
-        self.assertEqual(r["counts"], {"read": 18, "staged": 6, "rejected": 9, "duplicate": 3, "conflicts": 1})
+        self.assertEqual(r["counts"], {"read": 18, "staged": 4, "held": 2, "rejected": 9, "duplicate": 3,
+                                       "conflicts": 1, "ambiguous_comparisons": 0})
+        self.assertEqual(r["held_names"], 1)                              # MERCURY: the planet and the element
         self.assertTrue(r["reconciled"])
         self.assertEqual(r["duplicates_of_rows_without_entity"], 2)        # Lion/Mammal and HE: legacy rows
         self.assertEqual(r["rejected_by"], {
@@ -286,11 +288,13 @@ class TestRun(AcquireCase):
         staged = [x.split(T) for x in (d / "delta.pf").read_text().splitlines() if not x.startswith("#")]
         self.assertEqual([(s[0], s[1], s[3]) for s in staged], [
             ("GERMANY", "CAPITAL_CITY", "Berlin"), ("GERMANY", "POPULATION", "83200000"),
-            ("HELIUM", "ATOMIC_MASS", "4.002602"), ("FRANCE", "CAPITAL_CITY", "Lyon"),
-            ("MERCURY", "IS_A", "named thing"), ("MERCURY", "IS_A", "named thing")])
+            ("HELIUM", "ATOMIC_MASS", "4.002602"), ("FRANCE", "CAPITAL_CITY", "Lyon")])
         self.assertTrue(all(s[7] == "WIKIDATA" and s[8] for s in staged))         # the source's type, the original id
-        self.assertEqual([s[10] for s in staged if s[0] == "MERCURY"], ["ENTITY=wd:Q308", "ENTITY=wd:Q925"])
+        self.assertEqual([s[0] for s in staged if s[0] == "MERCURY"], [])          # held back, not staged (D4)
+        held = [x.split(T) for x in (d / "held.pf").read_text().splitlines() if not x.startswith("#")]
+        self.assertEqual([s[10] for s in held if s[0] == "MERCURY"], ["ENTITY=wd:Q308", "ENTITY=wd:Q925"])
         conflicts = self.jsonl(d / "conflicts.jsonl")
+        self.assertEqual({c["kind"] for c in conflicts}, {"conflict"})
         self.assertEqual([(c["subject"], c["value"], c["existing"][0]["value"]) for c in conflicts],
                          [("FRANCE", "Lyon", "Paris")])
         self.assertEqual(r["licence"], "CC0-1.0")
@@ -305,11 +309,14 @@ class TestRun(AcquireCase):
         self.assertEqual([s[10] for s in staged if s[0] == "MERCURY"], ["ENTITY=wd:Q925"])
         self.assertEqual(r["duplicates_of_rows_without_entity"], 2)
 
-    def test_the_staged_delta_builds_and_the_entities_stay_two_facts(self):
+    def test_the_staged_and_held_files_build_and_the_entities_stay_two_facts(self):
         r = self.acq().run("example")
         meta, _ = build_shards.build(self.run_dir(r) / "delta.pf", self.dir / "data", 4, 4, fix_keys=True,
                                      log=lambda *a: None)
-        self.assertEqual(meta["facts"], 6)                      # the two MERCURY rows aren't merged (Q3)
+        self.assertEqual(meta["facts"], 4)
+        meta, _ = build_shards.build(self.run_dir(r) / "held.pf", self.dir / "held", 4, 4, fix_keys=True,
+                                     log=lambda *a: None)
+        self.assertEqual(meta["facts"], 2)                      # the two MERCURY rows aren't merged (Q3)
 
     def test_a_rerun_with_nothing_changed_is_a_no_op(self):
         a = self.acq()
@@ -399,10 +406,12 @@ class TestSharedRows(unittest.TestCase):
         self.assertTrue(same_value("S", "He", "HE"))
         self.assertFalse(same_value("S", "Paris", "Lyon"))
 
-    def test_the_build_uses_the_shared_key(self):
-        src = (ROOT / "tools" / "build_shards.py").read_text()
-        self.assertIn("pfrow.fact_key(", src)
-        self.assertIn("pfrow.finish(", src)
+    def test_the_build_and_the_index_share_the_key_and_the_repairs(self):
+        build = (ROOT / "tools" / "build_shards.py").read_text()
+        self.assertIn("pfrow.fact_key(", build)
+        self.assertIn("served_rows(", build)                       # the build's row pass ...
+        self.assertIn("served_rows(", (ROOT / "computer" / "acquire" / "index.py").read_text())   # ... is the index's
+        self.assertIn("pfrow.finish(", (ROOT / "computer" / "served.py").read_text())
         self.assertIn("field_problems(", (ROOT / "tools" / "validate_corpus.py").read_text())
 
     def test_entity_and_sense_keep_facts_apart(self):

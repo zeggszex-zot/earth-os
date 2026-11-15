@@ -20,7 +20,12 @@ from pathlib import Path
 from computer.corpus_guard import CorpusGuard, GuardError
 from computer.governor import sha256_file
 
-from .. import pfrow
+from .. import pfrow, qualifiers, served
+from ..corpus import key_of
+from ..served import served_rows
+
+#: The build's production repairs (tools/corpus_guard.py BUILD_FLAGS): the index sees the master as it is served.
+PRODUCTION = {"fix_wordnet": True, "fix_wikidata": True, "fix_keys": True}
 from . import AcquireError
 
 BATCH = 50_000
@@ -31,7 +36,11 @@ def key_hash(key: tuple) -> bytes:
 
 
 def code_fingerprint() -> str:
-    return "sha256:" + hashlib.sha256(Path(pfrow.__file__).read_bytes()).hexdigest()
+    """Changes when the code that decides what a fact is (key, repairs, qualifiers) changes: the index is rebuilt."""
+    h = hashlib.sha256()
+    for mod in (pfrow, served, qualifiers):
+        h.update(Path(mod.__file__).read_bytes())
+    return "sha256:" + h.hexdigest()
 
 
 def replaced_by(spec: dict | None):
@@ -43,23 +52,26 @@ def replaced_by(spec: dict | None):
 
 
 def master_rows(path: Path, exclude: dict | None = None):
-    """(fields, finished) for every fact row of a PF file, the way the build reads them, leaving out the rows of a
-    generation being replaced."""
+    """(row, finished) for every fact row of the master as the build serves it (computer/served.py, with the
+    production repairs), leaving out the rows of a generation being replaced.  `row` is the served row; `finished` is
+    (subject, kind, start, until, qualifiers), what the fact key needs."""
     skip = replaced_by(exclude)
+    for r in served_rows(path, **PRODUCTION):
+        if skip(r):
+            continue
+        yield r, (r[0], r[2], r[5], r[6], r[10])
+
+
+def functional_relations(path: Path) -> set[str]:
+    """The relations the master declares functional (X IS_FUNCTIONAL TRUE), by a quick pass of the raw rows: these
+    schema rows are never repaired, so their subject is just its lookup key."""
+    out = set()
     with open(path, encoding="utf-8", errors="replace") as fh:
         for line in fh:
-            if not line.strip() or line.startswith("#"):
-                continue
             c = line.rstrip("\n").split("\t")
-            c = (c + [""] * 11)[:11]
-            if c[1] == "SYNSET" or skip(c):
-                continue
-            subj, rel, kind, value, unit, vf, vu, stype, sid, conf, qual = c
-            try:
-                fin = pfrow.finish(subj, rel, kind, value, vf, vu, stype, sid, qual, True)
-            except ValueError:                      # a year that isn't a number: not comparable, not indexed
-                continue
-            yield c, fin
+            if len(c) > 3 and c[1] == "IS_FUNCTIONAL" and c[3].strip().upper() == "TRUE":
+                out.add(key_of(c[0]))
+    return out
 
 
 class MasterIndex:
@@ -109,9 +121,7 @@ class MasterIndex:
         tmp = self.path.with_name(f".{self.path.name}.{os.getpid()}.tmp")
         with contextlib.suppress(FileNotFoundError):
             tmp.unlink()
-        functional = {pfrow.finish(c[0], c[1], c[2], c[3], c[5], c[6], c[7], c[8], c[10], True)[0]
-                      for c, _ in master_rows(master, exclude)
-                      if c[1] == "IS_FUNCTIONAL" and c[3].strip().upper() == "TRUE"}
+        functional = functional_relations(master)
         db = sqlite3.connect(tmp)
         try:
             db.executescript("""

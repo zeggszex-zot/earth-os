@@ -235,7 +235,8 @@ class TestRun(OewnCase):
     def test_the_run_maps_and_counts_everything(self):
         before = self.master_state()
         r = self.acq().run("oewn")
-        self.assertEqual(r["counts"], {"read": 24, "staged": 17, "rejected": 7, "duplicate": 0, "conflicts": 0})
+        self.assertEqual(r["counts"], {"read": 24, "staged": 17, "held": 0, "rejected": 7, "duplicate": 0,
+                                       "conflicts": 0, "ambiguous_comparisons": 0})
         self.assertEqual(r["rejected_by"], {"map: relation": 3, "parse: dangling-sense-relation": 1,
                                             "parse: dangling-synset-relation": 1, "parse: missing-synset": 1,
                                             "parse: no-lemmas": 1})

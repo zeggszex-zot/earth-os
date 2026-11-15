@@ -74,6 +74,10 @@ MASTER = "\n".join([
     row("France", "CAPITAL", "S", "Paris", "", "0", "0", "WIKIDATA", "Q142/P36", "1.0"),
     row("France", "AREA", "N", "643801", "KM2", "0", "0", "WIKIDATA", "Q142/P2046", "1.0"),
     row("Germany", "POPULATION", "N", "83200000", "", "2023", "0", "WIKIDATA", "Q183/P1082", "1.0"),
+    # legacy Wikidata rows store bare ids (D3); the build names them from other rows' source_id
+    row("CONTINENT", "IS_FUNCTIONAL", "S", "TRUE", "", "0", "0", "MANUAL", "schema", "1.0"),
+    row("Germany", "CONTINENT", "S", "Q46", "", "0", "0", "WIKIDATA", "Q183/P30", "1.0"),
+    row("Europe", "IS_A", "S", "continent", "", "0", "0", "WIKIDATA", "Q46/P31", "1.0"),
 ]) + "\n"
 
 
@@ -192,7 +196,7 @@ class TestRows(GeoCase):
     def test_countries(self):
         self.assertIn(("Germany", "SHARES_BORDER_WITH", "France", "", "0", "ENTITY=gn:2921044"), self.rows)
         self.assertIn(("France", "AREA", "547030", "KM2", "0", "ENTITY=gn:3017382"), self.rows)
-        self.assertIn(("Germany", "CONTINENT", "Europe", "", "0", "ENTITY=gn:2921044"), self.rows)
+        self.assertIn(("France", "CONTINENT", "Europe", "", "0", "ENTITY=gn:3017382"), self.rows)
         self.assertIn(("Germany", "CURRENCY", "Euro", "", "0", "ENTITY=gn:2921044"), self.rows)
         self.assertNotIn("Nowhere", {s[0] for s in self.rows if s[1] in ("AREA", "POPULATION")})   # 0 = unknown
 
@@ -209,11 +213,20 @@ class TestRows(GeoCase):
         self.assertTrue(pops)
         self.assertEqual({s[4] for s in pops}, {"0"})
 
-    def test_two_places_with_one_name_stay_two(self):
-        spring = {s[5] for s in self.rows if s[0] == "Springfield" and s[1] == "POPULATION"}
+    def test_two_places_with_one_name_are_held_back_and_stay_two(self):
+        self.assertFalse(any(s[0] == "Springfield" for s in self.rows))           # not staged (D4)
+        d = self.root / "staging" / "geonames" / self.report["run"]
+        held = [x.split(T) for x in (d / "held.pf").read_text().splitlines() if not x.startswith("#")]
+        spring = {s[10] for s in held if s[0] == "Springfield" and s[1] == "POPULATION"}
         self.assertEqual(spring, {"ENTITY=gn:4250542", "ENTITY=gn:4951788"})
-        self.assertEqual(self.report["names_with_several_entities"], 1)
+        self.assertEqual((self.report["names_with_several_entities"], self.report["held_names"]), (1, 1))
         self.assertEqual(self.report["names_with_several_entities_examples"], [["SPRINGFIELD", 2]])
+        self.assertEqual(self.report["counts"]["held"], len(held))
+
+    def test_different_places_with_one_name_are_never_compared(self):
+        # the two Springfields' populations differ, but they are different places (ENTITY): no comparison at all
+        self.assertNotIn("SPRINGFIELD", {c["subject"] for c in self.jsonl(self.report, "conflicts.jsonl")})
+        self.assertEqual(self.report["counts"]["ambiguous_comparisons"], 0)
 
     def test_what_wikidata_already_says_is_a_duplicate_and_a_different_area_is_a_conflict(self):
         self.assertNotIn(("France", "CAPITAL", "Paris", "", "0", "ENTITY=gn:3017382"), self.rows)
@@ -221,6 +234,12 @@ class TestRows(GeoCase):
         conflicts = {(c["subject"], c["relation"], c["value"]) for c in self.jsonl(self.report, "conflicts.jsonl")}
         self.assertIn(("FRANCE", "AREA", "547030"), conflicts)
         self.assertNotIn("POPULATION", {c[1] for c in conflicts if c[0] == "GERMANY"})   # master's is dated
+
+    def test_legacy_wikidata_ids_are_compared_as_the_names_the_build_serves(self):
+        # Germany CONTINENT Q46 is "Europe" once served: the same fact, not a conflict
+        conflicts = {(c["subject"], c["relation"]) for c in self.jsonl(self.report, "conflicts.jsonl")}
+        self.assertNotIn(("GERMANY", "CONTINENT"), conflicts)
+        self.assertNotIn(("Germany", "CONTINENT", "Europe", "", "0", "ENTITY=gn:2921044"), self.rows)  # a duplicate
 
     def test_a_rerun_is_a_no_op_and_the_master_is_untouched(self):
         before = self.master.read_bytes()
