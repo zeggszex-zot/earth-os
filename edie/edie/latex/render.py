@@ -160,6 +160,10 @@ def _render(text: str, start: int, end: int, ctx: Context) -> str:
                 i = _eat_spaces(text, j, end)
                 continue
             role = ctx.roles.get(name, {})
+            if role.get("role") == "page" and name in ctx.sigs:
+                # \DPPageSep{026.png}{14}: a page marker is recorded on the blocks ("pages"), never read as text
+                i = _safe_skip(text, j, ctx.sigs[name].args, end)
+                continue
             if role.get("role") == "correction" and name in ctx.sigs:
                 # \Typo{misprint}{correction}: the text says what the correction says; the JSON keeps both
                 pattern = ctx.sigs[name].args

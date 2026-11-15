@@ -57,6 +57,16 @@ def to_report(doc: dict) -> str:
     if unused:
         s.append(f"\n{unused} macros the profile knows are not used in this document.")
 
+    envs = doc.get("environments") or []
+    if envs:
+        s.append("\n## Environments the preamble defines as display mathematics\n")
+        s.append("Each is read as one display, like the standard environment its definition opens or closes.\n")
+        s.append("| environment | built on | arguments | defined | uses |\n|---|---|---|---|---|")
+        uses = Counter(b.get("environment") for b in doc["blocks"] if b["type"] == "math")
+        for e in envs:
+            s.append(f"| `{e['name']}` | `{e['based_on']}` | `{e['args'] or '-'}` | preamble line {e['line']} | "
+                     f"{uses[e['name']]} |")
+
     s.append("\n## Outline\n")
 
     def walk(nodes, depth):

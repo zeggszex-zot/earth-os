@@ -91,16 +91,40 @@ def independent_math(text: str, verbatim_envs, math_envs) -> tuple:
     return display, inline
 
 
+MATH_BASES = r"(?:align|alignat|gather|multline|flalign|eqnarray|equation|displaymath)"
+DEFINES_MATH = re.compile(r"\\(?:begin\{|end\{|end)?" + MATH_BASES + r"\*?(?![A-Za-z@])")
+
+
+def defined_math_envs(text: str) -> set:
+    """Environments the preamble defines with \\newenvironment (or a relative) whose definition, up to the next
+    definition of anything, mentions a standard display-math environment: \\begin{align*}, \\endalign, \\gather ...
+    A plain search of the text, not EDIE's reading of the definition."""
+    pre = text[:text.index("\\begin{document}")]
+    pre = "\n".join(re.split(r"(?<!\\)%", ln, maxsplit=1)[0] for ln in pre.split("\n"))
+    found = set()
+    ends = [m.start() for m in re.finditer(r"\\(?:new|renew|provide|New|Renew|Declare|Provide)[A-Za-z]*"
+                                           r"(?:command|environment|Command|Environment)|\\def\\|\\makeatother",
+                                           pre)]
+    for m in re.finditer(r"\\(?:new|renew|provide)environment\*?\{([^}]*)\}|\\(?:New|Renew|Declare|Provide)"
+                         r"DocumentEnvironment\{([^}]*)\}", pre):
+        name = m.group(1) or m.group(2)
+        stop = min([e for e in ends if e > m.start()] + [len(pre)])
+        if DEFINES_MATH.search(pre[m.end():stop]):
+            found.add(name)
+    return found
+
+
 def edie_math(doc: dict) -> tuple:
     """(display, inline) as EDIE recorded them: math blocks; every inline expression wherever it was recorded,
-    plus those written inside a display expression (\\text{... $x$ ...})."""
+    plus those written inside another expression, display or inline (\\text{... $x$ ...}), which stay part of
+    the expression they are written in."""
     inline = 0
 
     def walk(x):
         nonlocal inline
         if isinstance(x, dict):
             if x.get("delimiter") in ("$", "\\(") and "body" in x:
-                inline += 1
+                inline += 1 + x["body"].replace("\\$", "").count("$") // 2
             for v in x.values():
                 walk(v)
         elif isinstance(x, list):
@@ -170,7 +194,8 @@ class RealBook:
 
     def test_mathematics_agrees_with_an_independent_count(self):
         verb = sorted({b["environment"] for b in self.doc["blocks"] if b["type"] == "verbatim"} | {"verbatim"})
-        self.assertEqual(edie_math(self.doc), independent_math(self.src.text, verb, self.prof.math_envs))
+        envs = set(self.prof.math_envs) | defined_math_envs(self.src.text)
+        self.assertEqual(edie_math(self.doc), independent_math(self.src.text, verb, envs))
 
     def test_tags_corrections_and_page_markers_agree_with_an_independent_count(self):
         verb = sorted({b["environment"] for b in self.doc["blocks"] if b["type"] == "verbatim"} | {"verbatim"})

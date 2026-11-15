@@ -1,4 +1,4 @@
-# EDIE — Earth Document Intelligence Engine (v0.2)
+# EDIE — Earth Document Intelligence Engine (v0.2.1)
 
 Original documents in, structured documents out: hierarchy, text, mathematics and illustrations, every piece
 traceable to its source lines.  Deterministic, standard library only, no model, no network.  Design and test

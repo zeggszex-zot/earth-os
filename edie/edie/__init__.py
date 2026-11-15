@@ -4,5 +4,5 @@ Deterministic and standard-library only.  It reads a source, never writes it, an
 extracting facts is a later step with its own validation (docs/EDIE.md).
 """
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 SCHEMA = "edie-document/1"

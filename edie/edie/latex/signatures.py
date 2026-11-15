@@ -266,6 +266,126 @@ def scan_preamble(text: str, end: int, line_of) -> dict:
     return defs
 
 
+ENV_DEFINERS = {"newenvironment", "renewenvironment", "provideenvironment"}
+DOC_ENV_DEFINERS = {"NewDocumentEnvironment", "RenewDocumentEnvironment", "DeclareDocumentEnvironment",
+                    "ProvideDocumentEnvironment", "NewEnviron", "RenewEnviron"}
+
+
+@dataclass
+class EnvDefinition:
+    name: str
+    args: str | None        # "o", "mm", ...; None when not readable
+    line: int
+    begin: str              # the begin and end code, as written
+    end: str
+    source: str             # the whole definition as written
+    based_on: str | None = None   # the display-math environment it opens or closes, when it does
+
+
+def scan_environments(text: str, end: int, line_of) -> dict:
+    """Every \\newenvironment (and xparse/environ equivalent) in text[:end], keyed by name; a later definition
+    replaces an earlier one."""
+    out: dict = {}
+    i = 0
+    while i < end:
+        ch = text[i]
+        if ch == "%":
+            i = sc.skip_comment(text, i)
+            continue
+        if ch != "\\":
+            i += 1
+            continue
+        word, j = sc.read_control(text, i, at_letter=True)
+        try:
+            if word in ENV_DEFINERS or word in DOC_ENV_DEFINERS:
+                if j < end and text[j] == "*":
+                    j += 1
+                g = sc.read_group(text, j)
+                if not g:
+                    i = j
+                    continue
+                name, j = g.inner.strip(), g.end
+                args: str | None = ""
+                if word in ENV_DEFINERS:
+                    n = sc.read_optional(text, j)
+                    if n:
+                        j = n.end
+                        try:
+                            k = int(n.inner.strip())
+                        except ValueError:
+                            k = -1
+                        d = sc.read_optional(text, j)
+                        if d:
+                            j = d.end
+                        args = None if k < 0 else (("o" + "m" * (k - 1)) if d else "m" * k)
+                elif word.startswith(("New", "Renew", "Declare", "Provide")) and "Document" in word:
+                    spec = sc.read_group(text, j)
+                    args, j = (_xparse(spec.inner), spec.end) if spec else (None, j)
+                else:                                     # \NewEnviron{name}[n][default]: body via \BODY
+                    n = sc.read_optional(text, j)
+                    if n:
+                        j = n.end
+                        args = None
+                        d = sc.read_optional(text, j)
+                        if d:
+                            j = d.end
+                b = sc.read_group(text, j)
+                e = sc.read_group(text, b.end) if b else None
+                if b:
+                    j = (e or b).end
+                    out[name] = EnvDefinition(name, args, line_of(i), b.inner, e.inner if e else "", text[i:j])
+        except sc.ScanError:
+            pass
+        i = max(j, i + 1)
+    return out
+
+
+def math_environments(envs: dict, known: set) -> dict:
+    """The defined environments that are display mathematics: their begin or end code opens or closes a known
+    math environment, written \\begin{align*}, \\end{align*}, \\align, \\endalign or \\csname align*\\endcsname
+    style tokens.  #33283's DPalign* collects its body token by token and ends with \\endalign; that is enough.
+    Repeats until nothing new is found, so an environment built on another defined one is found too."""
+    bases = {e.rstrip("*") for e in known} - {"math"}
+    found: dict = {}
+    changed = True
+    while changed:
+        changed = False
+        for name, d in envs.items():
+            if name in found or name in known:
+                continue
+            base = _opens_math(d.begin + "\n" + d.end, bases | {n.rstrip("*") for n in found})
+            if base:
+                d.based_on = base
+                found[name] = d
+                changed = True
+    return found
+
+
+def _opens_math(code: str, bases: set) -> str | None:
+    i = 0
+    while i < len(code):
+        if code[i] == "%":
+            i = sc.skip_comment(code, i)
+            continue
+        if code[i] != "\\":
+            i += 1
+            continue
+        word, j = sc.read_control(code, i, at_letter=True)
+        if word in ("begin", "end"):
+            try:
+                g = sc.read_group(code, j)
+            except sc.ScanError:
+                g = None
+            if g and g.inner.strip().rstrip("*") in bases:
+                return g.inner.strip()
+        elif word in bases:
+            return word + ("*" if code.startswith("*", j) else "")
+        elif word.startswith("end") and word[3:] in bases:
+            return word[3:]
+        i = max(j, i + 1)
+    return None
+
+
 def _dispatch_target(body: str) -> tuple[str | None, str | None]:
     """For a body like \\@ifnextchar[{\\@Chapter}{\\@@Chapter}: the macro taken when [ follows, and the other one."""
     for d in DISPATCH[:2]:

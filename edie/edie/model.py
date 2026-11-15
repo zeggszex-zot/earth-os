@@ -10,6 +10,7 @@ source: the same bytes in give the same bytes out (tests/test_reproducible.py).
       "source":    {"filename", "sha256", "bytes", "encoding", "newline", "lines", "body_lines"},
       "metadata":  {...},                       every value says where it came from
       "signatures": [...],                      how many arguments each structural macro was read with, and why
+      "environments": [...],                    environments the preamble defines that EDIE gives a role (0.2.1)
       "outline":   [{"id", "kind", "level", "number", "title", "children": [...]}],
       "blocks":    [...],                       in document order; see docs/EDIE.md §5 for each type
       "figures":   [...],                       every illustration reference, in or out of mathematics
@@ -43,6 +44,7 @@ class Builder:
         self.equation_tags = 0
         self.corrections: list = []
         self.definitions: list = []
+        self.environments: list = []
 
     # ids are sequential in document order, so they are stable across runs and readable in a report
     def next_id(self, kind: str) -> str:
@@ -92,7 +94,8 @@ class Builder:
                 "list_items": sum(b["n_items"] for b in self.blocks if b["type"] == "list"),
                 "equation_tags": self.equation_tags, "corrections": len(self.corrections),
                 "page_markers": self.page_markers,
-                "layout_only_paragraphs": self.layout_only, "warnings": len(self.warnings)}
+                "layout_only_paragraphs": self.layout_only, "defined_math_environments": len(self.environments),
+                "warnings": len(self.warnings)}
 
     def document(self) -> dict:
         s = self.source
@@ -104,6 +107,7 @@ class Builder:
                        "body_lines": self.body_lines},
             "metadata": self.metadata,
             "signatures": self.signatures,
+            "environments": self.environments,
             "outline": self.outline(),
             "blocks": self.blocks,
             "figures": self.figures,

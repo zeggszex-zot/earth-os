@@ -51,6 +51,8 @@ class Parser:
         self.para_math: list = []
         self.para_figs: list = []
         self.verbatim = set(profile.verbatim_envs)
+        self.math_envs = set(profile.math_envs)
+        self.env_args: dict = {}
         self._para_used = False
         self.para_page = None                  # the page a text block starts on (page markers, e.g. \\PageSep)
 
@@ -76,6 +78,12 @@ class Parser:
                 self.b.warnings.append({"code": n.get("code", "SIGNATURE_UNREAD"), "message": f"\\{n['macro']}: {n['note']}",
                                         "line": n["line"]})
         self.verbatim |= self._verbatim_envs_defined(pre_end)
+        # Environments the preamble defines as display mathematics (#33283's DPalign*, which ends with \endalign).
+        learned = sg.math_environments(sg.scan_environments(t, pre_end, self.src.line), self.profile.math_envs)
+        self.math_envs = set(self.profile.math_envs) | set(learned)
+        self.env_args = {n: d.args for n, d in learned.items() if d.args}
+        self.b.environments = [{"name": n, "role": "math", "based_on": d.based_on, "args": d.args, "line": d.line,
+                                "origin": "preamble", "latex": d.source} for n, d in sorted(learned.items())]
         self.b.signatures = sg.as_records(self.sigs, self.profile)
         self._pg_metadata()
         self._latex_metadata(0, pre_end)
@@ -229,14 +237,45 @@ class Parser:
         if role == "metadata":
             return self._read_args(j, self.sigs[name].args, i)[1]
         if role == "page":
-            args, k = self._read_args(j, self.sigs[name].args, i)
-            g = next((a for a in args if a is not None and a.kind == "{"), None)
-            if g is not None:
-                self.b.page = g.inner.strip()
-                self.b.page_markers += 1
-            return k
+            return self._page_marker(name, i, j)
         self._open(i)
         return j
+
+    def _page_marker(self, name: str, i: int, j: int) -> int:
+        """A page marker (\\PageSep{14}, \\DPPageSep{026.png}{14}): the printed page that starts here."""
+        pattern = self.sigs[name].args
+        args, k = self._read_args(j, pattern, i)
+        spec = self.profile.macros[name]
+        fields = spec.get("fields") if spec.get("fields_for") in (None, pattern) else None
+        if fields and "page" in fields and fields.index("page") < len(args):
+            g = args[fields.index("page")]                   # \DPPageSep{026.png}{14}: the page is the 2nd argument
+        else:
+            g = next((a for a in args if a is not None and a.kind == "{"), None)
+        if g is not None:
+            self.b.page = g.inner.strip()
+            self.b.page_markers += 1
+        return k
+
+    def _pages_in(self, start: int, end: int):
+        """Page markers inside a block the walk does not enter (a display, a table, a list, a figure environment):
+        the page turns there too.  Returns the page the block starts on."""
+        first, i, t = self.b.page, start, self.text
+        while i < end:
+            if t[i] == "%":
+                i = sc.skip_comment(t, i)
+                continue
+            if t[i] != "\\":
+                i += 1
+                continue
+            name, j = sc.read_control(t, i)
+            if self.profile.macros.get(name, {}).get("role") == "page" and name in self.sigs:
+                try:
+                    i = max(self._page_marker(name, i, j), j)
+                except sc.ScanError:
+                    i = j
+                continue
+            i = max(j, i + 1)
+        return first
 
     def _open(self, i: int) -> None:
         if self.para_start is None:
@@ -380,7 +419,9 @@ class Parser:
         self._flush(i, para_break=False)
         body_end = close - len(closer)
         figs = self._figures_in(j, body_end, "math")
+        first = self._pages_in(j, body_end)
         block = self.b.add_block({"type": "math", "display": True, "delimiter": opener, "environment": env,
+                                  "_page_start": first,
                                   "section": self._section(), "paragraph": self.b.paragraph,
                                   **self.b.span(i, close), "latex": self.text[i:close], "body": self.text[j:body_end],
                                   "normalized": normalize(self.text, j, body_end),
@@ -409,13 +450,14 @@ class Parser:
             self.b.add_block({"type": "verbatim", "environment": name, "section": self._section(),
                               **self.b.span(i, after), "latex": self.text[i:after], "body": self.text[g.end:k]})
             return after
-        if name in self.profile.math_envs:
+        if name in self.math_envs:
             k, after = sc.find_env_end(self.text, g.end, name, verbatim=False)
             if k < 0:
                 self.b.warn("UNCLOSED_MATH", f"\\begin{{{name}}} has no \\end{{{name}}}", i)
                 self._open(i)
                 return g.end
-            return self._display(i, g.end, "\\end{" + name + "}", "\\begin{" + name + "}", env=name, close=after)
+            start = self._env_args_end(g.end, self.env_args.get(name, ""), k)   # \begin{DPalign*}[m]: not mathematics
+            return self._display(i, start, "\\end{" + name + "}", "\\begin{" + name + "}", env=name, close=after)
         if name in self.profile.table_envs or name in self.profile.list_envs:
             k, after = sc.find_env_end(self.text, g.end, name, verbatim=False)
             if k < 0:
@@ -436,6 +478,20 @@ class Parser:
         self.envs.append(name)
         self._open(i)
         return g.end
+
+    def _env_args_end(self, j: int, pattern: str, limit: int) -> int:
+        """Where an environment's own arguments end (pattern as for macros: o optional, m mandatory)."""
+        for c in pattern:
+            try:
+                g = sc.read_optional(self.text, j) if c == "o" else sc.read_group(self.text, j)
+            except sc.ScanError:
+                g = None
+            if g is None or g.end > limit:
+                if c == "o":
+                    continue
+                break
+            j = g.end
+        return j
 
     # ------------------------------------------------------------------ tags, corrections, inline mathematics in a span
 
@@ -611,7 +667,9 @@ class Parser:
                             **self.b.span(c0, max(c0 + 1, c1))})
             if any(c["text"] for c in row):
                 rows.append(row)
+        first = self._pages_in(body, k)
         self.b.add_block({"type": "table", "environment": name, "colspec": colspec, "section": self._section(),
+                          "_page_start": first,
                           "rows": rows, "n_rows": len(rows), "n_cols": max((len(r) for r in rows), default=0),
                           "inline_math": self._math_in(start, k), **self.b.span(i, after),
                           "latex": self.text[i:after]})
@@ -663,7 +721,9 @@ class Parser:
                           **self.b.span(a, max(a + 1, zz))})
         if self.text[start:cuts[0][0] if cuts else k].strip() and not cuts:
             self.b.warn("LIST_WITHOUT_ITEMS", f"\\begin{{{name}}} holds text but no \\item", i)
+        first = self._pages_in(body, k)
         self.b.add_block({"type": "list", "environment": name, "ordered": name == "enumerate",
+                          "_page_start": first,
                           "section": self._section(), "items": items, "n_items": len(items),
                           "inline_math": self._math_in(start, k), **self.b.span(i, after),
                           "latex": self.text[i:after]})
@@ -747,7 +807,9 @@ class Parser:
             f.update({"caption": rec["caption"], "label": rec["label"], "environment": env})
             if number and f["number"] is None:
                 f["number"], f["number_origin"] = number, "caption"
+        first = self._pages_in(body, k)
         block = self.b.add_block({"type": "figure", "figure": figs[0]["id"] if figs else None,
+                                  "_page_start": first,
                                   "figures": [f["id"] for f in figs], "section": self._section(),
                                   **self.b.span(i, after), "latex": t[i:after]})
         for f in figs:

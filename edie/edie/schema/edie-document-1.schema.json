@@ -2,7 +2,7 @@
  "$schema": "https://json-schema.org/draft/2020-12/schema",
  "$id": "edie-document/1",
  "title": "EDIE structured document, format edie-document/1",
- "description": "A source document's structure, text, mathematics and illustrations, each traceable to the source. Offsets are character offsets into the decoded source with line endings normalised to LF; lines are 1-based and inclusive. A new major version is a new format id; fields are only ever added within a major version. Fields added in EDIE 0.2 (still edie-document/1): blocks' pages, table and list blocks, headings' alt_title, mathematics' tags, the document's corrections and definitions, the profile's extends and selected.",
+ "description": "A source document's structure, text, mathematics and illustrations, each traceable to the source. Offsets are character offsets into the decoded source with line endings normalised to LF; lines are 1-based and inclusive. A new major version is a new format id; fields are only ever added within a major version. Fields added in EDIE 0.2 (still edie-document/1): blocks' pages, table and list blocks, headings' alt_title, mathematics' tags, the document's corrections and definitions, the profile's extends and selected. Added in 0.2.1: the document's environments (optional, so 0.2.0 documents stay valid).",
  "type": "object",
  "required": [
   "format",
@@ -246,6 +246,52 @@
      "args",
      "origin",
      "role"
+    ]
+   }
+  },
+  "environments": {
+   "type": "array",
+   "description": "environments the preamble defines that EDIE gives a role; role math: display mathematics because its own definition opens or closes a standard math environment (based_on), e.g. #33283's DPalign*, which ends with \\endalign",
+   "items": {
+    "type": "object",
+    "properties": {
+     "name": {
+      "type": "string"
+     },
+     "role": {
+      "enum": [
+       "math"
+      ]
+     },
+     "based_on": {
+      "type": "string"
+     },
+     "args": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "line": {
+      "type": "integer"
+     },
+     "origin": {
+      "enum": [
+       "preamble"
+      ]
+     },
+     "latex": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "name",
+     "role",
+     "based_on",
+     "args",
+     "line",
+     "origin",
+     "latex"
     ]
    }
   },

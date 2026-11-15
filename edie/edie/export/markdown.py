@@ -32,6 +32,9 @@ NOT_MATH = {"ifthenelse", "equal", "hyperref", "phantomsection", "label", "ref",
             "SetRunningHeads", "SectTitle", "SubsectTitle", "null", "hfill", "vfill", "textsc", "scshape", "raggedright"}
 CS = re.compile(r"\\([A-Za-z@]+)")
 PAGE_BREAKS = re.compile(r"\\(?:displaybreak|allowdisplaybreaks)(?:\[[^\]]*\])?")
+# Text set between the lines of a display: \intertext, and the left/right variants that Distributed Proofreaders'
+# DPalign*/DPgather* code (common in Project Gutenberg LaTeX) defines.  Renderers know \text.
+INTERTEXT = re.compile(r"\\(?:intertext|shortintertext|lintertext|rintertext)(?![A-Za-z@])\s*\{")
 
 
 def _image(fig: dict, base: str) -> str:
@@ -76,6 +79,7 @@ def _math_preamble(doc: dict) -> list:
             if n not in used:
                 used.add(n)
                 todo.append(n)
+    used -= {"intertext", "shortintertext", "lintertext", "rintertext"}     # printed as \\text (INTERTEXT)
     tag_macros = {t["macro"] for b in doc["blocks"] for t in b.get("tags", [])} - {"tag"}
     keep, skipped = [], []
     for n in sorted(used):
@@ -99,6 +103,7 @@ def _cell(text: str) -> str:
 
 def to_markdown(doc: dict, image_base: str = "", anchors: bool = True) -> str:
     figs = {f["id"]: f for f in doc["figures"]}
+    defined = {e["name"]: e["based_on"] for e in doc.get("environments", []) if e.get("role") == "math"}
     out = []
     meta = doc["metadata"]
     title = (meta.get("title") or meta.get("latex_title") or {}).get("value")
@@ -129,6 +134,10 @@ def to_markdown(doc: dict, image_base: str = "", anchors: bool = True) -> str:
             out.append(text)
         elif t == "math":
             env = b["environment"]
+            seen = set()
+            while env not in MD_ENVS and env in defined and env not in seen:   # a book's own math environment:
+                seen.add(env)                                                   # the standard one it is built on
+                env = defined[env]
             body = b["body"].strip("\n")
             tags = b.get("tags") or []
             if env in MD_ENVS:
@@ -139,10 +148,10 @@ def to_markdown(doc: dict, image_base: str = "", anchors: bool = True) -> str:
                             body = re.sub(r"\\" + re.escape(tg["macro"]) + r"\*?\s*\{" + re.escape(tg["latex"]) + r"\}",
                                           "", body)
                     body = f"\\begin{{{wrap[0]}}}{wrap[1]}\n{body}\n\\end{{{wrap[0]}}}"
-                out.append(f"<!-- LaTeX environment {env}; the JSON keeps it as written -->")
+                out.append(f"<!-- LaTeX environment {b['environment']}; the JSON keeps it as written -->")
             elif env:
                 body = b["latex"]
-            body = PAGE_BREAKS.sub("", body).replace("\\intertext{", "\\text{")   # print layout, not mathematics
+            body = INTERTEXT.sub(r"\\text{", PAGE_BREAKS.sub("", body))   # print layout, not mathematics
             out.append("$$\n" + body.strip("\n") + "\n$$")
             if env in MD_ENVS and MD_ENVS[env] and tags:
                 out.append("*Equations " + ", ".join(tg["text"] for tg in tags) + "*")

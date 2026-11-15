@@ -1,6 +1,6 @@
 # EDIE — Earth Document Intelligence Engine
 
-*v0.2. Part 1 (§1–§3) was written before any EDIE code existed; part 2
+*v0.2.1. Part 1 (§1–§3) was written before any EDIE code existed; part 2
 (§4 onward) describes what was built and what testing found.*
 
 EDIE turns an original document into a **structured document**: its
@@ -190,7 +190,7 @@ Added in 0.2, still `edie-document/1`:
 
 | Suite | Result |
 |---|---|
-| `edie/tests` | **147 run (0.2): 115 pass, 32 skipped** here (the real-book tests; the book is not in this sandbox). On the book's machine: v0.1.0, 82 of 82; v0.1.1, 84 of 84, 0 warnings (§7a) |
+| `edie/tests` | **153 run (0.2.1)**: all pass here with both books present; 121 pass and 32 skip without them. On the books' machine: v0.1.0, 82 of 82; v0.1.1, 84 of 84, 0 warnings (§7a); v0.2.0, 145 of 147 (§10a) |
 | `cdos-computer/tests` | 512 run, OK, 95 skipped: unchanged |
 | `tests/` (Earth OS) | 553 run, 7 failures and 32 errors: the same as before EDIE, all from this sandbox lacking GTK, Pango, cairo and sway |
 
@@ -264,28 +264,40 @@ These replace the v0.1 list; the history of each fix is in §7a and §10.
    spaces when there are several.
 3. **Profiles state meaning, and only from evidence.** A macro's arguments are
    named (`fields`) only for the definition they were checked against
-   (`fields_for`). For #33283, `\PageSep`, `\Typo` and the like are not yet
-   given roles: its definitions haven't been seen. The data is all in `latex`
-   either way.
-4. **Tables and lists are structured generically but untested on a real
-   book.** Neither #33283 nor #50992 uses `tabular`, `itemize` or
-   `enumerate` in its body; the fixtures cover them. A row of rules only is
+   (`fields_for`). #33283's `\DPPageSep` is a page marker (0.2.1); it has no
+   corrections macro. The data is all in `latex` either way.
+4. **Tables and lists: rows and items are checked on fixtures only.** #33283
+   has 5 tables and 2 lists; the real-book tests check their mathematics and
+   source slices, not how they were split into cells. A row of rules only is
    left out; `\multicolumn` keeps its text, not its span.
 5. **Equation references are text.** `\Eq{(12)}` reads "(12)", and the tag
    `(12)` is recorded on its equation, but the two aren't linked yet.
 6. **Page ranges at a marker's edge.** A block whose last line is a page
    marker is given that page as its last; a block that starts before the
-   first marker has a null first page.
+   first marker has a null first page. A marker inside a display, table, list
+   or figure environment turns the page there (0.2.1).
 7. **Markdown is presentation.** Top-level `align`/`gather` are shown as
    `aligned`/`gathered` with their tags listed after them; `\displaybreak` is
    dropped; the book's mathematics macros are copied from its preamble, except
    those that branch or typeset (#50992: `\efrac`, `\Fact`), whose equations
-   a renderer can't show. The JSON keeps everything as written. Image links
-   depend on where the output folder is.
+   a renderer can't show. A book's own math environment is shown as the
+   standard one its definition is built on (#33283's `DPalign*` and
+   `DPgather*` both end with `\endalign`, so both show as `aligned`: a
+   `DPgather*` line has no `&` and sits right-aligned rather than centred), and
+   `\lintertext`/`\rintertext` as `\text`. The JSON keeps everything as
+   written. Image links depend on where the output folder is.
 8. **Captions and figure numbers** come only from a caption (`Fig. 4`) or an
    argument the profile names.
 9. **Memory** is the finished document: JSON about 5–13× the source. Writing
    blocks as they are produced is the next step for very large sources.
+10. **Defined environments are recognised only as mathematics**, and only when
+   their own definition names a standard display-math environment (or one
+   already recognised). An environment whose mathematics comes from a macro
+   it calls under another name is not seen; its uses stay paragraph text, as
+   before 0.2.1.
+11. **Mathematics inside `\text{}` inside mathematics** stays part of the
+   expression it is written in (`$\dfrac{\text{rate of $P$}}{…}$` is one
+   expression); it is counted, not recorded separately.
 
 ## 9. The boundary with knowledge extraction
 
@@ -351,16 +363,58 @@ books; 18 for #50992 pass when it is present). Each real book now also has:
 |---|---:|---:|
 | Source | 33283-t.tex, LF | 511,666 bytes, 11,386 lines, CRLF |
 | Profile (auto) | `pg-latex` | `pg-50992` (extends `pg-latex`) |
-| Blocks | 2,096 (v0.1.3) | 1,948 |
+| Blocks | 2,215 | 1,948 |
 | Headings | 26 chapters (Preface, Prologue, I–XXI, 3 more), 15 sections, 12 subsections, 18 paragraphs, 3 cases, 15 examples | 17 chapters (Preface, Contents, I.–XV.), 9 theorems, 1 subsection |
-| Display / inline expressions | 457 / 3,482 (v0.1.3) | 725 / 2,349 (+12 inside displays) |
-| Equation tags | not given a role (no `\Tag`) | 562 |
+| Display / inline expressions | 567 (110 in `DPalign*`/`DPgather*`) / 3,467 (+64 inside displays, +4 inside inline) | 725 / 2,349 (+12 inside displays) |
+| Equation tags | 10 (`\tag*`) | 562 |
 | Figures (missing) | 74 (0) | 0 (0) |
-| Tables / lists | to be measured with 0.2 on the book's machine | 0 / 0 |
-| Corrections / page markers | roles not assigned for #33283 | 204 / 219 (pages v–207) |
-| Warnings | 0 (v0.1.3) | 0 |
-| Time, peak memory | 0.29 s, 37 MB (v0.1.3, the book's machine) | 0.33–0.34 s, 38 MB (3 runs, this workspace) |
-| Deterministic | yes: in-process and CLI tests | yes: 3 CLI runs byte-identical (JSON sha256 `05457fe1…`) |
+| Tables / lists | 5 / 2 | 0 / 0 |
+| Corrections / page markers | none in the book / 279 (`\DPPageSep`, pages i–269) | 204 / 219 (pages v–207) |
+| Warnings | 0 on the book's machine (here: 74 `MISSING_IMAGE`, the images not being in this workspace) | 0 |
+| Time, peak memory | 0.44 s, 38 MB (0.2.0, the books' machine); 0.35–0.42 s, 41 MB (0.2.1, this workspace) | 0.70 s, 36 MB (0.2.0, the books' machine); 0.47 s, 38 MB (0.2.1, this workspace) |
+| Deterministic | yes: 3 CLI runs byte-identical (0.2.1, JSON sha256 `346cfdfd…`) | yes: 3 CLI runs byte-identical (0.2.1, JSON sha256 `7e7fe0d4…`) |
 
-The #33283 column is from v0.1.3 on the book's machine. The real-book tests
-for 0.2 report its new figures when run there.
+Counts are 0.2.1's, from this workspace. Both sources here have the sha256
+the books' machine printed for its own copies (`fb6a9195621a…`,
+`fb7b303d1d0a…`).
+
+## 10a. 0.2.1: what the first 0.2 run on Calculus Made Easy showed
+
+On the books' machine, 0.2.0 passed every Gibbs test and failed two Calculus
+tests, both new in 0.2:
+
+* **Equation tags: 7 recorded, 10 in the source.** The other 3 were in
+  `DPalign*` and `DPgather*`, environments the book defines (preamble lines
+  825 and 832). Their definitions collect the body token by token and end
+  with `\endalign`, so nothing in them says `\begin{align*}`, and EDIE 0.1–0.2.0
+  read **all 110 of their uses as paragraph text**. The 0.1 tests could not
+  see this: the display-math count was added in 0.2, and EDIE and the count
+  both took the list of math environments from the profile. **Fix (generic):**
+  EDIE reads `\newenvironment` (and the xparse and `environ` forms) and treats
+  an environment as display mathematics when its own begin or end code opens
+  or closes a known math environment (`\begin{align*}`, `\gather*`,
+  `\endalign`, …), repeating so that one built on another is found too. Its
+  arguments (`\begin{DPalign*}[m]`) are read and are not mathematics. The
+  document lists these environments (`environments[]`, with `based_on` and the
+  definition as written); the report has a table of them. The test now learns
+  them separately, with a plain text search of each definition.
+* **Inline expressions: 3,531 recorded, 3,535 in the source.** Line 10143 has
+  `$\dfrac{\text{Rate of change of~$P$ when $t$~varies}}{…}$`: four
+  expressions inside `\text{}` inside an inline one. EDIE keeps them as part of
+  the outer expression, as it already did inside displays, and the test
+  counted them inside displays but not inside inline expressions. The test now
+  counts both the same way; the totals still have to agree exactly.
+
+Two more things came up while checking the fix:
+
+* **`\DPPageSep{026.png}{14}` leaked into the text** as "026.png 14" in 271
+  places since 0.1. It is now a page marker in `pg-latex` (its page is the
+  second argument: `fields`), so Calculus's blocks have printed pages, i–269.
+* **A page marker inside a display or a list did not turn the page** (6 in
+  Calculus). It now does, in displays, tables, lists and figure environments.
+
+New regression tests (`test_defined_envs.py`, 6) cover each of these on small
+documents, including an environment built on another defined one and one that
+is not mathematics (`Problems`, built on `enumerate`). Gibbs's output is
+unchanged except for the new, empty `environments` field. No assertion was
+removed or loosened; the two counting changes above are the only test changes.

@@ -99,6 +99,17 @@
       "fields_for": "ommmm",
       "seen": "33283-t.tex preamble line 669",
       "why": "side-by-side pair: \\\\Figures[width]{file 1}{file 2}{number 1}{number 2}"
+    },
+    "DPPageSep": {
+      "role": "page",
+      "args": "mm",
+      "fields": [
+        "scan",
+        "page"
+      ],
+      "fields_for": "mm",
+      "seen": "33283-t.tex preamble line 680",
+      "why": "\\\\DPPageSep{026.png}{14}: the scan of the original page and the printed page that starts here (\\\\Pagelabel{#2})"
     }
   },
   "environments": {
