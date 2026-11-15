@@ -41,14 +41,26 @@ twice ("FRANCE" curated, "France" from Wikidata) becomes one subject with both s
 corpus.pf itself is never written.  The report says how many rows each repair touched.  A guarded corpus.pf (one with
 a corpus.pf.lock beside it: computer/corpus_guard.py) is read under the guard's shared lock, so a build never mixes
 two versions of it; while its writer holds the lock, the build is refused at once.
+
+The build streams (phase 3): rows are repaired and finished one at a time and spilled to per-shard files beside the
+output (at most SPILL_BUFFER held in memory), then each s shard is deduplicated and written on its own; the subject
+decides the shard and is part of the fact key, so that keeps exactly the rows one global set would.  v rows carry
+their file position and are put back in file order.  The output is the same, row for row, as the in-memory build's
+(tests/test_build_streaming.py), and the .bin files are written with gzip mtime 0, so a rebuild is the same bytes.
+Memory doesn't grow with the number of rows; it grows with the id tables the repairs need (OEWN synsets, legacy
+Wikidata ids) and, through content_hash reading subjects.bin whole, with the number of subjects.
 """
 
 from __future__ import annotations
 
 import argparse
+import contextlib
 import gzip
+import heapq
 import json
+import os
 import re
+import shutil
 import sys
 from collections import Counter, defaultdict
 from pathlib import Path
@@ -95,6 +107,78 @@ def wikidata_names(src) -> dict[str, str]:
             if any(not QID.match(n) for n in names)}
 
 
+SPILL_BUFFER = 8 << 20      # memory for spilled rows (with Python's per-object overhead) before they're appended
+SPILL_OVERHEAD = 64         # what one buffered line costs beyond its bytes
+
+
+def _cell(x) -> str:
+    return "" if x is None else str(x)
+
+
+def _write_gz(path: Path, lines) -> None:
+    """Each line followed by a newline, and a lone newline when there are none: what "\\n".join(lines) + "\\n" gave
+    the in-memory build.  mtime=0 makes the file the same bytes on every build (the version never depended on it:
+    it hashes the decompressed content)."""
+    with open(path, "wb") as raw, gzip.GzipFile(filename="", fileobj=raw, mode="wb", compresslevel=9, mtime=0) as gz:
+        wrote = False
+        for line in lines:
+            gz.write(line.encode("utf-8") + b"\n")
+            wrote = True
+        if not wrote:
+            gz.write(b"\n")
+
+
+class Spill:
+    """Rows waiting for their shard, in files beside the output, with a bounded amount held in memory."""
+
+    def __init__(self, base: Path, s_shards: int, v_shards: int, limit: int | None = None):
+        self.base, self.limit = Path(base), SPILL_BUFFER if limit is None else limit
+        self.flushes = 0
+        if self.base.exists():
+            shutil.rmtree(self.base)
+        for d in ("s", "v", "subjects"):
+            (self.base / d).mkdir(parents=True)
+        self.buf, self.size = defaultdict(list), 0
+
+    def path(self, kind: str, i: int) -> Path:
+        return self.base / kind / f"{i:03d}"
+
+    def add(self, kind: str, i: int, line: str) -> None:
+        data = line.encode("utf-8") + b"\n"
+        self.buf[(kind, i)].append(data)
+        self.size += len(data) + SPILL_OVERHEAD
+        if self.size >= self.limit:
+            self.flush()
+
+    def flush(self) -> None:
+        for (kind, i), chunks in self.buf.items():
+            with open(self.path(kind, i), "ab") as fh:
+                fh.write(b"".join(chunks))
+        self.buf.clear()
+        self.size = 0
+        self.flushes += 1
+
+    def read(self, kind: str, i: int):
+        p = self.path(kind, i)
+        if not p.exists():
+            return
+        with open(p, "rb") as fh:
+            for raw in fh:
+                yield raw[:-1].decode("utf-8")
+
+    def write_lines(self, kind: str, i: int, lines) -> None:
+        with open(self.path(kind, i), "wb") as fh:
+            for line in lines:
+                fh.write(line.encode("utf-8") + b"\n")
+
+    def drop(self, kind: str, i: int) -> None:
+        with contextlib.suppress(FileNotFoundError):
+            self.path(kind, i).unlink()
+
+    def remove(self) -> None:
+        shutil.rmtree(self.base, ignore_errors=True)
+
+
 def build(src, out, s_shards=256, v_shards=256, fix_wordnet=False, fix_wikidata=False, fix_keys=False, log=print):
     """Build data/ from src.  src is read three times, so a guarded corpus is read under its shared lock."""
     guard = CorpusGuard(src)
@@ -113,10 +197,19 @@ def _build(src, out, s_shards=256, v_shards=256, fix_wordnet=False, fix_wikidata
         for c in rows(src):
             if c[1] == "SYNSET" and SYNSET_ID.match(c[3]):
                 lemmas[c[3]].append(c[0])
-    s_rows = [[] for _ in range(s_shards)]
-    v_rows = [[] for _ in range(v_shards)]
-    subjects, rels, seen = set(), set(), set()
-    n = 0
+    out.mkdir(parents=True, exist_ok=True)
+    spill = Spill(out.parent / f".{out.name}.build-{os.getpid()}", s_shards, v_shards)
+    try:
+        return _stream(src, out, spill, s_shards, v_shards, fix_wordnet, fix_wikidata, fix_keys, log, report,
+                       qnames, lemmas)
+    finally:
+        spill.remove()
+
+
+def _stream(src, out, spill, s_shards, v_shards, fix_wordnet, fix_wikidata, fix_keys, log, report, qnames, lemmas):
+    """Pass 2: repair and finish every row exactly as before, but spill it to its s shard's file instead of holding
+    it; then dedupe and write one s shard at a time, and the v shards in the original row order."""
+    seq = 0
     for c in rows(src):
         subj, rel, kind, value, unit, vf, vu, stype, sid, conf, qual = c[:11]
         if rel == "SYNSET":
@@ -168,34 +261,54 @@ def _build(src, out, s_shards=256, v_shards=256, fix_wordnet=False, fix_wikidata
             report["subjects stored under their lookup key"] += 1
         # The last steps and the fact key are shared with the validator and computer/acquire (computer/pfrow.py)
         subj, kind, start, until, qual = pfrow.finish(subj, rel, kind, value, vf, vu, stype, sid, qual, fix_keys)
-        key = pfrow.fact_key(subj, rel, kind, value, unit, start, until, qual, fix_keys)
-        if key in seen:
-            report["dropped: duplicate after repair"] += 1
-            continue
-        seen.add(key)
-        cell = lambda x: "" if x is None else str(x)
-        s_rows[fnv1a(subj) % s_shards].append("\t".join(map(cell, (subj, rel, kind, value, unit, start, until, stype,
-                                                                    conf or "1.0", qual))))
-        if kind == "S":
-            vk = key_of(value)
-            v_rows[fnv1a(vk) % v_shards].append("\t".join(map(cell, (vk, subj, rel, start, until, conf))))
-        subjects.add(subj)
-        rels.add(rel)
-        n += 1
+        # The subject decides the s shard and is part of the fact key, so deduplicating one shard at a time keeps
+        # exactly the rows one global set would: the first of each fact, in file order.
+        line = "\t".join(map(_cell, (subj, rel, kind, value, unit, start, until, stype, conf or "1.0", qual)))
+        spill.add("s", fnv1a(subj) % s_shards, f"{seq}\t{conf}\t{line}")
+        seq += 1
+    spill.flush()
+
+    rels, n, n_subjects = set(), 0, 0
     (out / "s").mkdir(parents=True, exist_ok=True)
     (out / "v").mkdir(parents=True, exist_ok=True)
-    for i, r in enumerate(s_rows):
-        (out / "s" / f"{i:03d}.bin").write_bytes(gzip.compress(("\n".join(r) + "\n").encode()))
-    for i, r in enumerate(v_rows):
-        (out / "v" / f"{i:03d}.bin").write_bytes(gzip.compress(("\n".join(r) + "\n").encode()))
-    (out / "subjects.bin").write_bytes(gzip.compress(("\n".join(sorted(subjects)) + "\n").encode()))
-    meta = {"facts": n, "subjects": len(subjects), "s_shards": s_shards, "v_shards": v_shards,
+    for i in range(s_shards):
+        kept, seen, subjects = [], set(), set()
+        for raw in spill.read("s", i):
+            nseq, conf, line = raw.split("\t", 2)
+            subj, rel, kind, value, unit, start, until, _stype, _conf, qual = line.split("\t")
+            start = int(start) if start else None
+            until = int(until) if until else None
+            key = pfrow.fact_key(subj, rel, kind, value, unit, start, until, qual, fix_keys)
+            if key in seen:
+                report["dropped: duplicate after repair"] += 1
+                continue
+            seen.add(key)
+            kept.append(line)
+            if kind == "S":
+                vk = key_of(value)
+                spill.add("v", fnv1a(vk) % v_shards,
+                          nseq + "\t" + "\t".join(map(_cell, (vk, subj, rel, start, until, conf))))
+            subjects.add(subj)
+            rels.add(rel)
+        n += len(kept)
+        n_subjects += len(subjects)
+        _write_gz(out / "s" / f"{i:03d}.bin", kept)
+        spill.write_lines("subjects", i, sorted(subjects))
+        spill.drop("s", i)
+    spill.flush()
+    for i in range(v_shards):
+        lines = sorted(spill.read("v", i), key=lambda x: int(x.split("\t", 1)[0]))    # back in file order
+        _write_gz(out / "v" / f"{i:03d}.bin", [x.split("\t", 1)[1] for x in lines])
+        spill.drop("v", i)
+    # each subject is in exactly one s shard, so merging the shards' sorted lists is sorted(all subjects)
+    _write_gz(out / "subjects.bin", heapq.merge(*(spill.read("subjects", i) for i in range(s_shards))))
+    meta = {"facts": n, "subjects": n_subjects, "s_shards": s_shards, "v_shards": v_shards,
             "relation_names": sorted(rels), "built_from": str(src), "fix_wordnet": fix_wordnet,
             "fix_wikidata": fix_wikidata, "fix_keys": fix_keys}
     (out / "meta.json").write_text(json.dumps(meta))
     meta["content_sha256"] = content_hash(out)      # the corpus version every answer cites (computer/corpus.py)
     (out / "meta.json").write_text(json.dumps(meta))
-    log(f"{n} facts, {len(subjects)} subjects, {len(rels)} relations -> {out}")
+    log(f"{n} facts, {n_subjects} subjects, {len(rels)} relations -> {out}")
     for k, v in sorted(report.items()):
         log(f"  {k}: {v}")
     return meta, report

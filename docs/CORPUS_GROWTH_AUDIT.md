@@ -62,6 +62,21 @@ The audit below is kept as written on 2026-11-14. What has changed since:
   real corpus still builds to `sha256:87ee23f5…`. A new row with `ENTITY=`
   is also a duplicate of the same fact in the master without one (a legacy
   row, until Q2 re-imports its source).
+- **Phase 3, the streaming build, is built.** `build_shards` spills rows to
+  per-shard files and deduplicates one shard at a time; the real corpus
+  still builds to `sha256:87ee23f5…`, all 514 files identical decompressed,
+  with peak memory 124 MB instead of 737 MB. Memory no longer grows with
+  rows (50,000 → 400,000 rows over the same subjects: within 12 MB, where the
+  old build grew by about 180 MB); it still grows with the number of
+  distinct subjects, because `content_hash` reads `subjects.bin` whole.
+- **The Pi (Q5, revised).** A Pi 4 with 2–4 GB and several GB free, running
+  an always-on Claude Code search for new facts. There is no `pi` build
+  profile yet: what the Pi holds is decided with the searcher's design
+  (phases 5/9). Its findings go to a review queue as extracted facts, each
+  with its page and quote; a person reviews them before anything is
+  integrated (Q1 unchanged). The searcher runs sandboxed, with no corpus
+  writer, git access or tokens, a budget and an e-stop, and treats web
+  pages as untrusted input.
 
 **Open items found on 2026-11-15:**
 
@@ -422,7 +437,7 @@ through the phase 1 guard.
 | **Q2** | Repair legacy OEWN/Wikidata rows by re-importing them (generation swap) rather than keeping the build-time fixes forever? | Yes | **Yes.** Re-import the legacy rows as a generation swap; the build-time fixes are not kept permanently |
 | **Q3** | Add `ENTITY=` qualifiers to new rows (no schema change)? | Yes | **Yes.** New rows carry `ENTITY=wd:Q…` / `ENTITY=gn:…`; no schema change |
 | **Q4** | Include CC BY-SA (DBpedia) rows in the public snapshot? | Publish them as a separate asset, or leave DBpedia out | **Not in the main snapshot.** DBpedia goes out as a separate release asset, or not at all |
-| **Q5** | Which machine runs it (CPU cores, RAM, free disk), and is the Pi still a target for the full corpus? | Run on the NUC/desktop; a `pi` build profile for the Pi | **This desktop** (`earthos`: 4 cores, 15 GB RAM, 83 GB free). **The Pi gets a smaller build, not the full corpus** (decided 2026-11-15) |
+| **Q5** | Which machine runs it (CPU cores, RAM, free disk), and is the Pi still a target for the full corpus? | Run on the NUC/desktop; a `pi` build profile for the Pi | **This desktop** (`earthos`: 4 cores, 15 GB RAM, 83 GB free) guards, builds, verifies and integrates. **Revised 2026-11-15:** the Pi (a Pi 4, 2–4 GB) runs an always-on web searcher whose findings go to a review queue; no `pi` build profile yet (first decided: "a smaller build, not the full corpus") |
 | **Q6** | Release tag scheme | `v1.0.0` stays the baseline; then `v2026.11.14-1` (UTC date + cycle) | **As recommended:** `v1.0.0` is the baseline; later tags are `vYYYY.MM.DD-N` |
 | **Q7** | Which repo is authoritative: GitHub `earth-os` (`bd36161`) or your local tree (`1a99a5b`)? | Your local tree; GitHub looks like a squashed export | **GitHub `main`.** The local tree was merged into it (`e533596`, 2026-11-15) and archived as `archive/esi-phase-1` |
 
