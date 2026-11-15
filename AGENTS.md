@@ -12,13 +12,16 @@ is, and this file tells you which test does it.
 ## Before you start
 
 ```bash
-/usr/bin/python3.12 -m unittest discover -s tests -q      # 892 tests, all pass (5 skip without cdos binaries or sway)
+/usr/bin/python3 -m unittest discover -s tests -q      # 892 tests, all pass (5 skip without cdos binaries or sway)
 ```
 
-**Use Python 3.12 or newer.** PyGObject's compiled extension is built for
-3.12, so under 3.11 the GTK-touching modules fail to import and four test
-files silently do not run — including the ones covering the whole platform
-integration. A green run on the wrong interpreter is worse than a red one.
+**Use the system interpreter, `/usr/bin/python3`** (Python 3.13.5 on the
+development machine; there is no `/usr/bin/python3.12` there). PyGObject's
+compiled extension is built for the system's Python, so under any other
+interpreter (a venv, an older 3.11) the GTK-touching modules fail to import
+and four test files silently do not run — including the ones covering the
+whole platform integration. A green run on the wrong interpreter is worse than
+a red one: `/usr/bin/python3 -c "import gi, cairo"` must print nothing first.
 
 If the suite is not green *before* your change, stop and say so. Do not start
 work on a broken tree and inherit the blame for it.
