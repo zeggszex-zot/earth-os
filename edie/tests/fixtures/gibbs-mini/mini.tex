@@ -1,0 +1,86 @@
+% The Project Gutenberg EBook of a second test book, by A. Fixture
+%
+% Title: A Test Book Shaped Like Elementary Principles in Statistical Mechanics
+%
+% Author: A. Fixture
+%
+% Release Date: November 14, 2026 [EBook #50992]
+%
+\def\ebook{50992}
+\documentclass[12pt]{book}
+\usepackage{amsmath}
+\usepackage{alltt}
+\newenvironment{PGtext}{%
+\begin{alltt}
+\fontsize{8.1}{10}\ttfamily\selectfont}%
+{\end{alltt}}
+
+\newcommand{\Typo}[2]{#2}
+\newcommand{\Chg}[2]{#2}
+\newcommand{\Add}[1]{\Chg{}{#1}}
+\newcommand{\TransNote}{Transcriber's Note}
+\newcommand{\SectTitle}[2][\large]{%
+  \section*{\centering#1\normalfont #2}
+}
+% \Chapter[Alt title]{Number}{Title}
+\newcommand{\Chapter}[3][]{%
+  \ifthenelse{\equal{#1}{}}{\BookMark{0}{#2 #3}}{\BookMark{0}{#2 #1}}
+  \SectTitle{\MakeUppercase{#2}}
+}
+% Unnumbered Chapter-like unit (Preface, Contents)
+\newcommand{\Chap}[1]{\SectTitle{\MakeUppercase{#1}}}
+\newcommand{\Theorem}[1]{\medskip\par\emph{Theorem~#1}}
+\newcommand{\Signature}[3]{\null\hfill#1\hspace{\parindent}}
+\newcommand{\PageSep}[1]{\phantomsection\label{page:#1}\ignorespaces}
+\newcommand{\ie}{\emph{i.e.}}
+\newcommand{\eps}{\epsilon}
+\newcommand{\efrac}[2]{%
+  \ifthenelse{\equal{#1}{1}}{\frac{#1}{#2}}{\tfrac{#1}{#2}}}
+\newcommand{\Int}[2]{\int\!\! \overset{\text{#1}}{\underset{\text{#2}}{\cdots}} \int}
+\newcommand{\intap}{\Int{all}{phases}}
+\newcommand{\Tag}[1]{%
+  \phantomsection\label{eqn:#1}\tag*{\ensuremath{#1}}%
+}
+\newcommand{\Eq}[1]{\hyperref[eqn:#1]{\ensuremath{#1}}}
+
+\begin{document}
+\begin{PGtext}
+Project Gutenberg's boilerplate: { unbalanced, and \Chapter{IX.}{Not a Chapter}
+\end{PGtext}
+
+\subsection*{\centering\normalfont\scshape%
+\normalsize\MakeLowercase{\TransNote}}%
+
+\PageSep{vii}
+\Chap{Preface.}
+
+The usual point of view, \ie, the \Typo{stuy}{study} of a system.
+\Signature{J. W. G.}{New Haven,}{December, 1901.}
+
+\PageSep{1}
+%[** TN: \Chapter{X.}{A Chapter That Is Only a Comment}]
+\Chapter{I.}{General Notions. The Principle of Conservation
+of Extension-in-Phase.}
+
+We write $q_{1}$,~\dots $q_{n}$ for the coördinates, and
+\[
+F_{1}\, dq_{1} + F_{2}\, dq_{2} \Add{+} \cdots + F_{n}\, dq_{n}
+\Tag{(1)}
+\]
+for the moment of the forces, and by~\Eq{(1)}
+\begin{gather*}
+\eps = \efrac{1}{2} \intap \Chg{\eps}{e}^{-\eps}\, dp_{1} \dots dq_{n},
+  \Tag{(2)} \displaybreak[0] \\
+U = \frac{1}{2},
+  \Tag{(3)}
+\end{gather*}
+which is what we wanted.
+\PageSep{2}
+
+\Chapter[The Function phi and the Canonical Distribution.]{II.}{The Function $\phi$ and the
+Canonical Distribution.}
+
+\Theorem{I\@.} If an ensemble of systems is so distributed in phase, then $\eps$ is least.
+
+\Theorem{II\@.} If two ensembles are combined\Add{,} the entropy increases.
+\end{document}

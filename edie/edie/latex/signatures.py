@@ -33,6 +33,7 @@ BASE_MACROS = {
     "paragraph":     {"role": "heading", "kind": "paragraph", "level": 5, "args": "om"},
     "includegraphics": {"role": "figure", "block": False, "args": "om"},
     "caption":       {"role": "caption", "args": "om"},
+    "tag":           {"role": "equation_tag", "args": "m"},
     "label":         {"role": "label", "args": "m"},
     "title":         {"role": "metadata", "field": "title", "args": "om"},
     "author":        {"role": "metadata", "field": "author", "args": "m"},
@@ -43,6 +44,8 @@ BASE_ENVS = {
              "multline", "multline*", "flalign", "flalign*", "eqnarray", "eqnarray*", "displaymath", "math"],
     "verbatim": ["verbatim", "verbatim*", "Verbatim", "lstlisting", "comment"],
     "figure": ["figure", "figure*", "wrapfigure"],
+    "table": ["tabular", "tabular*", "tabularx", "longtable"],
+    "list": ["itemize", "enumerate", "description"],
 }
 DEFINERS = {"newcommand", "renewcommand", "providecommand", "DeclareRobustCommand"}
 DOC_DEFINERS = {"NewDocumentCommand", "RenewDocumentCommand", "DeclareDocumentCommand", "ProvideDocumentCommand"}
@@ -65,39 +68,83 @@ class Definition:
     line: int
     body: str
     kind: str               # newcommand | xparse | def
+    source: str = ""        # the whole definition as written
 
 
 class Profile:
-    def __init__(self, data: dict, path: Path | None = None):
+    """What macros mean for one family of documents.  A profile may extend another ("extends": "pg-latex"):
+    its macros, drop list and environments are laid over the parent's, key by key, so a book profile states only
+    how the book differs."""
+
+    def __init__(self, data: dict, path: Path | None = None, chain: tuple = ()):
         if data.get("format") != "edie-profile/1":
             raise ValueError(f"{path or 'profile'}: format must be edie-profile/1, not {data.get('format')!r}")
         self.name = data["name"]
         self.path = path
+        self.chain = chain + (self.name,)
         self.raw = data
         self.macros = {**BASE_MACROS, **data.get("macros", {})}
         envs = data.get("environments", {})
         self.math_envs = set(BASE_ENVS["math"]) | set(envs.get("math", []))
         self.verbatim_envs = set(BASE_ENVS["verbatim"]) | set(envs.get("verbatim", []))
         self.figure_envs = set(BASE_ENVS["figure"]) | set(envs.get("figure", []))
+        self.table_envs = set(BASE_ENVS["table"]) | set(envs.get("table", []))
+        self.list_envs = set(BASE_ENVS["list"]) | set(envs.get("list", []))
         self.drop = data.get("drop_macros", {})          # name -> args pattern, removed with its arguments
         self.image_dirs = data.get("image_dirs", ["images", "."])
         self.image_exts = data.get("image_extensions", ["", ".png", ".jpg", ".jpeg", ".pdf", ".eps", ".svg", ".gif"])
+        self.selected = "named"
+
+    @staticmethod
+    def _read(p: Path, seen: tuple = ()) -> tuple[dict, tuple]:
+        try:
+            data = json.loads(p.read_text(encoding="utf-8"))
+        except OSError as e:
+            raise ValueError(f"profile {p.stem!r} not found ({p})") from e
+        parent = data.get("extends")
+        if not parent:
+            return data, (data.get("name"),)
+        if parent in seen:
+            raise ValueError(f"profile {data.get('name')!r}: 'extends' loops through {parent!r}")
+        base, chain = Profile._read(PROFILE_DIR / f"{parent}.json", seen + (data.get("name"),))
+        merged = {**base, **{k: v for k, v in data.items() if k not in ("macros", "environments", "drop_macros")}}
+        merged["macros"] = {**base.get("macros", {}), **data.get("macros", {})}
+        merged["drop_macros"] = {**base.get("drop_macros", {}), **data.get("drop_macros", {})}
+        envs = {k: list(v) for k, v in base.get("environments", {}).items()}
+        for k, v in data.get("environments", {}).items():
+            envs[k] = sorted(set(envs.get(k, [])) | set(v))
+        merged["environments"] = envs
+        return merged, chain + (data.get("name"),)
 
     @classmethod
     def load(cls, name_or_path: str) -> "Profile":
         p = Path(name_or_path)
         if not p.suffix:
             p = PROFILE_DIR / f"{name_or_path}.json"
-        try:
-            data = json.loads(p.read_text(encoding="utf-8"))
-        except OSError as e:
-            raise ValueError(f"profile {name_or_path!r} not found ({p})") from e
-        return cls(data, p)
+        data, chain = cls._read(p)
+        return cls(data, p, chain[:-1])
+
+    @classmethod
+    def auto(cls, text: str) -> "Profile":
+        """The profile for this document: pg-<ebook number> when one ships with EDIE, else pg-latex.  The ebook
+        number is the document's own \\def\\ebook{N}, or failing that its Project Gutenberg header."""
+        import re
+        m = (re.search(r"^\\def\\ebook\{(\d+)\}", text, re.M)
+             or re.search(r"\[E[Bb]ook #(\d+)\]", text[:20000]))
+        if m and (PROFILE_DIR / f"pg-{m.group(1)}.json").is_file():
+            prof = cls.load(f"pg-{m.group(1)}")
+            prof.selected = f"auto: ebook {m.group(1)} has its own profile"
+        else:
+            prof = cls.load("pg-latex")
+            prof.selected = (f"auto: no profile for ebook {m.group(1)}; the generic one" if m
+                             else "auto: no ebook number; the generic one")
+        return prof
 
     def describe(self) -> dict:
         import hashlib
         blob = json.dumps(self.raw, sort_keys=True).encode()
-        return {"name": self.name, "sha256": hashlib.sha256(blob).hexdigest()}
+        return {"name": self.name, "extends": list(self.chain[:-1]), "selected": self.selected,
+                "sha256": hashlib.sha256(blob).hexdigest()}
 
 
 def _name_after(text: str, i: int) -> tuple[str | None, int]:
@@ -192,14 +239,16 @@ def scan_preamble(text: str, end: int, line_of) -> dict:
                     j = body.end
                 if name:
                     args = None if nargs < 0 else (("o" + "m" * (nargs - 1)) if has_default else "m" * nargs)
-                    defs[name] = Definition(name, args, line_of(i), body.inner if body else "", "newcommand")
+                    defs[name] = Definition(name, args, line_of(i), body.inner if body else "", "newcommand",
+                                            text[i:j])
             elif word in DOC_DEFINERS:
                 name, j = _name_after(text, j)
                 spec = sc.read_group(text, j)
                 body = sc.read_group(text, spec.end) if spec else None
                 if name and spec:
-                    defs[name] = Definition(name, _xparse(spec.inner), line_of(i), body.inner if body else "", "xparse")
                     j = body.end if body else spec.end
+                    defs[name] = Definition(name, _xparse(spec.inner), line_of(i), body.inner if body else "", "xparse",
+                                            text[i:j])
             elif word in ("def", "gdef", "edef", "xdef"):
                 k = sc.skip_arg_space(text, j)
                 if k < end and text[k] == "\\":
@@ -208,7 +257,8 @@ def scan_preamble(text: str, end: int, line_of) -> dict:
                     if b >= 0:
                         params = text[k:b]
                         body_end = sc.find_group_end(text, b)
-                        defs[name] = Definition(name, _def_params(params), line_of(i), text[b + 1:body_end - 1], "def")
+                        defs[name] = Definition(name, _def_params(params), line_of(i), text[b + 1:body_end - 1], "def",
+                                                text[i:body_end])
                         j = body_end
         except sc.ScanError:
             pass                                 # an unreadable definition is simply not used

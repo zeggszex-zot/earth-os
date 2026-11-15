@@ -30,12 +30,27 @@ DECLARATIONS = {"itshape", "bfseries", "scshape", "upshape", "mdseries", "rmfami
 SPACE = re.compile(r"[ \t ]+")
 
 
+# Table rules and spacing: layout only, removed with their arguments wherever readable text is made.
+BASE_DROP = {"hline": "", "cline": "m", "toprule": "o", "midrule": "o", "bottomrule": "o", "cmidrule": "om",
+             "addlinespace": "o", "noalign": "m", "footnotemark": "o", "rule": "omm", "vspace": "m", "hspace": "m",
+             "pdfbookmark": "omm", "phantomsection": "", "label": "m"}
+# An environment's own arguments (a width, a column specification) are layout, not text.
+ENV_ARGS = {"minipage": "ooom", "tabular": "om", "tabular*": "mom", "tabularx": "mom", "array": "om",
+            "longtable": "om", "wrapfigure": "omm", "figure": "o", "figure*": "o", "table": "o", "multicols": "m",
+            "list": "mm"}
+# Macros whose readable text is one of their arguments: (pattern, index of the argument to keep).
+KEEP_ARG = {"multicolumn": ("mmm", 2), "multirow": ("mmm", 2), "texorpdfstring": ("mm", 0)}
+
+
 class Context:
-    def __init__(self, sigs: dict, drop: dict, figures: dict | None = None, roles: dict | None = None):
+    def __init__(self, sigs: dict, drop: dict, figures: dict | None = None, roles: dict | None = None,
+                 text_macros: dict | None = None):
         self.sigs = sigs                # name -> Signature
-        self.drop = drop                # name -> args pattern
+        self.drop = {**BASE_DROP, **drop}   # name -> args pattern
         self.figures = figures or {}    # offset of a figure macro -> its figure ids
         self.roles = roles or {}        # name -> profile spec
+        self.text_macros = text_macros or {}    # name -> plain-text body (parser.text_macros)
+        self.depth = 0
 
 
 def _skip_args(text: str, j: int, pattern: str) -> int:
@@ -96,6 +111,15 @@ def _render(text: str, start: int, end: int, ctx: Context) -> str:
                 if name in ACCENTS and j < end:
                     i = _accent(text, j, ACCENTS[name], out, end)
                     continue
+                if name == "\\":                       # a line break: \\*[12pt] spaces it, says nothing
+                    k = j + 1 if j < end and text[j] == "*" else j
+                    try:
+                        o = sc.read_optional(text, k)
+                    except sc.ScanError:
+                        o = None
+                    out.append(" ")
+                    i = o.end if o is not None and o.end <= end else k
+                    continue
                 out.append(SYMBOLS.get(name, name))
                 i = j
                 continue
@@ -115,6 +139,8 @@ def _render(text: str, start: int, end: int, ctx: Context) -> str:
             if name in ("begin", "end"):
                 g = sc.read_group(text, j)
                 i = g.end if g and g.end <= end else j
+                if name == "begin" and g and g.inner.strip() in ENV_ARGS:
+                    i = _safe_skip(text, i, ENV_ARGS[g.inner.strip()], end)
                 continue
             if name == "item":
                 out.append("\n• ")
@@ -124,7 +150,53 @@ def _render(text: str, start: int, end: int, ctx: Context) -> str:
                     j = g.end
                 i = j
                 continue
-            if name == "footnote":
+            if name in ctx.text_macros and ctx.depth < 4:
+                ctx.depth += 1
+                try:
+                    body = ctx.text_macros[name]
+                    out.append(_render(body, 0, len(body), ctx))
+                finally:
+                    ctx.depth -= 1
+                i = _eat_spaces(text, j, end)
+                continue
+            role = ctx.roles.get(name, {})
+            if role.get("role") == "correction" and name in ctx.sigs:
+                # \Typo{misprint}{correction}: the text says what the correction says; the JSON keeps both
+                pattern = ctx.sigs[name].args
+                try:
+                    k, args = j, []
+                    for a in pattern:
+                        g = sc.read_optional(text, k) if a == "o" else sc.read_group(text, k)
+                        if g is not None and g.end <= end:
+                            k = g.end
+                        args.append(g if g is not None and g.end <= end else None)
+                except sc.ScanError:
+                    args = []
+                if args:
+                    fields = role.get("fields") if role.get("fields_for") in (None, pattern) else None
+                    keep = (fields.index("corrected") if fields and "corrected" in fields
+                            else len(args) - 1)
+                    g = args[keep] if keep < len(args) else None
+                    if g is not None:
+                        out.append(_render(text, g.inner_start, g.inner_end, ctx))
+                    i = k
+                    continue
+            if name in KEEP_ARG:
+                pattern, keep = KEEP_ARG[name]
+                try:
+                    k, args = j, []
+                    for a in pattern:
+                        g = sc.read_optional(text, k) if a == "o" else sc.read_group(text, k)
+                        args.append(g)
+                        if g is not None:
+                            k = g.end
+                except sc.ScanError:
+                    args = []
+                if len(args) == len(pattern) and args[keep] is not None and k <= end:
+                    out.append(_render(text, args[keep].inner_start, args[keep].inner_end, ctx))
+                    i = k
+                    continue
+            if name in ("footnote", "footnotetext"):
                 g = sc.read_group(text, j)
                 if g and g.end <= end:
                     out.append(f" [footnote: {_render(text, g.inner_start, g.inner_end, ctx)}]")
@@ -142,6 +214,20 @@ def _render(text: str, start: int, end: int, ctx: Context) -> str:
                 g = sc.read_optional(text, j)
                 if g and g.end <= end:
                     j = g.end
+            if spec and spec.args.count("m") >= 2:
+                # \Signature{J. W. G.}{New Haven,}{December, 1901.}: each argument's text, a space between
+                k, parts = j, []
+                for a in spec.args.lstrip("o"):
+                    g = sc.read_optional(text, k) if a == "o" else sc.read_group(text, k)
+                    if g is None or g.end > end:
+                        break
+                    if a == "m":
+                        parts.append(_render(text, g.inner_start, g.inner_end, ctx))
+                    k = g.end
+                if parts:
+                    out.append(" ".join(p for p in parts if p))
+                    i = k
+                    continue
             i = _eat_spaces(text, j, end) if j < end and text[j] in " \t" else j
             continue
         if ch in "{}":

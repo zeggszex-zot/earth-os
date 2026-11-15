@@ -1,0 +1,94 @@
+{
+  "format": "edie-profile/1",
+  "name": "pg-50992",
+  "extends": "pg-latex",
+  "description": "Project Gutenberg #50992, J. Willard Gibbs, Elementary Principles in Statistical Mechanics (LaTeX by Andrew D. Hwang). Only what differs from pg-latex, each entry checked against the book's own preamble (line numbers after CRLF is read as LF).",
+  "macros": {
+    "Chapter": {
+      "role": "heading",
+      "kind": "chapter",
+      "level": 1,
+      "args": "omm",
+      "fields": [
+        "alt_title",
+        "number",
+        "title"
+      ],
+      "fields_for": "omm",
+      "seen": "50992-t.tex preamble line 320",
+      "why": "line 319: '% \\Chapter[Alt title]{Number}{Title}'. The [..] only replaces the title in the PDF bookmark (\\BookMark{0}{#2 #1}); it is not a running head"
+    },
+    "Chap": {
+      "role": "heading",
+      "kind": "chapter",
+      "level": 1,
+      "args": "m",
+      "fields": [
+        "title"
+      ],
+      "fields_for": "m",
+      "seen": "50992-t.tex preamble line 336",
+      "why": "line 335: 'Unnumbered Chapter-like unit (Preface, Contents)'"
+    },
+    "Theorem": {
+      "role": "heading",
+      "kind": "theorem",
+      "level": 4,
+      "args": "m",
+      "fields": [
+        "number"
+      ],
+      "fields_for": "m",
+      "seen": "50992-t.tex preamble line 344",
+      "why": "\\medskip\\par\\emph{Theorem~#1}: a run-in theorem whose only argument is its number"
+    },
+    "Typo": {
+      "role": "correction",
+      "args": "mm",
+      "fields": [
+        "original",
+        "corrected"
+      ],
+      "fields_for": "mm",
+      "seen": "50992-t.tex preamble line 223",
+      "why": "\\newcommand{\\Typo}[2]{#2}: prints the correction"
+    },
+    "Chg": {
+      "role": "correction",
+      "args": "mm",
+      "fields": [
+        "original",
+        "corrected"
+      ],
+      "fields_for": "mm",
+      "seen": "50992-t.tex preamble line 226",
+      "why": "\\newcommand{\\Chg}[2]{#2}: prints the change"
+    },
+    "Add": {
+      "role": "correction",
+      "args": "m",
+      "fields": [
+        "corrected"
+      ],
+      "fields_for": "m",
+      "seen": "50992-t.tex preamble line 228",
+      "why": "\\newcommand{\\Add}[1]{\\Chg{}{#1}}: an addition, nothing printed before"
+    },
+    "Tag": {
+      "role": "equation_tag",
+      "args": "m",
+      "seen": "50992-t.tex preamble line 406",
+      "why": "\\tag*{\\ensuremath{#1}} with a label: the equation's printed number"
+    },
+    "PageSep": {
+      "role": "page",
+      "args": "m",
+      "seen": "50992-t.tex preamble line 357",
+      "why": "\\label{page:#1}: the printed page that starts here"
+    }
+  },
+  "drop_macros": {
+    "BookMark": "mm"
+  },
+  "drop_macros_why": "50992-t.tex preamble line 260: \\BookMark{level}{title} is \\phantomsection\\pdfbookmark: a PDF bookmark, nothing printed"
+}

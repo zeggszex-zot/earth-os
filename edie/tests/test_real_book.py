@@ -1,8 +1,13 @@
-"""Calculus Made Easy (Project Gutenberg #33283), when it is on this machine.
+"""The real books, when they are on this machine: Calculus Made Easy (Project Gutenberg #33283) and Elementary
+Principles in Statistical Mechanics (#50992, Gibbs).
 
-    EDIE_BOOK=/path/to/33283-t.tex python3 -m unittest test_real_book -v
+    python3 -m unittest test_real_book -v
+    EDIE_BOOK_33283=/path/33283-t.tex EDIE_BOOK_50992=/path/50992-t.tex python3 -m unittest test_real_book -v
 
-Default location: ~/earth-os-library/gutenberg/books-original/33283/33283-t.tex.  Skipped when absent.
+Default locations: ~/earth-os-library/gutenberg/books-original/<number>/<number>-t.tex (EDIE_BOOK still names the
+first book, as in 0.1).  Each book's tests are skipped when it is absent.
+
+Every check in RealBook runs on both books; each book adds what only it has.
 
 The structure EDIE extracts is compared with the source by a second, independent method: a line-by-line count of
 each structural macro outside comments and verbatim blocks.  The two have to agree.  Nothing here was copied from
@@ -13,6 +18,9 @@ consecutive Roman numerals the source states, so a skipped or invented chapter f
 import hashlib
 import os
 import re
+import subprocess
+import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -23,8 +31,9 @@ from edie.latex.parser import Parser
 from edie.model import dumps
 from edie.source import Source
 
-BOOK = Path(os.environ.get("EDIE_BOOK",
-                           Path.home() / "earth-os-library/gutenberg/books-original/33283/33283-t.tex"))
+LIBRARY = Path.home() / "earth-os-library/gutenberg/books-original"
+BOOK = Path(os.environ.get("EDIE_BOOK_33283") or os.environ.get("EDIE_BOOK") or LIBRARY / "33283/33283-t.tex")
+GIBBS = Path(os.environ.get("EDIE_BOOK_50992") or LIBRARY / "50992/50992-t.tex")
 ROMAN = {"I": 1, "V": 5, "X": 10, "L": 50, "C": 100}
 
 
@@ -41,8 +50,22 @@ def roman(s: str):
 
 def independent_counts(text: str, names, verbatim_envs) -> dict:
     """Occurrences of each macro in the body, outside comments and verbatim environments, counted per line."""
-    body = text[text.index("\\begin{document}"):]
+    body = code_lines(text, verbatim_envs)
     counts = {n: 0 for n in names}
+    for code in body:
+        for n in names:
+            counts[n] += len(re.findall(r"\\" + n + r"(?![A-Za-z])", code))
+    return counts
+
+
+def code_lines(text: str, verbatim_envs) -> list:
+    """The body's lines, from \\begin{document} to \\end{document} as EDIE reads it, comments cut off and
+    verbatim environments left out."""
+    text = text.replace("\r\n", "\n")
+    start = text.index("\\begin{document}")
+    end = text.find("\\end{document}", start)
+    body = text[start:end if end >= 0 else len(text)]
+    out = []
     inside = None
     for line in body.split("\n"):
         if inside:
@@ -54,22 +77,58 @@ def independent_counts(text: str, names, verbatim_envs) -> dict:
             if f"\\begin{{{env}}}" in code:
                 inside = env
                 code = code.split(f"\\begin{{{env}}}")[0]
-        for n in names:
-            counts[n] += len(re.findall(r"\\" + n + r"(?![A-Za-z])", code))
-    return counts
+        out.append(code)
+    return out
 
 
-@unittest.skipUnless(BOOK.is_file(), f"{BOOK} is not on this machine")
-class CalculusMadeEasy(unittest.TestCase):
+def independent_math(text: str, verbatim_envs, math_envs) -> tuple:
+    """(display, inline) expressions counted from the source's characters alone: \\[, $$ and math environments;
+    single $ pairs and \\(.  An escaped \\$ and the line break \\\\[2pt] are not mathematics."""
+    code = "\n".join(code_lines(text, verbatim_envs)).replace("\\\\", "  ").replace("\\$", "  ")
+    envs = sum(code.count(f"\\begin{{{e}}}") for e in math_envs)
+    display = code.count("\\[") + code.count("$$") // 2 + envs
+    inline = (code.count("$") - 2 * code.count("$$")) // 2 + code.count("\\(")
+    return display, inline
+
+
+def edie_math(doc: dict) -> tuple:
+    """(display, inline) as EDIE recorded them: math blocks; every inline expression wherever it was recorded,
+    plus those written inside a display expression (\\text{... $x$ ...})."""
+    inline = 0
+
+    def walk(x):
+        nonlocal inline
+        if isinstance(x, dict):
+            if x.get("delimiter") in ("$", "\\(") and "body" in x:
+                inline += 1
+            for v in x.values():
+                walk(v)
+        elif isinstance(x, list):
+            for v in x:
+                walk(v)
+    walk(doc["blocks"])
+    walk(doc["figures"])
+    maths = [b for b in doc["blocks"] if b["type"] == "math"]
+    inside = sum((b["latex"].replace("\\$", "").count("$") - (4 if b["delimiter"] == "$$" else 0)) // 2
+                 for b in maths)
+    return len(maths), inline + inside
+class RealBook:
+    """Checks every real book must pass.  BOOK and PROFILE are set by each book's class."""
+    BOOK: Path
+    PROFILE: str
+
     @classmethod
     def setUpClass(cls):
-        cls.before = hashlib.sha256(BOOK.read_bytes()).hexdigest()
-        cls.src = Source.load(BOOK)
-        cls.prof = sg.Profile.load("pg-latex")
-        cls.doc = Parser(cls.src, cls.prof, BOOK.parent).parse()
+        cls.before = hashlib.sha256(cls.BOOK.read_bytes()).hexdigest()
+        cls.src = Source.load(cls.BOOK)
+        cls.prof = sg.Profile.load(cls.PROFILE)
+        cls.doc = Parser(cls.src, cls.prof, cls.BOOK.parent).parse()
+
+    def test_auto_selects_this_books_profile(self):
+        self.assertEqual(sg.Profile.auto(self.src.text).name, self.PROFILE)
 
     def test_source_unchanged(self):
-        self.assertEqual(hashlib.sha256(BOOK.read_bytes()).hexdigest(), self.before)
+        self.assertEqual(hashlib.sha256(self.BOOK.read_bytes()).hexdigest(), self.before)
         self.assertEqual(self.doc["source"]["sha256"], self.before)
 
     def test_structure_agrees_with_an_independent_count(self):
@@ -109,6 +168,54 @@ class CalculusMadeEasy(unittest.TestCase):
                 ta, tz = b["title"]["offsets"]
                 self.assertTrue(rz <= ta or tz <= ra, b["lines"])  # different spans of the source
 
+    def test_mathematics_agrees_with_an_independent_count(self):
+        verb = sorted({b["environment"] for b in self.doc["blocks"] if b["type"] == "verbatim"} | {"verbatim"})
+        self.assertEqual(edie_math(self.doc), independent_math(self.src.text, verb, self.prof.math_envs))
+
+    def test_tags_corrections_and_page_markers_agree_with_an_independent_count(self):
+        verb = sorted({b["environment"] for b in self.doc["blocks"] if b["type"] == "verbatim"} | {"verbatim"})
+        by_role = lambda role: [m for m, s in self.prof.macros.items() if s.get("role") == role]
+        count = lambda names: sum(independent_counts(self.src.text, names, verb).values()) if names else 0
+        self.assertEqual(self.doc["stats"]["equation_tags"], count(by_role("equation_tag")))
+        self.assertEqual(len(self.doc["corrections"]), count(by_role("correction")))
+        self.assertEqual(self.doc["stats"]["page_markers"], count(by_role("page")))
+
+    def test_every_figure_and_correction_is_its_source_slice(self):
+        for x in self.doc["figures"] + self.doc["corrections"]:
+            a, z = x["offsets"]
+            self.assertEqual(self.src.text[a:z], x["latex"], x.get("id", x["lines"]))
+
+    def test_cli_twice_in_separate_processes_is_byte_identical(self):
+        root = Path(__file__).resolve().parent.parent
+        with tempfile.TemporaryDirectory() as a, tempfile.TemporaryDirectory() as b:
+            for out in (a, b):
+                r = subprocess.run([sys.executable, "-m", "edie", "parse", str(self.BOOK), "--out", out,
+                                    "--image-base", "images"], cwd=root, capture_output=True, text=True)
+                self.assertEqual(r.returncode, 0, r.stderr)
+            for f in sorted(Path(a).iterdir()):
+                self.assertEqual(f.read_bytes(), (Path(b) / f.name).read_bytes(), f.name)
+
+    def test_every_block_is_its_source_slice(self):
+        for b in self.doc["blocks"]:
+            a, z = b["offsets"]
+            self.assertEqual(self.src.text[a:z], b["latex"], b["id"])
+
+    def test_reproducible(self):
+        again = Parser(Source.load(self.BOOK), self.prof, self.BOOK.parent).parse()
+        self.assertEqual(dumps(again), dumps(self.doc))
+
+    def test_no_crash_level_problems(self):
+        codes = {w["code"] for w in self.doc["warnings"]}
+        self.assertFalse(codes & {"UNBALANCED_GROUP", "NO_DOCUMENT_ENV", "NO_DOCUMENT_END", "SIGNATURE_MISMATCH"},
+                         [w for w in self.doc["warnings"] if w["code"] in
+                          {"UNBALANCED_GROUP", "NO_DOCUMENT_ENV", "NO_DOCUMENT_END", "SIGNATURE_MISMATCH"}][:10])
+
+
+
+@unittest.skipUnless(BOOK.is_file(), f"{BOOK} is not on this machine")
+class CalculusMadeEasy(RealBook, unittest.TestCase):
+    BOOK, PROFILE = BOOK, "pg-latex"
+
     def test_figure_numbers_come_from_the_source(self):
         """\\Figure[width]{file}{number} and \\Figures[width]{f1}{f2}{n1}{n2} state their numbers: every one has
         a number, it is in the macro's own text, and no number is used twice."""
@@ -120,20 +227,57 @@ class CalculusMadeEasy(unittest.TestCase):
         numbers = [f["number"] for f in figs]
         self.assertEqual(len(numbers), len(set(numbers)), sorted(n for n in numbers if numbers.count(n) > 1))
 
-    def test_every_block_is_its_source_slice(self):
+
+
+@unittest.skipUnless(GIBBS.is_file(), f"{GIBBS} is not on this machine")
+class StatisticalMechanics(RealBook, unittest.TestCase):
+    """#50992: no figures; numbered chapters I.-XV. with an optional [..] that is an alternate (bookmark) title;
+    unnumbered \\Chap units; run-in \\Theorem{I\\@.}; transcriber's corrections; equation tags; page markers."""
+    BOOK, PROFILE = GIBBS, "pg-50992"
+
+    def heads(self, kind):
+        return [b for b in self.doc["blocks"] if b["type"] == "heading" and b["kind"] == kind]
+
+    def test_alternate_titles_are_exactly_the_chapters_that_give_one(self):
+        verb = sorted({b["environment"] for b in self.doc["blocks"] if b["type"] == "verbatim"} | {"verbatim"})
+        given = sum(len(re.findall(r"\\Chapter\s*\[", c)) for c in code_lines(self.src.text, verb))
+        alts = [b for b in self.heads("chapter") if b["alt_title"]]
+        self.assertEqual(len(alts), given)
+        for b in self.heads("chapter"):
+            self.assertIsNone(b["running_head"], b["lines"])        # this book's [..] is never a running head
+        for b in alts:
+            self.assertNotEqual(b["alt_title"]["offsets"], b["title"]["offsets"])
+
+    def test_theorems_are_consecutive_and_inside_chapters(self):
+        th = self.heads("theorem")
+        self.assertTrue(th)
+        self.assertEqual([roman(t["number"]) for t in th], list(range(1, len(th) + 1)))
+        chapters = {b["id"] for b in self.heads("chapter")}
+        self.assertTrue(all(t["parent"] in chapters for t in th))
+
+    def test_unnumbered_chapters_have_titles_and_no_number(self):
+        chap = [b for b in self.heads("chapter") if b["macro"] == "Chap"]
+        self.assertTrue(chap)
+        for b in chap:
+            self.assertIsNone(b["number"])
+            self.assertTrue(b["title"]["text"])
+
+    def test_no_correction_macro_is_left_in_readable_text(self):
+        names = [m for m, s in self.prof.macros.items() if s.get("role") == "correction"]
         for b in self.doc["blocks"]:
-            a, z = b["offsets"]
-            self.assertEqual(self.src.text[a:z], b["latex"], b["id"])
+            if b["type"] == "text":
+                plain = re.sub(r"\$[^$]*\$", "", b["text"])          # mathematics is kept as written
+                for n in names:
+                    self.assertNotIn("\\" + n + "{", plain, b["lines"])
 
-    def test_reproducible(self):
-        again = Parser(Source.load(BOOK), self.prof, BOOK.parent).parse()
-        self.assertEqual(dumps(again), dumps(self.doc))
-
-    def test_no_crash_level_problems(self):
-        codes = {w["code"] for w in self.doc["warnings"]}
-        self.assertFalse(codes & {"UNBALANCED_GROUP", "NO_DOCUMENT_ENV", "NO_DOCUMENT_END", "SIGNATURE_MISMATCH"},
-                         [w for w in self.doc["warnings"] if w["code"] in
-                          {"UNBALANCED_GROUP", "NO_DOCUMENT_ENV", "NO_DOCUMENT_END", "SIGNATURE_MISMATCH"}][:10])
+    def test_every_block_after_the_first_page_marker_has_its_page(self):
+        """The block holding the first marker may start before it (its first page is then unknown, null, not
+        guessed); every block after that one starts on a known page."""
+        seen = False
+        for b in self.doc["blocks"]:
+            if seen:
+                self.assertTrue(b["pages"] and b["pages"][0], b["lines"])
+            seen = seen or bool(b["pages"])
 
 
 if __name__ == "__main__":

@@ -38,6 +38,11 @@ class Builder:
         self.paragraph = 0
         self.body_lines = None                 # [first, last] line of the document body
         self.layout_only = 0                   # paragraphs holding only layout commands, not emitted
+        self.page = None                       # the source's own page number, from its page markers
+        self.page_markers = 0
+        self.equation_tags = 0
+        self.corrections: list = []
+        self.definitions: list = []
 
     # ids are sequential in document order, so they are stable across runs and readable in a report
     def next_id(self, kind: str) -> str:
@@ -52,7 +57,8 @@ class Builder:
                               "line": self.source.line(offset) if offset is not None else None})
 
     def add_block(self, block: dict) -> dict:
-        block = {"id": self.next_id("block"), **block}
+        first = block.pop("_page_start", self.page)
+        block = {"id": self.next_id("block"), **block, "pages": [first, self.page] if (first or self.page) else None}
         self.blocks.append(block)
         return block
 
@@ -73,11 +79,19 @@ class Builder:
             key = b["type"] if b["type"] != "heading" else f"heading:{b['kind']}"
             count[key] = count.get(key, 0) + 1
         inline = sum(len(b.get("inline_math", [])) for b in self.blocks)
+        inline += sum(len(f.get("inline_math", [])) for b in self.blocks if b["type"] == "heading"
+                      for f in (b["title"], b["running_head"], b["alt_title"]) if f)
         return {"blocks": len(self.blocks), "by_type": dict(sorted(count.items())),
                 "inline_math": inline, "display_math": count.get("math", 0),
                 "figures": len(self.figures),
                 "figures_in_math": sum(1 for f in self.figures if f["context"] == "math"),
                 "images_missing": sum(1 for f in self.figures if not f["file_exists"]),
+                "tables": count.get("table", 0),
+                "table_rows": sum(b["n_rows"] for b in self.blocks if b["type"] == "table"),
+                "lists": count.get("list", 0),
+                "list_items": sum(b["n_items"] for b in self.blocks if b["type"] == "list"),
+                "equation_tags": self.equation_tags, "corrections": len(self.corrections),
+                "page_markers": self.page_markers,
                 "layout_only_paragraphs": self.layout_only, "warnings": len(self.warnings)}
 
     def document(self) -> dict:
@@ -93,6 +107,8 @@ class Builder:
             "outline": self.outline(),
             "blocks": self.blocks,
             "figures": self.figures,
+            "corrections": self.corrections,
+            "definitions": self.definitions,
             "warnings": self.warnings,
             "stats": self.stats(),
         }

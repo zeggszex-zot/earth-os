@@ -1,6 +1,6 @@
 # EDIE — Earth Document Intelligence Engine
 
-*v0.1. Part 1 (§1–§3) was written before any EDIE code existed; part 2
+*v0.2. Part 1 (§1–§3) was written before any EDIE code existed; part 2
 (§4 onward) describes what was built and what testing found.*
 
 EDIE turns an original document into a **structured document**: its
@@ -66,10 +66,12 @@ edie/
       report.py                 the parsing report
     profiles/
       pg-latex.json             roles of the Project Gutenberg LaTeX macros (\Chapter, \Figure, …)
+      pg-50992.json             Gibbs (#50992): only what differs; extends pg-latex (0.2)
     schema/
       edie-document-1.schema.json
   tests/
     fixtures/thompson-mini/     a small document using every pattern, with images
+    fixtures/gibbs-mini/        a small document in #50992's conventions (0.2)
     test_*.py
 docs/EDIE.md                    this file
 ```
@@ -156,7 +158,18 @@ and `section`, the innermost heading it falls under.
 | `text` | `text` (readable), `inline_math` (each with `latex`, `body`, `normalized`, `features`, `figures`, `lines`), `figures`, `paragraph` |
 | `math` | display mathematics: `delimiter`, `environment`, `latex`, `body`, `normalized`, `features`, `figures`, `paragraph` |
 | `figure` | a block-level illustration or figure environment; the details are in `figures[]` |
+| `table` | `environment`, `colspec`, `rows` (cells, each `{latex, text, lines, offsets}`), `n_rows`, `n_cols`, `inline_math` (0.2) |
+| `list` | `environment`, `ordered`, `items` (each `{label, latex, text, lines, offsets}`; a nested list stays in its item), `n_items`, `inline_math` (0.2) |
 | `verbatim` | `environment`, `body` |
+
+Added in 0.2, still `edie-document/1`:
+* every block has `pages`, its [first, last] printed page from the source's
+  own page markers (null without them);
+* headings have `alt_title`, an alternate title the source gives, which is
+  never a running head;
+* every expression has `tags`, its equation tags;
+* the document has `corrections[]` (each with both readings) and
+  `definitions[]` (the preamble macros the body uses, as written).
 
 * **`figures[]`** holds every illustration: `macro`, `context` (`text`,
   `math` or `figure-environment`), `in_math`, `args` as written, `file`,
@@ -177,7 +190,7 @@ and `section`, the innermost heading it falls under.
 
 | Suite | Result |
 |---|---|
-| `edie/tests` | **91 run: 82 pass, 9 skipped** here (the real-book tests; the book is not in this sandbox). On the book's machine: v0.1.0, 82 of 82; v0.1.1, 84 of 84, 0 warnings (§7a) |
+| `edie/tests` | **147 run (0.2): 115 pass, 32 skipped** here (the real-book tests; the book is not in this sandbox). On the book's machine: v0.1.0, 82 of 82; v0.1.1, 84 of 84, 0 warnings (§7a) |
 | `cdos-computer/tests` | 512 run, OK, 95 skipped: unchanged |
 | `tests/` (Earth OS) | 553 run, 7 failures and 32 errors: the same as before EDIE, all from this sandbox lacking GTK, Pango, cairo and sway |
 
@@ -238,46 +251,41 @@ consecutive, running heads apart from titles, reproducible, source untouched).
 | Signatures | every structural macro read from the book's preamble (`\Chapter` line 388, `\AltChapter` 407, `\ChapterStar` 432, `\Section` 451, `\Subsection` 459, `\Paragraph` 464, `\Case` 472, `\Example` 475, `\Graphic` 651, `\Figure` 660); none fell back to the profile |
 | Warnings (v0.1.0) | 3 × `CHAPTER_UNNUMBERED` on `\AltChapter`: a false alarm. The book defines `\AltChapter[head]{title}`, unnumbered by design. **Fixed in 0.1.1**: the warning now fires only for a number argument that exists and is empty; regression test added. The profile's fallback patterns now match this preamble. v0.1.1 on the book: 84 tests pass, **0 warnings**, 0.38 s. |
 
-## 8. Known limitations
+## 8. Known limitations (v0.2)
 
-1. **Figure numbers for #33283 come from the definitions** (0.1.2). The
-   book's own usage line (659) is `\Figure[optional width]{File name}{Fig number}`,
-   and line 669 defines a side-by-side pair,
-   `\Figures[width]{file 1}{file 2}{number 1}{number 2}`, which v0.1.0–0.1.1
-   did not know about. Any pairs in the book were therefore missed by both
-   EDIE and the independent count, which only counts profile macros. The
-   profile now names each argument (`fields`), applied only when the book
-   defines the macro with exactly that pattern (`fields_for`). A pair gives
-   two figure records sharing a `group` and one block. A new real-book test
-   requires every `\Figure`/`\Figures` to carry the number stated in its own
-   text, with no number used twice. On the book (0.1.2): **74 figures**, 22 of them from 11 `\Figures` pairs that earlier versions missed; every number found.
-   0.1.2 also showed a bug: inside a figure environment, each image's position was replaced by the environment's
-   span, so two `\Graphic`s in one environment looked like one use (independent count 12, EDIE 11). **Fixed in 0.1.3**:
-   every figure keeps its own macro's span, and a test now checks each figure, not only each block, against its exact
-   source text and lines.
-2. **Fallback patterns** in `pg-latex.json` are now the ones #33283's
-   preamble defines. They only matter for a book that doesn't define a macro
-   readably, and the report flags that case.
-3. **Figure numbers.** `\Figure`/`\Graphic` arguments are kept as written. A
-   number is recorded only from a caption (`Fig. 4`) or from an argument the
-   profile names (`"fields": [null, "number", "file"]`).
-4. **No macro expansion.** A heading produced by a wrapper macro the profile
-   doesn't list isn't seen as a heading. Unknown macros keep their arguments'
-   text in the readable rendering (`\textit{x}` → `x`); the drop list removes
-   layout-only ones (`\Pagelabel{162}`).
-5. **Tables and lists aren't structured yet.** `tabular` becomes text, and
-   `\item` becomes `•`. The raw LaTeX is in the block.
-6. **Optional arguments of every heading are stored as `running_head`.** For
-   `\Section[short]{…}` that's a short title, used the same way. Case and
-   Example are recorded as level-5 headings under the preceding heading; the
-   raw LaTeX allows another reading later.
-7. **Markdown only.** Top-level `align`/`equation` environments are shown as
-   `aligned`/plain display maths, because Markdown renderers reject them
-   inside `$$`. A comment names the original environment, and the JSON keeps
-   it untouched. Image links depend on where the output folder is; the JSON
-   doesn't.
-8. **Inputs: LaTeX in UTF-8 or Latin-1.** PDF and plain text will be further
-   front ends producing the same `edie-document/1`.
+These replace the v0.1 list; the history of each fix is in §7a and §10.
+
+1. **One front end: LaTeX** (UTF-8 or Latin-1, LF or CRLF). PDF and plain
+   text are still to come, producing the same `edie-document/1`.
+2. **No macro expansion beyond plain text.** A zero-argument macro whose
+   definition is plain text is expanded in readable text (`\ie`); nothing else
+   is. A heading produced by a wrapper macro the profile doesn't list isn't
+   seen as a heading. Unknown macros keep their arguments' text, separated by
+   spaces when there are several.
+3. **Profiles state meaning, and only from evidence.** A macro's arguments are
+   named (`fields`) only for the definition they were checked against
+   (`fields_for`). For #33283, `\PageSep`, `\Typo` and the like are not yet
+   given roles: its definitions haven't been seen. The data is all in `latex`
+   either way.
+4. **Tables and lists are structured generically but untested on a real
+   book.** Neither #33283 nor #50992 uses `tabular`, `itemize` or
+   `enumerate` in its body; the fixtures cover them. A row of rules only is
+   left out; `\multicolumn` keeps its text, not its span.
+5. **Equation references are text.** `\Eq{(12)}` reads "(12)", and the tag
+   `(12)` is recorded on its equation, but the two aren't linked yet.
+6. **Page ranges at a marker's edge.** A block whose last line is a page
+   marker is given that page as its last; a block that starts before the
+   first marker has a null first page.
+7. **Markdown is presentation.** Top-level `align`/`gather` are shown as
+   `aligned`/`gathered` with their tags listed after them; `\displaybreak` is
+   dropped; the book's mathematics macros are copied from its preamble, except
+   those that branch or typeset (#50992: `\efrac`, `\Fact`), whose equations
+   a renderer can't show. The JSON keeps everything as written. Image links
+   depend on where the output folder is.
+8. **Captions and figure numbers** come only from a caption (`Fig. 4`) or an
+   argument the profile names.
+9. **Memory** is the finished document: JSON about 5–13× the source. Writing
+   blocks as they are produced is the next step for very large sources.
 
 ## 9. The boundary with knowledge extraction
 
@@ -288,3 +296,71 @@ in `corpus.pf`'s `source_id`, with its own `source_type`. Under the corpus
 growth plan (`docs/CORPUS_GROWTH_AUDIT.md` §6.3), model-extracted statements
 go to a proposal queue and never directly into `corpus.pf`. EDIE has no code
 path to the corpus at all, and `test_isolation.py` keeps it that way.
+
+## 10. v0.2: a second book, and EDIE in the repository
+
+**Integration.** `edie/` sits at the root of the Earth OS repository, beside
+`earth_os/` and `cdos-computer/`, and is not part of either. Its isolation
+tests read the actual repository and fail if anything outside `edie/` imports
+EDIE (including `importlib`/`__import__`), or if EDIE imports Earth OS, CDOS,
+the network, a subprocess or a model client. A planted `import edie` and a
+planted `__import__("edie")` were both caught. Copied anywhere else, those two
+tests say *skipped*, never *passed*. `CLAUDE.md` and `AGENTS.md` now name
+`/usr/bin/python3` (3.13.5), the interpreter the development machine has.
+
+**The second book** is #50992, Gibbs, *Elementary Principles in Statistical
+Mechanics*. Its structural audit and the compatibility report are in
+[`EDIE_COMPAT_50992.md`](EDIE_COMPAT_50992.md). In short:
+- EDIE 0.1.3 parsed it with 0 warnings and every expression accounted for;
+- but it silently got meaning wrong, recording a bookmark title as a running
+  head and merging misprints with their corrections;
+- and it had no place for the book's equation tags, page numbers and
+  theorems.
+
+**What changed** (generic unless marked):
+- profile inheritance and automatic selection (`--profile auto`: `pg-<ebook>`
+  if EDIE has it, else `pg-latex`);
+- named heading arguments that apply only to the definition they were checked
+  against;
+- `alt_title`;
+- roles `correction`, `equation_tag` and `page`;
+- plain-text macro expansion;
+- `table` and `list` blocks;
+- `definitions[]`;
+- Markdown that carries the book's mathematics macros;
+- readable-text fixes (`\\[12pt]`, `\rule`, environment arguments,
+  multi-argument macros);
+- *profile* `pg-50992` (inheriting `pg-latex`): `\Chapter[alt]{n}{title}`,
+  `\Chap`, `\Theorem`, `\Typo`/`\Chg`/`\Add`, `\Tag`, `\PageSep`,
+  `\BookMark`. Every entry names the preamble line it came from.
+
+No #33283 test was changed except for two things. The independent count now
+stops at `\end{document}`, where EDIE stops (#50992 names `\Chapter` in
+tables after it). And the checks shared by both books moved into a common
+class, with their assertions unchanged.
+
+**Tests.** `edie/tests`: 147 run here (32 real-book tests skipped without the
+books; 18 for #50992 pass when it is present). Each real book now also has:
+- an independent count of every display and inline expression;
+- independent counts of equation tags, corrections and page markers;
+- a check that every figure and correction is its exact source slice;
+- a comparison of two CLI runs **in separate processes**, byte for byte;
+- a check that `--profile auto` picks its profile.
+
+| | #33283 Calculus Made Easy | #50992 Gibbs |
+|---|---:|---:|
+| Source | 33283-t.tex, LF | 511,666 bytes, 11,386 lines, CRLF |
+| Profile (auto) | `pg-latex` | `pg-50992` (extends `pg-latex`) |
+| Blocks | 2,096 (v0.1.3) | 1,948 |
+| Headings | 26 chapters (Preface, Prologue, I–XXI, 3 more), 15 sections, 12 subsections, 18 paragraphs, 3 cases, 15 examples | 17 chapters (Preface, Contents, I.–XV.), 9 theorems, 1 subsection |
+| Display / inline expressions | 457 / 3,482 (v0.1.3) | 725 / 2,349 (+12 inside displays) |
+| Equation tags | not given a role (no `\Tag`) | 562 |
+| Figures (missing) | 74 (0) | 0 (0) |
+| Tables / lists | to be measured with 0.2 on the book's machine | 0 / 0 |
+| Corrections / page markers | roles not assigned for #33283 | 204 / 219 (pages v–207) |
+| Warnings | 0 (v0.1.3) | 0 |
+| Time, peak memory | 0.29 s, 37 MB (v0.1.3, the book's machine) | 0.33–0.34 s, 38 MB (3 runs, this workspace) |
+| Deterministic | yes: in-process and CLI tests | yes: 3 CLI runs byte-identical (JSON sha256 `05457fe1…`) |
+
+The #33283 column is from v0.1.3 on the book's machine. The real-book tests
+for 0.2 report its new figures when run there.

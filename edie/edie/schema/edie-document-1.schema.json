@@ -1,140 +1,717 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "edie-document/1",
-  "title": "EDIE structured document, format edie-document/1",
-  "description": "A source document's structure, text, mathematics and illustrations, each traceable to the source. Offsets are character offsets into the decoded source with line endings normalised to LF; lines are 1-based and inclusive. A new major version is a new format id; fields are only ever added within a major version.",
-  "type": "object",
-  "required": ["format", "generator", "source", "metadata", "signatures", "outline", "blocks", "figures", "warnings", "stats"],
-  "$defs": {
-    "span": {
-      "type": "object",
-      "properties": {
-        "lines": {"type": "array", "items": {"type": "integer", "minimum": 1}, "minItems": 2, "maxItems": 2},
-        "offsets": {"type": "array", "items": {"type": "integer", "minimum": 0}, "minItems": 2, "maxItems": 2}
-      },
-      "required": ["lines", "offsets"]
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "edie-document/1",
+ "title": "EDIE structured document, format edie-document/1",
+ "description": "A source document's structure, text, mathematics and illustrations, each traceable to the source. Offsets are character offsets into the decoded source with line endings normalised to LF; lines are 1-based and inclusive. A new major version is a new format id; fields are only ever added within a major version. Fields added in EDIE 0.2 (still edie-document/1): blocks' pages, table and list blocks, headings' alt_title, mathematics' tags, the document's corrections and definitions, the profile's extends and selected.",
+ "type": "object",
+ "required": [
+  "format",
+  "generator",
+  "source",
+  "metadata",
+  "signatures",
+  "outline",
+  "blocks",
+  "figures",
+  "corrections",
+  "definitions",
+  "warnings",
+  "stats"
+ ],
+ "$defs": {
+  "span": {
+   "type": "object",
+   "properties": {
+    "lines": {
+     "type": "array",
+     "items": {
+      "type": "integer",
+      "minimum": 1
+     },
+     "minItems": 2,
+     "maxItems": 2
     },
-    "field": {
-      "description": "One macro argument: exactly as written (latex) and as readable text.",
-      "type": ["object", "null"],
-      "properties": {"latex": {"type": "string"}, "text": {"type": "string"},
-                     "lines": {"type": "array"}, "offsets": {"type": "array"}},
-      "required": ["latex", "text"]
-    },
-    "math": {
-      "type": "object",
-      "properties": {
-        "delimiter": {"type": "string", "description": "$, $$, \\(, \\[ or \\begin{env}"},
-        "latex": {"type": "string", "description": "exactly as in the source, delimiters included"},
-        "body": {"type": "string", "description": "the expression between the delimiters, unchanged"},
-        "normalized": {"type": "string", "description": "body with comments removed and whitespace runs made one space; nothing else changes"},
-        "features": {"type": "array", "items": {"enum": ["alignment", "derivative", "fraction", "function", "greek", "integral", "limit", "root", "sum"]}},
-        "figures": {"type": "array", "items": {"type": "string"}}
-      },
-      "required": ["latex", "body", "normalized", "features", "figures"]
+    "offsets": {
+     "type": "array",
+     "items": {
+      "type": "integer",
+      "minimum": 0
+     },
+     "minItems": 2,
+     "maxItems": 2
     }
+   },
+   "required": [
+    "lines",
+    "offsets"
+   ]
   },
-  "properties": {
-    "format": {"const": "edie-document/1"},
-    "generator": {
-      "type": "object",
-      "properties": {"name": {"const": "edie"}, "version": {"type": "string"},
-                     "profile": {"type": "object", "properties": {"name": {"type": "string"}, "sha256": {"type": "string"}}}}
+  "field": {
+   "description": "One macro argument: exactly as written (latex) and as readable text.",
+   "type": [
+    "object",
+    "null"
+   ],
+   "properties": {
+    "latex": {
+     "type": "string"
     },
-    "source": {
-      "type": "object",
-      "properties": {
-        "filename": {"type": "string"}, "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
-        "bytes": {"type": "integer"}, "encoding": {"enum": ["utf-8", "utf-8-sig", "latin-1"]},
-        "newline": {"enum": ["LF", "CRLF", "CR"]}, "lines": {"type": "integer"},
-        "body_lines": {"type": ["array", "null"]}
-      },
-      "required": ["filename", "sha256", "bytes", "encoding", "lines"]
+    "text": {
+     "type": "string"
     },
-    "metadata": {
-      "description": "Each value is {value, origin, line} (origin: gutenberg-header | preamble), plus unreferenced_images: image files in the image folders that no reference uses.",
-      "type": "object"
+    "lines": {
+     "type": "array"
     },
-    "signatures": {
-      "description": "How each macro with a role was read: its argument pattern (o optional, m mandatory) and where the pattern came from (preamble | profile | base).",
-      "type": "array",
-      "items": {"type": "object", "required": ["name", "args", "origin", "role"]}
+    "offsets": {
+     "type": "array"
     },
-    "outline": {"type": "array", "description": "Headings as a tree: {id, kind, level, number, title, line, children}."},
-    "blocks": {
-      "type": "array",
-      "items": {
-        "allOf": [{"$ref": "#/$defs/span"}],
-        "type": "object",
-        "properties": {
-          "id": {"type": "string", "pattern": "^b-\\d{5}$"},
-          "type": {"enum": ["heading", "text", "math", "figure", "verbatim"]},
-          "latex": {"type": "string", "description": "the exact source slice offsets[0]..offsets[1]"},
-          "section": {"type": ["string", "null"], "description": "id of the innermost heading this block is under"},
-          "paragraph": {"type": "integer", "description": "text and display-math blocks that were one TeX paragraph share a number"},
-          "kind": {"type": "string", "description": "heading: part | chapter | section | subsection | subsubsection | paragraph | case | example"},
-          "level": {"type": "integer"},
-          "macro": {"type": "string"},
-          "star": {"type": "boolean"},
-          "number": {"type": ["string", "null"], "description": "heading number exactly as the source gives it (I, II, 3); null when the source gives none"},
-          "number_latex": {"type": ["string", "null"]},
-          "title": {"$ref": "#/$defs/field"},
-          "running_head": {"$ref": "#/$defs/field"},
-          "extra_args": {"type": "array"},
-          "parent": {"type": ["string", "null"]},
-          "text": {"type": "string", "description": "text block: readable text; mathematics copied unchanged; [[figure:fig-NNNNN]] marks an illustration"},
-          "inline_math": {"type": "array", "items": {"$ref": "#/$defs/math"}},
-          "figures": {"type": "array", "items": {"type": "string"}},
-          "display": {"type": "boolean"},
-          "delimiter": {"type": "string"},
-          "environment": {"type": ["string", "null"]},
-          "body": {"type": "string"},
-          "normalized": {"type": "string"},
-          "features": {"type": "array"},
-          "figure": {"type": ["string", "null"]}
-        },
-        "required": ["id", "type", "latex", "lines", "offsets"]
-      }
+    "inline_math": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/math"
+     }
+    }
+   },
+   "required": [
+    "latex",
+    "text"
+   ]
+  },
+  "math": {
+   "type": "object",
+   "properties": {
+    "delimiter": {
+     "type": "string",
+     "description": "$, $$, \\(, \\[ or \\begin{env}"
+    },
+    "latex": {
+     "type": "string",
+     "description": "exactly as in the source, delimiters included"
+    },
+    "body": {
+     "type": "string",
+     "description": "the expression between the delimiters, unchanged"
+    },
+    "normalized": {
+     "type": "string",
+     "description": "body with comments removed and whitespace runs made one space; nothing else changes"
+    },
+    "features": {
+     "type": "array",
+     "items": {
+      "enum": [
+       "alignment",
+       "derivative",
+       "fraction",
+       "function",
+       "greek",
+       "integral",
+       "limit",
+       "root",
+       "sum"
+      ]
+     }
     },
     "figures": {
-      "type": "array",
-      "items": {
-        "allOf": [{"$ref": "#/$defs/span"}],
-        "type": "object",
-        "properties": {
-          "id": {"type": "string", "pattern": "^fig-\\d{5}$"},
-          "macro": {"type": "string"},
-          "context": {"enum": ["text", "math", "figure-environment"]},
-          "in_math": {"type": "boolean"},
-          "block_level": {"type": "boolean"},
-          "args": {"type": "array", "items": {"type": "object", "properties": {"kind": {"enum": ["optional", "mandatory"]}, "latex": {"type": ["string", "null"]}}}},
-          "file": {"type": ["string", "null"], "description": "path relative to the image root, when the file exists"},
-          "file_exists": {"type": "boolean"},
-          "candidates": {"type": "array", "description": "argument values tried when no file was found"},
-          "number": {"type": ["string", "null"], "description": "only when the source states it (an argument the profile names, or 'Fig. N' in a caption)"},
-          "number_origin": {"enum": ["argument", "caption", null]},
-          "caption": {"$ref": "#/$defs/field"},
-          "label": {"type": ["string", "null"]},
-          "group": {"type": ["string", "null"], "description": "for a macro showing several images side by side (\\Figures): the id of the first, shared by all"},
-          "block": {"type": ["string", "null"], "description": "the block it appears in"},
-          "section": {"type": ["string", "null"]},
-          "latex": {"type": "string"}
-        },
-        "required": ["id", "macro", "context", "in_math", "args", "file", "file_exists", "lines", "offsets"]
-      }
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
     },
-    "warnings": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "code": {"enum": ["ARG_MISSING", "CHAPTER_UNNUMBERED", "HEADING_NUMBER_EMPTY", "FIGURE_AMBIGUOUS", "FIGURE_ENV_EMPTY", "MISSING_IMAGE", "NO_DOCUMENT_END", "NO_DOCUMENT_ENV", "SIGNATURE_MISMATCH", "SIGNATURE_UNREAD", "UNBALANCED_GROUP", "UNCLOSED_ENV", "UNCLOSED_MATH", "UNCLOSED_OPTIONAL"]},
-          "message": {"type": "string"},
-          "line": {"type": ["integer", "null"]}
-        },
-        "required": ["code", "message", "line"]
+    "tags": {
+     "type": "array",
+     "description": "equation tags inside the expression (\\tag, \\tag*, or a profile's equation_tag macro), in order",
+     "items": {
+      "type": "object",
+      "properties": {
+       "macro": {
+        "type": "string"
+       },
+       "latex": {
+        "type": "string"
+       },
+       "text": {
+        "type": "string"
+       },
+       "line": {
+        "type": "integer"
+       }
       }
-    },
-    "stats": {"type": "object"}
+     }
+    }
+   },
+   "required": [
+    "latex",
+    "body",
+    "normalized",
+    "features",
+    "figures",
+    "tags"
+   ]
   }
+ },
+ "properties": {
+  "format": {
+   "const": "edie-document/1"
+  },
+  "generator": {
+   "type": "object",
+   "properties": {
+    "name": {
+     "const": "edie"
+    },
+    "version": {
+     "type": "string"
+    },
+    "profile": {
+     "type": "object",
+     "properties": {
+      "name": {
+       "type": "string"
+      },
+      "sha256": {
+       "type": "string"
+      },
+      "extends": {
+       "type": "array",
+       "items": {
+        "type": "string"
+       },
+       "description": "the profiles this one is laid over, outermost first"
+      },
+      "selected": {
+       "type": "string",
+       "description": "how the profile was chosen: named, or auto with the reason"
+      }
+     }
+    }
+   }
+  },
+  "source": {
+   "type": "object",
+   "properties": {
+    "filename": {
+     "type": "string"
+    },
+    "sha256": {
+     "type": "string",
+     "pattern": "^[0-9a-f]{64}$"
+    },
+    "bytes": {
+     "type": "integer"
+    },
+    "encoding": {
+     "enum": [
+      "utf-8",
+      "utf-8-sig",
+      "latin-1"
+     ]
+    },
+    "newline": {
+     "enum": [
+      "LF",
+      "CRLF",
+      "CR"
+     ]
+    },
+    "lines": {
+     "type": "integer"
+    },
+    "body_lines": {
+     "type": [
+      "array",
+      "null"
+     ]
+    }
+   },
+   "required": [
+    "filename",
+    "sha256",
+    "bytes",
+    "encoding",
+    "lines"
+   ]
+  },
+  "metadata": {
+   "description": "Each value is {value, origin, line} (origin: gutenberg-header | preamble), plus unreferenced_images: image files in the image folders that no reference uses.",
+   "type": "object"
+  },
+  "signatures": {
+   "description": "How each macro with a role was read: its argument pattern (o optional, m mandatory) and where the pattern came from (preamble | profile | base).",
+   "type": "array",
+   "items": {
+    "type": "object",
+    "required": [
+     "name",
+     "args",
+     "origin",
+     "role"
+    ]
+   }
+  },
+  "outline": {
+   "type": "array",
+   "description": "Headings as a tree: {id, kind, level, number, title, line, children}."
+  },
+  "blocks": {
+   "type": "array",
+   "items": {
+    "allOf": [
+     {
+      "$ref": "#/$defs/span"
+     }
+    ],
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "string",
+      "pattern": "^b-\\d{5}$"
+     },
+     "type": {
+      "enum": [
+       "heading",
+       "text",
+       "math",
+       "figure",
+       "table",
+       "list",
+       "verbatim"
+      ]
+     },
+     "latex": {
+      "type": "string",
+      "description": "the exact source slice offsets[0]..offsets[1]"
+     },
+     "section": {
+      "type": [
+       "string",
+       "null"
+      ],
+      "description": "id of the innermost heading this block is under"
+     },
+     "paragraph": {
+      "type": "integer",
+      "description": "text and display-math blocks that were one TeX paragraph share a number"
+     },
+     "kind": {
+      "type": "string",
+      "description": "heading: part | chapter | section | subsection | subsubsection | paragraph | case | example | theorem, or what a profile names"
+     },
+     "level": {
+      "type": "integer"
+     },
+     "macro": {
+      "type": "string"
+     },
+     "star": {
+      "type": "boolean"
+     },
+     "number": {
+      "type": [
+       "string",
+       "null"
+      ],
+      "description": "heading number exactly as the source gives it (I, II, 3); null when the source gives none"
+     },
+     "number_latex": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "title": {
+      "$ref": "#/$defs/field"
+     },
+     "running_head": {
+      "$ref": "#/$defs/field"
+     },
+     "extra_args": {
+      "type": "array"
+     },
+     "parent": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "text": {
+      "type": "string",
+      "description": "text block: readable text; mathematics copied unchanged; [[figure:fig-NNNNN]] marks an illustration"
+     },
+     "inline_math": {
+      "type": "array",
+      "items": {
+       "$ref": "#/$defs/math"
+      }
+     },
+     "figures": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "display": {
+      "type": "boolean"
+     },
+     "delimiter": {
+      "type": "string"
+     },
+     "environment": {
+      "type": [
+       "string",
+       "null"
+      ],
+      "description": "math: the LaTeX environment; table: tabular | tabular* | tabularx | longtable; list: itemize | enumerate | description; verbatim: its environment"
+     },
+     "body": {
+      "type": "string"
+     },
+     "normalized": {
+      "type": "string"
+     },
+     "features": {
+      "type": "array"
+     },
+     "figure": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "alt_title": {
+      "$ref": "#/$defs/field",
+      "description": "an alternate title the source gives for the same heading (#50992: the PDF bookmark's plain-text title); never a running head"
+     },
+     "pages": {
+      "type": [
+       "array",
+       "null"
+      ],
+      "items": {
+       "type": [
+        "string",
+        "null"
+       ]
+      },
+      "description": "[first, last] printed page, from the source's own page markers (a profile's 'page' macro, e.g. \\PageSep); null when the source has none"
+     },
+     "tags": {
+      "type": "array",
+      "description": "math block: its equation tags"
+     },
+     "colspec": {
+      "type": [
+       "string",
+       "null"
+      ],
+      "description": "table: the column specification as written"
+     },
+     "rows": {
+      "type": "array",
+      "description": "table: rows of cells, each {latex, text, lines, offsets}; rows with no text (rules only) are left out",
+      "items": {
+       "type": "array",
+       "items": {
+        "type": "object",
+        "required": [
+         "latex",
+         "text"
+        ]
+       }
+      }
+     },
+     "n_rows": {
+      "type": "integer"
+     },
+     "n_cols": {
+      "type": "integer"
+     },
+     "items": {
+      "type": "array",
+      "description": "list: items, each {label (field or null), latex, text, lines, offsets}; a nested list stays inside its item"
+     },
+     "n_items": {
+      "type": "integer"
+     },
+     "ordered": {
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "id",
+     "type",
+     "latex",
+     "lines",
+     "offsets"
+    ]
+   }
+  },
+  "figures": {
+   "type": "array",
+   "items": {
+    "allOf": [
+     {
+      "$ref": "#/$defs/span"
+     }
+    ],
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "string",
+      "pattern": "^fig-\\d{5}$"
+     },
+     "macro": {
+      "type": "string"
+     },
+     "context": {
+      "enum": [
+       "text",
+       "math",
+       "figure-environment"
+      ]
+     },
+     "in_math": {
+      "type": "boolean"
+     },
+     "block_level": {
+      "type": "boolean"
+     },
+     "args": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "properties": {
+        "kind": {
+         "enum": [
+          "optional",
+          "mandatory"
+         ]
+        },
+        "latex": {
+         "type": [
+          "string",
+          "null"
+         ]
+        }
+       }
+      }
+     },
+     "file": {
+      "type": [
+       "string",
+       "null"
+      ],
+      "description": "path relative to the image root, when the file exists"
+     },
+     "file_exists": {
+      "type": "boolean"
+     },
+     "candidates": {
+      "type": "array",
+      "description": "argument values tried when no file was found"
+     },
+     "number": {
+      "type": [
+       "string",
+       "null"
+      ],
+      "description": "only when the source states it (an argument the profile names, or 'Fig. N' in a caption)"
+     },
+     "number_origin": {
+      "enum": [
+       "argument",
+       "caption",
+       null
+      ]
+     },
+     "caption": {
+      "$ref": "#/$defs/field"
+     },
+     "label": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "group": {
+      "type": [
+       "string",
+       "null"
+      ],
+      "description": "for a macro showing several images side by side (\\Figures): the id of the first, shared by all"
+     },
+     "block": {
+      "type": [
+       "string",
+       "null"
+      ],
+      "description": "the block it appears in"
+     },
+     "section": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "latex": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "id",
+     "macro",
+     "context",
+     "in_math",
+     "args",
+     "file",
+     "file_exists",
+     "lines",
+     "offsets"
+    ]
+   }
+  },
+  "warnings": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "properties": {
+     "code": {
+      "enum": [
+       "ARG_MISSING",
+       "CHAPTER_UNNUMBERED",
+       "FIGURE_AMBIGUOUS",
+       "FIGURE_ENV_EMPTY",
+       "HEADING_NUMBER_EMPTY",
+       "LIST_WITHOUT_ITEMS",
+       "MISSING_IMAGE",
+       "NO_DOCUMENT_END",
+       "NO_DOCUMENT_ENV",
+       "SIGNATURE_MISMATCH",
+       "SIGNATURE_UNREAD",
+       "UNBALANCED_GROUP",
+       "UNCLOSED_ENV",
+       "UNCLOSED_MATH",
+       "UNCLOSED_OPTIONAL"
+      ]
+     },
+     "message": {
+      "type": "string"
+     },
+     "line": {
+      "type": [
+       "integer",
+       "null"
+      ]
+     }
+    },
+    "required": [
+     "code",
+     "message",
+     "line"
+    ]
+   }
+  },
+  "stats": {
+   "type": "object"
+  },
+  "corrections": {
+   "type": "array",
+   "description": "every transcriber's correction (a profile's 'correction' macro, e.g. \\Typo{printed}{corrected}): readable text uses the correction; this keeps both",
+   "items": {
+    "type": "object",
+    "properties": {
+     "macro": {
+      "type": "string"
+     },
+     "original": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "corrected": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "block": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "latex": {
+      "type": "string"
+     },
+     "lines": {
+      "type": "array"
+     },
+     "offsets": {
+      "type": "array"
+     }
+    },
+    "required": [
+     "macro",
+     "original",
+     "corrected",
+     "lines",
+     "offsets",
+     "latex"
+    ]
+   }
+  },
+  "definitions": {
+   "type": "array",
+   "description": "the preamble's macro definitions the body uses, directly (uses > 0) or through another definition (via), exactly as written",
+   "items": {
+    "type": "object",
+    "properties": {
+     "name": {
+      "type": "string"
+     },
+     "args": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "kind": {
+      "enum": [
+       "newcommand",
+       "xparse",
+       "def"
+      ]
+     },
+     "line": {
+      "type": "integer"
+     },
+     "uses": {
+      "type": "integer"
+     },
+     "via": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "body": {
+      "type": "string"
+     },
+     "latex": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "name",
+     "args",
+     "kind",
+     "line",
+     "uses",
+     "body",
+     "latex"
+    ]
+   }
+  }
+ }
 }

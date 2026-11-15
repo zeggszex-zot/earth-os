@@ -1,6 +1,6 @@
 """EDIE command line.
 
-    python3 -m edie parse BOOK.tex --out OUTDIR [--profile pg-latex] [--images DIR] [--strict]
+    python3 -m edie parse BOOK.tex --out OUTDIR [--profile auto|NAME|PATH] [--images DIR] [--strict]
 
 Writes OUTDIR/<name>.edie.json, OUTDIR/<name>.md and OUTDIR/<name>.report.md, each atomically.  The source and
 its folder are only ever read; an output path that would land on the source is refused.
@@ -39,7 +39,7 @@ def cmd_parse(a) -> int:
     t0 = time.perf_counter()
     try:
         src = Source.load(a.source)
-        prof = sg.Profile.load(a.profile)
+        prof = sg.Profile.auto(src.text) if a.profile == "auto" else sg.Profile.load(a.profile)
     except (SourceError, ValueError) as e:
         print(f"edie: {e}", file=sys.stderr)
         return 1
@@ -63,7 +63,8 @@ def cmd_parse(a) -> int:
     rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024
     print(f"edie {__version__} ({SCHEMA}): {src.path.name} sha256:{src.sha256[:12]}… "
           f"{st['blocks']} blocks, {st['inline_math']} inline + {st['display_math']} display math, "
-          f"{st['figures']} figures ({st['images_missing']} missing), {st['warnings']} warnings "
+          f"{st['figures']} figures ({st['images_missing']} missing), {st['tables']} tables, {st['lists']} lists, "
+          f"{st['equation_tags']} equation tags, {st['warnings']} warnings, profile {prof.name} "
           f"in {time.perf_counter() - t0:.2f} s, peak RSS {rss:.0f} MB", file=sys.stderr)
     for p in paths.values():
         print(p)
@@ -76,7 +77,9 @@ def main(argv=None) -> int:
     p = sub.add_parser("parse", help="parse a LaTeX document into edie-document/1, Markdown and a report")
     p.add_argument("source")
     p.add_argument("--out", required=True, help="output folder (created if needed)")
-    p.add_argument("--profile", default="pg-latex", help="profile name or path to a profile .json")
+    p.add_argument("--profile", default="auto",
+                   help="profile name or path to a profile .json; auto (default): pg-<ebook number> if EDIE has one, "
+                        "else pg-latex")
     p.add_argument("--images", help="folder image paths are relative to (default: the source's folder)")
     p.add_argument("--image-base", help="prefix for image links in the Markdown (default: relative to --out)")
     p.add_argument("--no-anchors", action="store_true", help="leave source-line comments out of the Markdown")
