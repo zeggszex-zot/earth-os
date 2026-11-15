@@ -210,6 +210,84 @@ class TestSpill(StreamingCase):
         self.assertEqual(self.spills(), [])
 
 
+class TestKilledBuilds(StreamingCase):
+    """A kill skips the build's own cleanup, so the next build of the same output removes the spill folder, but only
+    one named exactly .<out>.build-<pid>, beside the output, whose process has ended; a live build's is kept."""
+
+    PAUSED = r"""
+import sys, time
+sys.path.insert(0, sys.argv[1]); sys.path.insert(0, sys.argv[1] + "/tools")
+import build_shards
+def pause(path, lines):
+    print("spilling", flush=True)
+    time.sleep(120)
+build_shards._write_gz = pause
+build_shards.build(sys.argv[2], sys.argv[3], 8, 8, fix_keys=True, log=lambda *a: None)
+"""
+
+    def paused_build(self, out: Path) -> subprocess.Popen:
+        """A real build of `out` in another process, stopped while its spill folder holds the corpus."""
+        p = subprocess.Popen([sys.executable, "-c", self.PAUSED, str(ROOT), str(self.pf), str(out)],
+                             stdout=subprocess.PIPE, text=True)
+        self.addCleanup(lambda: (p.kill(), p.wait(), p.stdout.close()))
+        self.assertEqual(p.stdout.readline().strip(), "spilling")
+        return p
+
+    def ended_pid(self) -> int:
+        p = subprocess.Popen([sys.executable, "-c", "pass"])
+        p.wait()
+        return p.pid
+
+    def test_a_killed_build_is_cleaned_up_by_the_next(self):
+        out = self.dir / "data"
+        p = self.paused_build(out)
+        folder = self.dir / f".data.build-{p.pid}"
+        self.assertTrue(any(folder.rglob("*")), "the paused build has spilled rows")
+        p.kill()
+        p.wait()
+        logged = []
+        meta, _ = build_shards.build(self.pf, out, 8, 8, fix_keys=True, log=logged.append)
+        self.assertFalse(folder.exists())
+        self.assertIn(f"removed .data.build-{p.pid}: the spill folder of a build that is no longer running", logged)
+        self.assertEqual(self.spills(), [])
+
+    def test_a_live_builds_folder_is_left_alone(self):
+        out = self.dir / "data"
+        p = self.paused_build(out)
+        folder = self.dir / f".data.build-{p.pid}"
+        before = sorted(x.relative_to(folder) for x in folder.rglob("*"))
+        self.assertEqual(build_shards.remove_stale_spills(out), [])
+        self.assertEqual(sorted(x.relative_to(folder) for x in folder.rglob("*")), before)
+        p.kill()
+        p.wait()
+        self.assertEqual(build_shards.remove_stale_spills(out), [folder.name])     # once it has ended, it goes
+
+    def test_only_the_exact_pattern_is_removed(self):
+        dead = self.ended_pid()
+        keep = [f".data.build-{dead}x", ".data.build-", f"data.build-{dead}", f".other.build-{dead}",
+                f".data.build-{os.getpid()}", f".data.old.build-{dead}"]
+        for name in keep:
+            (self.dir / name).mkdir()
+            (self.dir / name / "row").write_text("x")
+        (self.dir / f".data.build-{dead + 1}").write_text("a file, not a folder")
+        target = self.dir / "elsewhere"
+        target.mkdir()
+        (target / "precious").write_text("x")
+        os.symlink(target, self.dir / f".data.build-{dead + 2}")
+        (self.dir / "sub").mkdir()
+        (self.dir / "sub" / f".data.build-{dead}").mkdir()                          # not beside the output
+        stale = self.dir / f".data.build-{dead}"
+        stale.mkdir()
+        (stale / "row").write_text("x")
+        (self.dir / "data").mkdir()
+        self.assertEqual(build_shards.remove_stale_spills(self.dir / "data"), [stale.name])
+        for name in keep:
+            self.assertTrue((self.dir / name / "row").exists(), name)
+        self.assertTrue((self.dir / f".data.build-{dead + 1}").is_file())
+        self.assertTrue((target / "precious").exists())
+        self.assertTrue((self.dir / "sub" / f".data.build-{dead}").exists())
+
+
 class TestMemory(unittest.TestCase):
     """Peak memory with 50,000 and 400,000 rows over the same 2,000 subjects, each build in its own process.  The
     in-memory build grew by about 190 MB between the two; the streaming one must stay within a few MB."""

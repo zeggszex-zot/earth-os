@@ -128,6 +128,36 @@ def _write_gz(path: Path, lines) -> None:
             gz.write(b"\n")
 
 
+def _running(pid: int) -> bool:
+    """True unless the process certainly doesn't exist.  Someone else's process (EPERM) counts as running."""
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
+
+
+def remove_stale_spills(out: Path) -> list[str]:
+    """Remove the spill folders left by builds of `out` that were killed (a kill skips the cleanup in _build).
+    Only a directory beside `out` named exactly .<out name>.build-<pid>, not a symlink, whose pid isn't running and
+    isn't this process; anything else, a live build's folder included, is left alone."""
+    out = Path(out)
+    pattern = re.compile(r"^\." + re.escape(out.name) + r"\.build-([0-9]+)$")
+    removed = []
+    for entry in os.scandir(out.parent):
+        m = pattern.match(entry.name)
+        if not m or not entry.is_dir(follow_symlinks=False):
+            continue
+        pid = int(m.group(1))
+        if pid == os.getpid() or _running(pid):
+            continue
+        shutil.rmtree(entry.path)
+        removed.append(entry.name)
+    return removed
+
+
 class Spill:
     """Rows waiting for their shard, in files beside the output, with a bounded amount held in memory."""
 
@@ -198,6 +228,8 @@ def _build(src, out, s_shards=256, v_shards=256, fix_wordnet=False, fix_wikidata
             if c[1] == "SYNSET" and SYNSET_ID.match(c[3]):
                 lemmas[c[3]].append(c[0])
     out.mkdir(parents=True, exist_ok=True)
+    for gone in remove_stale_spills(out):
+        log(f"removed {gone}: the spill folder of a build that is no longer running")
     spill = Spill(out.parent / f".{out.name}.build-{os.getpid()}", s_shards, v_shards)
     try:
         return _stream(src, out, spill, s_shards, v_shards, fix_wordnet, fix_wikidata, fix_keys, log, report,
