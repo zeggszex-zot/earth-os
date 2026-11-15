@@ -18,6 +18,12 @@ from . import AcquireError
 
 #: WordNet's order of parts of speech (by the synset id's last letter); 's' is an adjective satellite.
 POS_ORDER = {"n": 0, "v": 1, "a": 2, "s": 2, "r": 3}
+# OEWN has no sense frequencies; an entry's order of senses is WordNet's ranking where there is one ("big": "large"
+# before "pregnant"), and otherwise its synsets in descending id order ("colour": the visual attribute 5th of 7).
+# 3,963 entries with three or more senses run strictly downward and 200 upward, so downward is the default, not a
+# ranking; those take ascending id order, the order the legacy import had.  Two senses can't be told apart (12,886
+# downward, 2,835 upward: many real rankings among them) and keep the entry's order.
+UNRANKED_MIN = 3
 #: The most a compressed XML source may expand to before it is refused as a decompression bomb.
 MAX_XML_BYTES = 500_000_000
 
@@ -108,16 +114,26 @@ def parse_gwa_xml(path: Path, cap: int = MAX_XML_BYTES) -> Iterator[tuple[int, l
     lemma_of_entry, lemma_of_sense, synset_of_sense = {}, {}, {}
     senses_of_synset = defaultdict(list)
     sense_rels = defaultdict(list)
+    entries = []                                 # (lemma, part of speech, the entry's senses in its own order)
     for entry in _events(path, {"LexicalEntry"}, cap):
         lemma_el = entry.find("Lemma")
         lemma = _clean(lemma_el.get("writtenForm") if lemma_el is not None else "")
         lemma_of_entry[entry.get("id")] = lemma
+        senses = []
         for sense in entry.findall("Sense"):
             sid, syn = sense.get("id"), sense.get("synset")
             lemma_of_sense[sid], synset_of_sense[sid] = lemma, syn
             senses_of_synset[syn].append(sid)
+            senses.append(sid)
             for rel in sense.findall("SenseRelation"):
                 sense_rels[sid].append((rel.get("relType"), rel.get("target")))
+        ids = [synset_of_sense[x] or "" for x in senses]
+        if len(ids) >= UNRANKED_MIN and all(x > y for x, y in zip(ids, ids[1:])):
+            senses.sort(key=lambda x: synset_of_sense[x] or "")
+        pos = lemma_el.get("partOfSpeech", "") if lemma_el is not None else ""
+        if not pos and senses:                   # else the synset id's last letter
+            pos = (synset_of_sense[senses[0]] or "").rsplit("-", 1)[-1]
+        entries.append((lemma, pos, senses))
 
     def lemmas(syn: str, members: list[str] | None = None) -> list[str]:
         """The synset's words, in its own order (members) when it gives one, else the file's; without repeats."""
@@ -139,19 +155,13 @@ def parse_gwa_xml(path: Path, cap: int = MAX_XML_BYTES) -> Iterator[tuple[int, l
         rels = [(r.get("relType"), r.get("target")) for r in syn.findall("SynsetRelation")]
         synsets.append((sid, words, definition, examples, rels))
     # Synset relations can point forward in the file, so rows are made once every synset's first word is known.
-    # Rows come in WordNet's conventional order, nouns, verbs, adjectives (with satellites), adverbs, each in file
-    # order: the order the legacy import had, which the reader follows when it lists a word's first meanings.
     synsets.sort(key=lambda x: POS_ORDER.get(x[0].rsplit("-", 1)[-1], len(POS_ORDER)))
+    usable = {}                                  # synset -> (record number, words, text, relations that resolve)
     for sid, words, definition, examples, rels in synsets:
         n += 1
         if not words:
             yield n, None, "no-lemmas: a synset with no lemmas", sid
             continue
-        text = "; ".join([definition] + [f'"{e}"' for e in examples]) if definition else ""
-
-        def row(lemma, rel, kind, value):
-            return [lemma, rel, kind, value, "", "0", "0", "OEWN", sid, "1.0", f"SENSE={sid}"]
-
         good = []
         for rel, target in rels:
             if target in first:
@@ -159,21 +169,50 @@ def parse_gwa_xml(path: Path, cap: int = MAX_XML_BYTES) -> Iterator[tuple[int, l
             else:
                 yield n, None, f"dangling-synset-relation: {rel} points at {target}, a synset with no lemmas or none at all", \
                     f"{sid} {rel} -> {target}"
-        for lemma in words:
-            if text:
-                yield n, row(lemma, "definition", "T", text), "", f"{sid} definition"
-            for other in words:
-                if other != lemma:
-                    yield n, row(lemma, "synonym", "S", other), "", f"{sid} synonym {other}"
-            for rel, target in good:
-                yield n, row(lemma, rel, "S", first[target]), "", f"{sid} {rel} -> {target}"
-        for sense in senses_of_synset.get(sid, []):
-            lemma = lemma_of_sense[sense]
-            for rel, target in sense_rels.get(sense, []):
-                if target not in lemma_of_sense:
-                    yield n, None, f"dangling-sense-relation: {rel} points at {target}, a sense that doesn't exist", f"{sense} {rel} -> {target}"
+        text = "; ".join([definition] + [f'"{e}"' for e in examples]) if definition else ""
+        usable[sid] = (n, words, text, good)
+
+    def row(lemma, rel, kind, value, sid):
+        return [lemma, rel, kind, value, "", "0", "0", "OEWN", sid, "1.0", f"SENSE={sid}"]
+
+    done = set()
+
+    def synset_rows(lemma, sid):
+        if (lemma, sid) in done or lemma not in usable[sid][1]:
+            return
+        done.add((lemma, sid))
+        rn, words, text, good = usable[sid]
+        if text:
+            yield rn, row(lemma, "definition", "T", text, sid), "", f"{sid} definition"
+        for other in words:
+            if other != lemma:
+                yield rn, row(lemma, "synonym", "S", other, sid), "", f"{sid} synonym {other}"
+        for rel, target in good:
+            yield rn, row(lemma, rel, "S", first[target], sid), "", f"{sid} {rel} -> {target}"
+
+    # A word's rows come in its meanings' order, which the reader follows when it lists a word's first meanings:
+    # nouns, verbs, adjectives (with satellites), adverbs, as the legacy import had, and within each the order the
+    # word's own entry gives its senses (WordNet's ranking; see UNRANKED_MIN), not the synsets' ids ("big" is "large"
+    # before it is "pregnant").  Words come in the order the file first names them.
+    by_word = defaultdict(list)
+    for i, (lemma, pos, senses) in enumerate(entries):
+        by_word[lemma.casefold()].append((POS_ORDER.get(pos, len(POS_ORDER)), i, lemma, senses))
+    for group in by_word.values():
+        for _, _, lemma, senses in sorted(group):
+            for sense in senses:
+                sid = synset_of_sense[sense]
+                if sid not in usable:
                     continue
-                yield n, row(lemma, rel, "S", lemma_of_sense[target]), "", f"{sense} {rel} -> {target}"
+                yield from synset_rows(lemma, sid)
+                rn = usable[sid][0]
+                for rel, target in sense_rels.get(sense, []):
+                    if target not in lemma_of_sense:
+                        yield rn, None, f"dangling-sense-relation: {rel} points at {target}, a sense that doesn't exist", f"{sense} {rel} -> {target}"
+                        continue
+                    yield rn, row(lemma, rel, "S", lemma_of_sense[target], sid), "", f"{sense} {rel} -> {target}"
+    for sid, (_, words, _, _) in usable.items():  # a member no entry's senses name: still its synset's rows
+        for lemma in words:
+            yield from synset_rows(lemma, sid)
     known = {x[0] for x in synsets}
     missing = sorted(s for s in senses_of_synset if s not in known)
     for syn in missing:

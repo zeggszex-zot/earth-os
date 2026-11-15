@@ -184,6 +184,60 @@ class TestParser(OewnCase):
         order = [c[8].rsplit("-", 1)[-1] for _, c, _, _ in parse_gwa_xml(p) if c and c[1] == "definition"]
         self.assertEqual(order, ["n", "v", "a", "r"])
 
+    def test_a_word_s_meanings_come_in_its_own_sense_order_not_the_synset_ids(self):
+        # OEWN 2025's "big" (four of its 13 senses, in its order): "large" is sense 1 (synset 01385012), "pregnant"
+        # sense 13 (00174652); by synset id
+        # "another word for big" began "enceinte, expectant, gravid"
+        xml = ("<LexicalResource><Lexicon id='x'>"
+               "<LexicalEntry id='big-a'><Lemma writtenForm='big' partOfSpeech='a'/>"
+               "<Sense id='b1' synset='oewn-01385012-a'/><Sense id='b4' synset='oewn-01514159-s'/>"
+               "<Sense id='b2' synset='oewn-00581973-s'/>"
+               "<Sense id='b3' synset='oewn-00174652-s'><SenseRelation relType='antonym' target='l1'/></Sense>"
+               "</LexicalEntry>"
+               "<LexicalEntry id='large-a'><Lemma writtenForm='large' partOfSpeech='a'/>"
+               "<Sense id='l1' synset='oewn-01385012-a'/></LexicalEntry>"
+               "<LexicalEntry id='gravid-a'><Lemma writtenForm='gravid' partOfSpeech='a'/>"
+               "<Sense id='g1' synset='oewn-00174652-s'/></LexicalEntry>"
+               "<LexicalEntry id='big-n'><Lemma writtenForm='Big' partOfSpeech='n'/>"
+               "<Sense id='n1' synset='oewn-09999999-n'/></LexicalEntry>"
+               "<Synset id='oewn-00174652-s' members='big-a gravid-a'><Definition>pregnant</Definition></Synset>"
+               "<Synset id='oewn-00581973-s' members='big-a'><Definition>prominent</Definition></Synset>"
+               "<Synset id='oewn-01514159-s' members='big-a'><Definition>intense</Definition></Synset>"
+               "<Synset id='oewn-01385012-a' members='big-a large-a'><Definition>above average in size</Definition>"
+               "</Synset>"
+               "<Synset id='oewn-09999999-n' members='big-n'><Definition>a name</Definition></Synset>"
+               "</Lexicon></LexicalResource>")
+        p = self.dir / "big.xml"
+        p.write_text(xml)
+        out = [c for _, c, _, _ in parse_gwa_xml(p) if c]
+        big = [(c[1], c[3]) for c in out if c[0].casefold() == "big"]
+        self.assertEqual([v for r, v in big if r == "definition"], ["a name", "above average in size", "intense",
+                                                                    "prominent", "pregnant"])
+        self.assertEqual([v for r, v in big if r == "synonym"], ["large", "gravid"])
+        self.assertIn(("antonym", "large"), big)
+        # every row the synsets give is still made, once
+        self.assertEqual(len(out), len({tuple(c) for c in out}))
+        self.assertIn(["gravid", "synonym", "S", "big"], [c[:4] for c in out])
+
+    def test_senses_in_descending_id_order_are_not_a_ranking(self):
+        # OEWN 2025's "colour": its seven senses run down by synset id, the visual attribute 5th; three or more
+        # downward is OEWN's default, so ascending id order; two senses, or a ranked order, are kept as given
+        def entry(word, ids):
+            return (f"<LexicalEntry id='{word}-n'><Lemma writtenForm='{word}' partOfSpeech='n'/>"
+                    + "".join(f"<Sense id='{word}{i}' synset='oewn-{s}-n'/>" for i, s in enumerate(ids))
+                    + "</LexicalEntry>")
+        ids = ["15009532", "05853190", "04963771", "04682325"]
+        xml = ("<LexicalResource><Lexicon id='x'>"
+               + entry("colour", ids) + entry("pair", ids[:2]) + entry("ranked", [ids[2], ids[0], ids[3]])
+               + "".join(f"<Synset id='oewn-{s}-n'><Definition>d{s}</Definition></Synset>" for s in ids)
+               + "</Lexicon></LexicalResource>")
+        p = self.dir / "colour.xml"
+        p.write_text(xml)
+        defs = [(c[0], c[3][1:]) for _, c, _, _ in parse_gwa_xml(p) if c and c[1] == "definition"]
+        self.assertEqual([d for w, d in defs if w == "colour"], sorted(ids))
+        self.assertEqual([d for w, d in defs if w == "pair"], ids[:2])
+        self.assertEqual([d for w, d in defs if w == "ranked"], [ids[2], ids[0], ids[3]])
+
     def test_malformed_xml_fails_the_run_and_stages_nothing(self):
         bad = self.dir / "broken.xml.gz"
         bad.write_bytes(gzip.compress(GWA.replace("</Lexicon>", "").encode()))
