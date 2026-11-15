@@ -129,7 +129,7 @@ def opener(req):
 
 
 def registry_toml(url, sha=SHA, extra="", **over):
-    d = {"source_type": '"EX"', "licence": '"CC0-1.0"', "attribution": '"synthetic test data"',
+    d = {"source_type": '"WIKIDATA"', "licence": '"CC0-1.0"', "attribution": '"synthetic test data"',
          "url": f'"{url}"', "sha256": f'"{sha}"', "parser": '"pf"',
          "relations": '{ capital = "CAPITAL_CITY", pop = "POPULATION", isa = "IS_A", mass = "ATOMIC_MASS", '
                       'symbol = "CHEMICAL_SYMBOL" }',
@@ -187,6 +187,11 @@ class TestRegistry(AcquireCase):
                 self.write_registry(**over)
                 with self.assertRaisesRegex(AcquireError, why):
                     self.acq().run("example")
+
+    def test_a_source_type_the_reader_doesnt_rank_is_refused(self):
+        self.write_registry(source_type='"EXAMPLE"')
+        with self.assertRaisesRegex(AcquireError, "doesn't rank source_type 'EXAMPLE'"):
+            self.acq().run("example")
 
     def test_a_broken_registry_is_an_error_not_an_empty_one(self):
         (self.root / "sources.toml").write_text("[source.example\nurl = ")
@@ -283,7 +288,7 @@ class TestRun(AcquireCase):
             ("GERMANY", "CAPITAL_CITY", "Berlin"), ("GERMANY", "POPULATION", "83200000"),
             ("HELIUM", "ATOMIC_MASS", "4.002602"), ("FRANCE", "CAPITAL_CITY", "Lyon"),
             ("MERCURY", "IS_A", "named thing"), ("MERCURY", "IS_A", "named thing")])
-        self.assertTrue(all(s[7] == "EX" and s[8] for s in staged))         # the source's type, the original id
+        self.assertTrue(all(s[7] == "WIKIDATA" and s[8] for s in staged))         # the source's type, the original id
         self.assertEqual([s[10] for s in staged if s[0] == "MERCURY"], ["ENTITY=wd:Q308", "ENTITY=wd:Q925"])
         conflicts = self.jsonl(d / "conflicts.jsonl")
         self.assertEqual([(c["subject"], c["value"], c["existing"][0]["value"]) for c in conflicts],

@@ -125,17 +125,59 @@ class Fetcher:
         self.journal.append({"event": "quarantined", "source": src.id, "file": dst.name, "why": why})
         return dst
 
-    def fetch(self, src: Source) -> Fetched:
+    def fetch_all(self, src: Source) -> dict[str, Fetched]:
+        """Every file of the source, verified: {"": Fetched} for a single url, else {input name: Fetched}."""
+        if src.unpinned:
+            raise FetchRejected(f"{src.id}: {', '.join(src.unpinned)} not pinned: run `python3 -m computer.acquire "
+                                f"pin {src.id}`, check what it fetched, and copy the sha256 values into sources.toml")
+        return {name: self.fetch(t) for name, t in src.targets().items()}
+
+    def pin(self, src: Source) -> dict[str, dict]:
+        """Download every file of the source without parsing it, and say what was fetched: size, sha256, date.
+        A person approves a file by copying its sha256 into sources.toml; the run then uses exactly this file."""
+        return {name: self.fetch(t, pin=True).record for name, t in src.targets().items()}
+
+    def _pinned(self, src: Source, expected: str) -> Fetched | None:
+        """A file fetched by `pin` whose sha256 a person has since approved: moved into place, not fetched again."""
+        p = self._dir(src) / "pins.json"
+        try:
+            pin = json.loads(p.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            return None
+        path = Path(pin.get("path", ""))
+        if pin.get("sha256") != expected or pin.get("url") != src.url or not path.is_file():
+            return None
+        if sha256_file(path) != expected:
+            return None
+        return self._accept(src, path, expected, pin.get("etag", ""), pin.get("last_modified", ""), "pinned")
+
+    def _accept(self, src: Source, part: Path, sha: str, etag: str, modified: str, how: str) -> Fetched:
+        d = self._dir(src)
+        final_dir = d / sha[7:15]
+        final_dir.mkdir(exist_ok=True)
+        final = final_dir / src.filename
+        os.replace(part, final)
+        rec = {"url": src.url, "path": str(final), "sha256": sha, "size": final.stat().st_size, "etag": etag,
+               "last_modified": modified, "at": utc(self.wall())}
+        write_atomic(d / "fetch.json", (json.dumps(rec, indent=1, sort_keys=True) + "\n").encode())
+        self.journal.append({"event": "fetched", "source": src.id, "sha256": sha, "size": rec["size"], "how": how})
+        return Fetched(final, sha, rec["size"], True, rec)
+
+    def fetch(self, src: Source, pin: bool = False) -> Fetched:
         d = self._dir(src)
         d.mkdir(parents=True, exist_ok=True)
-        last = self.last(src)
-        if last and src.sha256 and last["sha256"] == src.sha256 and last.get("url") == src.url:
-            return Fetched(Path(last["path"]), last["sha256"], last["size"], False, last)
-        expected = self.expected_sha(src)
-        if last and last["sha256"] == expected and last.get("url") == src.url:
-            return Fetched(Path(last["path"]), last["sha256"], last["size"], False, last)
+        last = None if pin else self.last(src)
+        if not pin:
+            if last and src.sha256 and last["sha256"] == src.sha256 and last.get("url") == src.url:
+                return Fetched(Path(last["path"]), last["sha256"], last["size"], False, last)
+            expected = self.expected_sha(src)
+            if last and last["sha256"] == expected and last.get("url") == src.url:
+                return Fetched(Path(last["path"]), last["sha256"], last["size"], False, last)
+            pinned = self._pinned(src, expected)
+            if pinned:
+                return pinned
 
-        part = d / (src.filename + ".part")
+        part = d / (src.filename + (".pin.part" if pin else ".part"))
         have = part.stat().st_size if part.exists() else 0
         headers = {}
         if have:
@@ -196,16 +238,18 @@ class Fetcher:
             etag, modified = resp.headers.get("ETag", ""), resp.headers.get("Last-Modified", "")
 
         sha = sha256_file(part)
+        if pin:
+            held = d / "unpinned" / sha[7:15]
+            held.mkdir(parents=True, exist_ok=True)
+            dst = held / src.filename
+            os.replace(part, dst)
+            rec = {"url": src.url, "path": str(dst), "sha256": sha, "size": dst.stat().st_size, "etag": etag,
+                   "last_modified": modified, "at": utc(self.wall()), "approved": False}
+            write_atomic(d / "pins.json", (json.dumps(rec, indent=1, sort_keys=True) + "\n").encode())
+            self.journal.append({"event": "pinned", "source": src.id, "sha256": sha, "size": rec["size"],
+                                 "last_modified": modified})
+            return Fetched(dst, sha, rec["size"], True, rec)
         if sha != expected:
             q = self._quarantine(src, part, f"sha256 {sha} != expected {expected}")
             raise FetchRejected(f"{src.id}: the download doesn't match its sha256; quarantined as {q.name}")
-        final_dir = d / sha[7:15]
-        final_dir.mkdir(exist_ok=True)
-        final = final_dir / src.filename
-        os.replace(part, final)
-        rec = {"url": src.url, "path": str(final), "sha256": sha, "size": final.stat().st_size, "etag": etag,
-               "last_modified": modified, "at": utc(self.wall())}
-        write_atomic(d / "fetch.json", (json.dumps(rec, indent=1, sort_keys=True) + "\n").encode())
-        self.journal.append({"event": "fetched", "source": src.id, "sha256": sha, "size": rec["size"],
-                             "resumed_from": start})
-        return Fetched(final, sha, rec["size"], True, rec)
+        return self._accept(src, part, sha, etag, modified, f"downloaded (resumed from {start})")

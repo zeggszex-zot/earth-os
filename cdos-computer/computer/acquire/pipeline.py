@@ -88,14 +88,18 @@ class Acquirer:
         ok, refused = registry.load(self.registry_path)
         out = {"registry": str(self.registry_path), "refused": refused, "sources": {}}
         for sid, src in sorted(ok.items()):
-            last = self.fetcher.last(src)
             runs = self.runs(sid)
-            out["sources"][sid] = {
-                "url": src.url, "licence": src.licence, "approved_by": src.approved_by,
-                "verified_download": last["sha256"] if last else None,
-                "would": ("check upstream for a newer file, then stage if anything changed" if last
-                          else "fetch and verify, then stage"),
-                "last_run": runs[-1]["run"] if runs else None}
+            files = {}
+            for name, t in src.targets().items():
+                last = self.fetcher.last(t)
+                files[name or "file"] = {"url": t.url, "verified_download": last["sha256"] if last else None,
+                                         "pinned": bool(t.sha256 or t.checksum_url)}
+            would = ("pin first: `python3 -m computer.acquire pin " + sid + "`, then approve the sha256 values"
+                     if src.unpinned else
+                     "check upstream for newer files, then stage if anything changed"
+                     if all(f["verified_download"] for f in files.values()) else "fetch and verify, then stage")
+            out["sources"][sid] = {"licence": src.licence, "approved_by": src.approved_by, "files": files,
+                                   "would": would, "last_run": runs[-1]["run"] if runs else None}
         return out
 
     def status(self) -> dict:
@@ -123,14 +127,16 @@ class Acquirer:
         src = registry.get(self.registry_path, sid)
         if not self.master.is_file():
             raise AcquireError(f"no master corpus at {self.master}")
-        got = self.fetcher.fetch(src)
+        got = self.fetcher.fetch_all(src)
+        input_sha = got[""].sha256 if "" in got else "sha256:" + hashlib.sha256(
+            "\n".join(f"{n}={f.sha256}" for n, f in sorted(got.items())).encode()).hexdigest()
         master_sha = sha256_file(self.master)
         code = code_fingerprint()
         runs = self.runs(sid)
         if runs and not force:
             last = runs[-1]
             if (last["input"]["sha256"], last["master"]["sha256"], last["source_fingerprint"], last["code"]) == \
-                    (got.sha256, master_sha, src.fingerprint(), code):
+                    (input_sha, master_sha, src.fingerprint(), code):
                 return {"unchanged": True, "run": last["run"], "counts": last["counts"]}
         meta, rebuilt = self.index.ensure(self.master, src.replaces or None)
         if rebuilt:
@@ -146,7 +152,7 @@ class Acquirer:
         part = base / f".{run_id}.part"
         part.mkdir()
         try:
-            report = self._stage(src, got, part, run_id, master_sha, code)
+            report = self._stage(src, got, input_sha, part, run_id, master_sha, code)
             self._hook("staging")
             final = base / run_id
             os.replace(part, final)
@@ -163,12 +169,13 @@ class Acquirer:
                              "delta_sha256": report["delta_sha256"]})
         return report
 
-    def _stage(self, src, got, part: Path, run_id: str, master_sha: str, code: str) -> dict:
+    def _stage(self, src, got, input_sha: str, part: Path, run_id: str, master_sha: str, code: str) -> dict:
         counts = Counter()
         rejected_by = Counter()
         functional = self.index.functional()
         seen: set[bytes] = set()
         run_vals = defaultdict(list)
+        entities = defaultdict(set)              # name -> the things it names, for the homonym count (D4)
         conflicts = 0
 
         with open(part / "delta.pf", "w", encoding="utf-8") as delta, \
@@ -182,7 +189,8 @@ class Acquirer:
                 rej.write(json.dumps({"line": n, "source_id": sid_, "stage": stage, "code": code_, "why": why,
                                       "raw": raw[:500]}, ensure_ascii=False, sort_keys=True) + "\n")
 
-            for n, cols, why, raw in PARSERS[src.parser](got.path):
+            source_files = got[""].path if "" in got else {name: f.path for name, f in got.items()}
+            for n, cols, why, raw in PARSERS[src.parser](source_files):
                 counts["read"] += 1
                 if cols is None:
                     code_ = why.split(":", 1)[0] if ":" in why else "unreadable"
@@ -236,6 +244,8 @@ class Acquirer:
                     run_vals[(fsubj, rel)].append((fkind, value))
                 delta.write("\t".join((subj, rel, kind, value, unit, vf, vu, stype, sid_, conf, qual)) + "\n")
                 counts["staged"] += 1
+                if Q.get(fqual, "ENTITY"):
+                    entities[fsubj].add(Q.get(fqual, "ENTITY"))
             for fh in (delta, rej, con):
                 fh.flush()
                 os.fsync(fh.fileno())
@@ -248,12 +258,19 @@ class Acquirer:
             "source_type": src.source_type, "licence": src.licence, "attribution": src.attribution,
             "approved_by": src.approved_by, "approved_at": src.approved_at,
             "source_fingerprint": src.fingerprint(), "code": code,
-            "input": {"url": src.url, "path": str(got.path), "sha256": got.sha256, "size": got.size,
-                      "etag": got.record.get("etag", "")},
+            "input": ({"url": src.url, "path": str(got[""].path), "sha256": input_sha, "size": got[""].size,
+                       "etag": got[""].record.get("etag", "")} if "" in got else
+                      {"sha256": input_sha, "files": {n: {"url": f.record["url"], "path": str(f.path),
+                                                           "sha256": f.sha256, "size": f.size,
+                                                           "last_modified": f.record.get("last_modified", "")}
+                                                       for n, f in sorted(got.items())}}),
             "master": {"path": str(self.master), "sha256": master_sha},
             "replaces": src.replaces or None,
             "counts": counts, "rejected_by": dict(sorted(rejected_by.items())),
             "duplicates_of_rows_without_entity": without_entity,
+            "names_with_several_entities": sum(1 for v in entities.values() if len(v) > 1),
+            "names_with_several_entities_examples": sorted(
+                ([k, len(v)] for k, v in entities.items() if len(v) > 1), key=lambda x: (-x[1], x[0]))[:10],
             "reconciled": counts["read"] == counts["staged"] + counts["rejected"] + counts["duplicate"],
             "delta_sha256": sha256_file(part / "delta.pf"),
             "integrated": False,

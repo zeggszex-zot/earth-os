@@ -109,6 +109,21 @@ The audit below is kept as written on 2026-11-14. What has changed since:
   S1, which pins the exact fact count and fails for any new corpus; it has
   to be updated when a new corpus is accepted. `corpus.integrate` stays off.
 
+- **GeoNames (phase 4, second source): the code is built, nothing is
+  downloaded yet.** GeoNames publishes no checksums and regenerates its
+  files daily, so a source can now be *pinned*: `python3 -m computer.acquire
+  pin SOURCE` downloads its files without parsing them and prints their
+  sha256s, a person approves by copying them into `sources.toml`, and the
+  run uses exactly those files. A source can have several input files
+  (`inputs`). The `geonames` parser reads `countryInfo.txt`,
+  `admin1CodesASCII.txt` and `cities15000.zip`, resolves codes to names
+  (a code that resolves to nothing is rejected), writes the corpus's own
+  relation names and units, leaves populations undated (GeoNames doesn't
+  say when they were counted) and marks every row `ENTITY=gn:<id>`. Runs
+  report how many names stand for more than one place (D4). `GEONAMES` is
+  ranked with Wikidata, and the registry refuses a source type the reader
+  doesn't rank.
+
 **Also found on 2026-11-15:**
 
 - **The reader lists a word's meanings in row order** and reads out the

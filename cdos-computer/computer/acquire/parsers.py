@@ -9,6 +9,7 @@ from __future__ import annotations
 import gzip
 import io
 import xml.etree.ElementTree as ET
+import zipfile
 from collections import defaultdict
 from pathlib import Path
 from typing import Iterator
@@ -180,4 +181,135 @@ def parse_gwa_xml(path: Path, cap: int = MAX_XML_BYTES) -> Iterator[tuple[int, l
         yield n, None, f"missing-synset: senses point at {syn}, a synset that doesn't exist", syn
 
 
-PARSERS = {"pf": parse_pf, "gwa_xml": parse_gwa_xml}
+CONTINENTS = {"AF": "Africa", "AN": "Antarctica", "AS": "Asia", "EU": "Europe", "NA": "North America",
+              "OC": "Oceania", "SA": "South America"}
+CITY_COLUMNS = 19        # geonameid name asciiname alternatenames lat lon fclass fcode cc cc2 admin1..4 population
+                         # elevation dem timezone modified (GeoNames readme, "geoname" table)
+
+
+def _text_lines(path: Path, cap: int):
+    """The lines of a text file, or of the one .txt inside a .zip, with the same decompression cap as the XML."""
+    if zipfile.is_zipfile(path):
+        zf = zipfile.ZipFile(path)
+        names = [n for n in zf.namelist() if n.endswith(".txt") and "/" not in n]
+        if len(names) != 1:
+            zf.close()
+            raise AcquireError(f"{path.name} should hold exactly one .txt file, not {names}")
+        if zf.getinfo(names[0]).file_size > cap:
+            zf.close()
+            raise AcquireError(f"{path.name} expands past {cap:,} bytes; refused as a decompression bomb")
+        raw = zf.open(names[0])
+        closers = (raw, zf)
+    else:
+        raw = open(path, "rb")
+        closers = (raw,)
+    stream = io.BufferedReader(_Capped(raw, cap))
+    try:
+        for n, line in enumerate(io.TextIOWrapper(stream, encoding="utf-8", newline="\n"), 1):
+            yield n, line.rstrip("\r\n")
+    finally:
+        stream.close()
+        for c in closers:
+            c.close()
+
+
+def parse_geonames(files: dict, cap: int = MAX_XML_BYTES) -> Iterator[tuple[int, list | None, str, str]]:
+    """GeoNames dump files: `countries` (countryInfo.txt), `admin1` (admin1CodesASCII.txt) and `cities`
+    (citiesNNNNN.zip).  Countries first, then cities; codes are resolved to names through the other files, and a
+    code that resolves to nothing is rejected, never guessed.  Every row carries ENTITY=gn:<geonameid>, so two places
+    with one name stay two facts (Q3).  GeoNames doesn't say when a population was counted, so none is dated."""
+    missing = {"countries", "admin1", "cities"} - set(files)
+    if missing:
+        raise AcquireError(f"geonames needs the inputs countries, admin1 and cities; missing {sorted(missing)}")
+
+    def row(subj, rel, kind, value, unit, sid, gid):
+        return [subj, rel, kind, value, unit, "0", "0", "GEONAMES", sid, "1.0", f"ENTITY=gn:{gid}" if gid else ""]
+
+    countries, gids, lines = {}, {}, []
+    for n, line in _text_lines(Path(files["countries"]), cap):
+        if not line.strip() or line.startswith("#"):
+            continue
+        c = line.split("\t")
+        if len(c) < 18 or not c[0] or not c[4]:
+            yield n, None, f"columns: a country line with {len(c)} columns or no code/name", line[:200]
+            continue
+        countries[c[0]], gids[c[0]] = c[4], c[16]
+        lines.append((n, c))
+    regions = {}
+    for _, line in _text_lines(Path(files["admin1"]), cap):
+        c = line.split("\t")
+        if len(c) >= 2 and c[0] and c[1]:
+            regions[c[0]] = c[1]
+
+    record = 0
+    for n, c in lines:
+        record += 1
+        iso, name, capital, area, pop, cont, cur_name, neighbours = c[0], c[4], c[5], c[6], c[7], c[8], c[11], c[17]
+        gid = gids[iso]
+        yield record, row(name, "is_a", "S", "country", "", iso, gid), "", f"{iso} country"
+        if capital:
+            yield record, row(name, "capital", "S", capital, "", iso, gid), "", f"{iso} capital"
+        if _known(area):
+            yield record, row(name, "area", "N", area, "KM2", iso, gid), "", f"{iso} area"
+        if _known(pop):
+            yield record, row(name, "population", "N", pop, "", iso, gid), "", f"{iso} population"
+        if cont:
+            if cont in CONTINENTS:
+                yield record, row(name, "continent", "S", CONTINENTS[cont], "", iso, gid), "", f"{iso} continent"
+            else:
+                yield record, None, f"unknown-continent: {cont!r} isn't a GeoNames continent code", f"{iso} {cont}"
+        if cur_name:
+            yield record, row(name, "currency", "S", cur_name, "", iso, gid), "", f"{iso} currency"
+        for nb in filter(None, neighbours.split(",")):
+            if nb in countries:
+                yield record, row(name, "shares_border_with", "S", countries[nb], "", iso, gid), "", f"{iso} -> {nb}"
+            else:
+                yield record, None, f"unknown-country: neighbour {nb!r} of {iso} isn't in countryInfo", f"{iso} {nb}"
+
+    for n, line in _text_lines(Path(files["cities"]), cap):
+        if not line.strip():
+            continue
+        record += 1
+        c = line.split("\t")
+        if len(c) != CITY_COLUMNS:
+            yield record, None, f"columns: {len(c)} columns, not {CITY_COLUMNS}", line[:200]
+            continue
+        gid, name, lat, lon, fclass, cc, adm1, pop, elev, tz = c[0], c[1], c[4], c[5], c[6], c[8], c[10], c[14], \
+            c[15], c[17]
+        if not gid or not name:
+            yield record, None, "columns: no geonameid or name", line[:200]
+            continue
+        if fclass != "P":
+            yield record, None, f"not-a-place: feature class {fclass!r}, not P (a populated place)", f"{gid} {name}"
+            continue
+        yield record, row(name, "is_a", "S", "city", "", gid, gid), "", f"{gid} city"
+        if cc in countries:
+            yield record, row(name, "located_in", "S", countries[cc], "", gid, gid), "", f"{gid} in {cc}"
+        else:
+            yield record, None, f"unknown-country: {cc!r} isn't in countryInfo", f"{gid} {name} {cc}"
+        if adm1 and adm1 != "00":
+            region = regions.get(f"{cc}.{adm1}")
+            if region:
+                yield record, row(name, "located_in", "S", region, "", gid, gid), "", f"{gid} in {cc}.{adm1}"
+            else:
+                yield record, None, f"unknown-admin1: {cc}.{adm1} isn't in admin1CodesASCII", f"{gid} {name}"
+        if _known(pop):
+            yield record, row(name, "population", "N", pop, "", gid, gid), "", f"{gid} population"
+        if elev:
+            yield record, row(name, "elevation", "N", elev, "M", gid, gid), "", f"{gid} elevation"
+        if lat and lon:
+            yield record, row(name, "located_at", "S", f"{lat},{lon}", "", gid, gid), "", f"{gid} position"
+        if tz:
+            yield record, row(name, "timezone", "S", tz, "", gid, gid), "", f"{gid} timezone"
+
+
+def _known(x: str) -> bool:
+    """GeoNames writes an unknown number as "" or 0; anything else goes on to be validated (a non-number is rejected
+    there, with its reason, rather than dropped here)."""
+    try:
+        return bool(x) and float(x) != 0
+    except ValueError:
+        return True
+
+
+PARSERS = {"pf": parse_pf, "gwa_xml": parse_gwa_xml, "geonames": parse_geonames}
