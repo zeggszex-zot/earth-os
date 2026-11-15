@@ -168,6 +168,22 @@ class TestParser(OewnCase):
                 self.assertTrue(c[8].startswith("oewn-"))
                 self.assertFalse(c[3].startswith(("WN_", "oewn-")), c)        # values are words, never ids
 
+    def test_meanings_come_nouns_first_whatever_the_file_order(self):
+        xml = ("<LexicalResource><Lexicon id='x'>"
+               "<LexicalEntry id='c-v'><Lemma writtenForm='colour'/><Sense id='s1' synset='oewn-00281861-v'/></LexicalEntry>"
+               "<LexicalEntry id='c-a'><Lemma writtenForm='colour'/><Sense id='s2' synset='oewn-00395196-a'/></LexicalEntry>"
+               "<LexicalEntry id='c-r'><Lemma writtenForm='colourfully'/><Sense id='s3' synset='oewn-00012345-r'/></LexicalEntry>"
+               "<LexicalEntry id='c-n'><Lemma writtenForm='colour'/><Sense id='s4' synset='oewn-04963771-n'/></LexicalEntry>"
+               "<Synset id='oewn-00012345-r'><Definition>in a colourful way</Definition></Synset>"
+               "<Synset id='oewn-00281861-v'><Definition>change color</Definition></Synset>"
+               "<Synset id='oewn-00395196-a'><Definition>having colors</Definition></Synset>"
+               "<Synset id='oewn-04963771-n'><Definition>a visual attribute of things</Definition></Synset>"
+               "</Lexicon></LexicalResource>")
+        p = self.dir / "order.xml"
+        p.write_text(xml)
+        order = [c[8].rsplit("-", 1)[-1] for _, c, _, _ in parse_gwa_xml(p) if c and c[1] == "definition"]
+        self.assertEqual(order, ["n", "v", "a", "r"])
+
     def test_malformed_xml_fails_the_run_and_stages_nothing(self):
         bad = self.dir / "broken.xml.gz"
         bad.write_bytes(gzip.compress(GWA.replace("</Lexicon>", "").encode()))
@@ -191,6 +207,28 @@ class TestParser(OewnCase):
         p.write_bytes(gzip.compress(b"<LexicalResource>" + b" " * 2_000_000 + b"</LexicalResource>"))
         with self.assertRaisesRegex(AcquireError, "decompression bomb"):
             list(parse_gwa_xml(p, cap=100_000))
+
+
+class TestParserScales(unittest.TestCase):
+    def test_time_grows_with_the_entries_not_their_square(self):
+        def gwa(n):
+            return ("<LexicalResource><Lexicon id='x'>"
+                    + "".join(f"<LexicalEntry id='e{i}'><Lemma writtenForm='w{i}'/><Sense id='s{i}' synset='y{i}'/>"
+                              "</LexicalEntry>" for i in range(n))
+                    + "".join(f"<Synset id='y{i}'><Definition>d{i}</Definition></Synset>" for i in range(n))
+                    + "</Lexicon></LexicalResource>").encode()
+
+        import time
+        with tempfile.TemporaryDirectory() as t:
+            took = {}
+            for n in (5_000, 40_000):
+                p = Path(t) / f"x{n}.xml"
+                p.write_bytes(gwa(n))
+                start = time.perf_counter()
+                self.assertEqual(sum(1 for _ in parse_gwa_xml(p)), n)
+                took[n] = time.perf_counter() - start
+        # 8x the entries: about 8x the time when linear, 64x when quadratic
+        self.assertLess(took[40_000] / took[5_000], 20, took)
 
 
 class TestRun(OewnCase):

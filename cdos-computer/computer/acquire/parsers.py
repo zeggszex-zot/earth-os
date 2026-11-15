@@ -15,6 +15,8 @@ from typing import Iterator
 
 from . import AcquireError
 
+#: WordNet's order of parts of speech (by the synset id's last letter); 's' is an adjective satellite.
+POS_ORDER = {"n": 0, "v": 1, "a": 2, "s": 2, "r": 3}
 #: The most a compressed XML source may expand to before it is refused as a decompression bomb.
 MAX_XML_BYTES = 500_000_000
 
@@ -77,7 +79,9 @@ def _events(path: Path, tags: set[str], cap: int):
                 yield elem
                 elem.clear()
                 if stack:
-                    stack[-1].remove(elem)          # detached, so the tree doesn't keep every finished element
+                    # Every earlier child of the parent has ended too, so all of them can go: memory stays bounded,
+                    # and each step costs one child, not a search through all of them (remove() was quadratic).
+                    del stack[-1][:]
     except ET.ParseError as e:
         raise AcquireError(f"{path.name} isn't well-formed XML: {e}") from None
     finally:
@@ -134,6 +138,9 @@ def parse_gwa_xml(path: Path, cap: int = MAX_XML_BYTES) -> Iterator[tuple[int, l
         rels = [(r.get("relType"), r.get("target")) for r in syn.findall("SynsetRelation")]
         synsets.append((sid, words, definition, examples, rels))
     # Synset relations can point forward in the file, so rows are made once every synset's first word is known.
+    # Rows come in WordNet's conventional order, nouns, verbs, adjectives (with satellites), adverbs, each in file
+    # order: the order the legacy import had, which the reader follows when it lists a word's first meanings.
+    synsets.sort(key=lambda x: POS_ORDER.get(x[0].rsplit("-", 1)[-1], len(POS_ORDER)))
     for sid, words, definition, examples, rels in synsets:
         n += 1
         if not words:

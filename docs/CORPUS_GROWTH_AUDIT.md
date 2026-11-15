@@ -91,8 +91,32 @@ The audit below is kept as written on 2026-11-14. What has changed since:
   candidate, compares their served rows relation by relation and checks
   the candidate against the review baseline. `build_shards --fix-wordnet`
   now repairs only legacy-id rows; the real corpus still builds to
-  `sha256:87ee23f5…`. Next: the `sources.toml` entry and the 11.4 MB
-  download, each approved first.
+  `sha256:87ee23f5…`.
+- **Phase 4 run on real data (2026-11-15), staged only.** The approved
+  source (`~/cdos/acquire/sources.toml`, approved by richie) was fetched
+  and verified (`sha256:9ca6d1dc…`, 11,363,503 bytes): 1,039,726 records,
+  999,223 staged, 21,998 duplicates within the file, 18,505 rejected (the
+  unmapped relation types `other`, `is_entailed_by`, `is_caused_by`), no
+  parse rejections; 107,519 synsets, the same number as the legacy rows.
+  The swap preview (master without the 1,335,135 legacy OEWN rows, plus the
+  999,223 new ones) builds to `sha256:ff38e69a…`, 1,106,278 facts, and the
+  validator finds no problems. SYNONYM, DEFINITION, HYPERNYM and HYPONYM
+  match today's served counts within 0.1 %. The large changes are
+  corrections: the legacy import gave every word of a synset the
+  word-to-word links of each of its words (DERIVATION −51 %, WN_ANTONYM
+  −34 %, usage links), WordNet's verb groups are now WN_SIMILAR_TO, and the
+  part and member relations were swapped (D8). One review case regresses,
+  S1, which pins the exact fact count and fails for any new corpus; it has
+  to be updated when a new corpus is accepted. `corpus.integrate` stays off.
+
+**Also found on 2026-11-15:**
+
+- **The reader lists a word's meanings in row order** and reads out the
+  first few. The 2025 file orders synsets by id, which put verbs before
+  nouns ("what does colour mean" lost "a visual attribute…"); the parser
+  now emits nouns, verbs, adjectives, adverbs, as the legacy rows did. The
+  reader choosing meanings without depending on row order is a separate
+  change.
 
 **Open items found on 2026-11-15:**
 
@@ -268,6 +292,7 @@ Six findings shape the plan:
 | D5 | 16,980 Wikidata rows point at their own subject; 909 subjects are QIDs with no label | dropped at build | Low; fix at import |
 | D6 | Conflicts that are really case or precision differences | §3 G8 | Low; normalise before comparing |
 | D7 | The `earth-os-corpus` commit author email is a placeholder (`YOUR-GITHUB-EMAIL`) | `git show v1.0.0` | Cosmetic; set `git config user.email` before automated publishing |
+| **D8** | *(found 2026-11-15)* The legacy OEWN import swapped holonym and meronym for part and member relations | Legacy rows say `CAR PART_HOLONYM accelerator` and `FLEET MEMBER_HOLONYM aircraft`; OEWN 2025 says `car PART_MERONYM accelerator`, `fleet MEMBER_MERONYM aircraft`. `--fix-wordnet` doesn't repair it | Medium; served wrongly today; the OEWN 2025 generation swap corrects it |
 
 ---
 
