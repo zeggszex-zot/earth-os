@@ -44,14 +44,23 @@ QUESTIONS = [
 ]
 
 
+SUBJECTS = sorted({r[0] for r in ROWS})
+
+
+def entity(i):
+    """One thing per name: every row about the same subject carries the same ENTITY= (one name, one thing, so the
+    reader has nothing to choose between; tests/test_entities.py covers names with several)."""
+    return f"wd:Q{100 + SUBJECTS.index(ROWS[i][0])}"
+
+
 def entity_added(i, q):
-    """The same qualifier with an ENTITY= after it (a different entity on every row)."""
-    return (q + ";" if q else "") + f"ENTITY=wd:Q{100 + i}"
+    """The same qualifier with an ENTITY= after it."""
+    return (q + ";" if q else "") + f"ENTITY={entity(i)}"
 
 
 def several(i, q):
     """ENTITY= first, then the row's own qualifier, then (for rows that have none) a second bookkeeping SENSE=."""
-    return ";".join(x for x in (f"ENTITY=wd:Q{200 + i}", q, "" if q else f"SENSE=x{i}") if x)
+    return ";".join(x for x in (f"ENTITY={entity(i)}", q, "" if q else f"SENSE=x{i}") if x)
 
 
 def build(tmp: Path, name: str, qual_of) -> Corpus:
@@ -141,7 +150,7 @@ class TestSameAnswers(unittest.TestCase):
 
     def test_the_evidence_keeps_the_entity(self):
         f = next(f for f in self.entity.facts_for("FRANCE") if f.relation == "CAPITAL")
-        self.assertEqual(get(f.qual, "ENTITY"), "wd:Q102")
+        self.assertEqual(get(f.qual, "ENTITY"), f"wd:Q{100 + SUBJECTS.index('FRANCE')}")
         g = next(f for f in self.plain.facts_for("FRANCE") if f.relation == "CAPITAL")
         self.assertNotEqual(f.id, g.id)                              # a different fact, said the same way
 

@@ -19,6 +19,7 @@ import time
 from dataclasses import dataclass, field
 
 from .clock import current_year
+from .corpus import choose_entity  # noqa: E402
 from .corpus import (HINT_ALIASES, NOT_KNOWLEDGE, SOURCE_RANK, applicable, LEXICAL_RELS, META, STOP, Corpus, Fact, expand_hints, key_of, rank_by_overlap,
                      rel_words)
 from .phrase import clean_definition, listing, name_of, phrase_block, rel_text, sentence, unit_of, value_of
@@ -129,6 +130,10 @@ class Binding:
     said: list = field(default_factory=list)   # sentences this step contributes to the answer
 
 
+#: Words in a name's phrase that never pick out which thing it is ("the city of luxembourg": of)
+HINT_STOP = frozenset({"the", "a", "an", "of", "in", "at", "on", "near", "called", "named"})
+
+
 @dataclass
 class Result:
     status: str                     # "answered" | "unsupported" | "conflict" | "no_entity" | "invalid"
@@ -188,18 +193,27 @@ class Navigator:
         self.fact_derived: dict = {}
         self._cache: dict[tuple, list[Fact]] = {}
         self.mapped: list = []          # lexicon mappings used by the plan being run
+        self.hints: dict[str, frozenset] = {}     # key -> the question's other words about it ("illinois", "state")
+        self.choices: dict = {}                   # key -> corpus.Choice: which of a name's entities was meant (D4)
 
     # ------------------------------------------------------------------ corpus access
 
     def facts(self, key: str, year: int) -> list[Fact]:
         """Facts that hold in `year`, latest value only for dated numbers (same rules as Corpus.ask)."""
-        ck = (key, year)
+        hints = self.hints.get(key, frozenset())
+        ck = (key, year, hints)
         if ck in self._cache:
-            return self._cache[ck]
-        out = applicable(self.corpus.facts_for(key), year, self.min_conf)     # computer/corpus.py: the shared policy
-        if len(self._cache) > 512:
-            self._cache.clear()
-        self._cache[ck] = out
+            out, choice = self._cache[ck]
+        else:
+            # One name, several things (ENTITY=): the entity first, then the time policy, so one thing's dated
+            # figures never hide another's (computer/corpus.py choose_entity, applicable).
+            raw, choice = choose_entity(key, self.corpus.facts_for(key), hints)
+            out = applicable(raw, year, self.min_conf)
+            if len(self._cache) > 512:
+                self._cache.clear()
+            self._cache[ck] = (out, choice)
+        if choice:
+            self.choices[key] = choice
         return out
 
     def resolve(self, phrase: str) -> list[str]:
@@ -213,6 +227,7 @@ class Navigator:
                   whole[:-3] + "Y" if whole.endswith("IES") else ""):
             if k and self.corpus.has(k) and k not in out:
                 out.append(k)
+                self.hints[k] = frozenset()          # named whole: nothing else in the phrase says which thing
         cands = sorted(self.corpus.names_in(words), key=lambda c: (-c["n"], -c["pos"]))
         vocab = self.corpus.rel_vocab()
         for c in cands:
@@ -221,6 +236,16 @@ class Navigator:
             if c["n"] == 1 and (c["words"][0] in vocab or c["words"][0] in HINT_ALIASES or c["words"][0] in META):
                 continue
             out.append(c["key"])
+            # The phrase's other words may say which of the name's things is meant ("springfield illinois")
+            self.hints[c["key"]] = frozenset(w for w in words if w not in c["words"] and w not in HINT_STOP)
+        # A name whose things the rest of the phrase tells apart is the one meant: in "springfield, illinois" that's
+        # Springfield (in Illinois), not Illinois, though both are names.
+        for k in out[1:]:
+            if self.hints.get(k) and (lambda ch: ch and ch.by == "hint")(choose_entity(k, self.corpus.facts_for(k),
+                                                                                       self.hints[k])[1]):
+                out.remove(k)
+                out.insert(0, k)
+                break
         return out[:FANOUT]
 
     def soft_resolve(self, phrase: str) -> Item | None:
@@ -317,6 +342,8 @@ class Navigator:
         self.mapped = []
         self.rules_used = []
         self.errors, self.inferences, self.assumptions, self.fact_derived = [], [], [], {}
+        self.choices = {}
+        self.hints = {}            # a question's words about a name are that question's: nothing carries over (D4)
         self._use("navigator.execute")
         self._use("corpus.lookup")
         res = Result("answered", plan=plan, year=year, notes=list(getattr(plan, "notes", []) or []))
@@ -361,6 +388,10 @@ class Navigator:
         res.rules = list(dict.fromkeys(self.rules_used))
         res.derived = [b.verdict["record"] for b in env.values() if b.step.op == "CALC" and b.verdict]
         res.subjects = [b.items[0].key for b in env.values() if b.step.op == "FIND" and b.items]
+        # Said once, after the answer: which of a name's things it was about, and the others (D4)
+        said = [c.note() for k, c in self.choices.items() if k in res.subjects and c.note()]
+        if said and res.text and res.status == "answered":
+            res.text = res.text + " " + " ".join(said)
         ev = self._evidence_via(env)
         res.evidence = [f for f, _ in ev]
         res.inherited = [via for _, via in ev]

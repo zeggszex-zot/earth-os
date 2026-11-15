@@ -29,6 +29,7 @@ PRODUCTION = {"fix_wordnet": True, "fix_wikidata": True, "fix_keys": True}
 from . import AcquireError
 
 BATCH = 50_000
+SCHEMA = "2"          # 2: names held without entities (`plain`); an index of another schema is rebuilt
 
 
 def key_hash(key: tuple) -> bytes:
@@ -103,7 +104,8 @@ class MasterIndex:
         sha = sha256_file(master)
         m = self.meta()
         excl = json.dumps(exclude or {}, sort_keys=True)
-        if m.get("master_sha256") == sha and m.get("code") == code_fingerprint() and m.get("exclude", "{}") == excl:
+        if (m.get("master_sha256") == sha and m.get("code") == code_fingerprint() and m.get("exclude", "{}") == excl
+                and m.get("schema") == SCHEMA):
             return m, False
         self.close()
         guard = CorpusGuard(master)
@@ -130,14 +132,17 @@ class MasterIndex:
                 CREATE TABLE keys (h BLOB PRIMARY KEY) WITHOUT ROWID;
                 CREATE TABLE functional (relation TEXT PRIMARY KEY);
                 CREATE TABLE fvals (subject TEXT, relation TEXT, kind TEXT, value TEXT);
+                CREATE TABLE plain (subject TEXT PRIMARY KEY) WITHOUT ROWID;
             """)
             db.executemany("INSERT INTO functional VALUES (?)", [(r,) for r in sorted(functional)])
-            keys, fvals, n = [], [], 0
+            keys, fvals, n, plain = [], [], 0, set()
             for c, (subj, kind, start, until, qual) in master_rows(master, exclude):
                 rel, value, unit = c[1], c[3], c[4]
                 keys.append((key_hash(pfrow.fact_key(subj, rel, kind, value, unit, start, until, qual, True)),))
                 if rel in functional and start is None and until is None:
                     fvals.append((subj, rel, kind, value))
+                if c[7] != "OEWN" and not qualifiers.get(qual, "ENTITY"):
+                    plain.add(subj)            # the master says things about this name without saying which thing
                 n += 1
                 if len(keys) >= BATCH:
                     db.executemany("INSERT OR IGNORE INTO keys VALUES (?)", keys)
@@ -145,10 +150,11 @@ class MasterIndex:
             db.executemany("INSERT OR IGNORE INTO keys VALUES (?)", keys)
             db.executemany("INSERT INTO fvals VALUES (?, ?, ?, ?)", fvals)
             db.execute("CREATE INDEX fv ON fvals (subject, relation)")
+            db.executemany("INSERT INTO plain VALUES (?)", [(x,) for x in sorted(plain)])
             distinct = db.execute("SELECT count(*) FROM keys").fetchone()[0]
             meta = {"master": str(master), "master_sha256": sha, "code": code_fingerprint(), "rows": str(n),
                     "keys": str(distinct), "functional": str(len(functional)),
-                    "exclude": json.dumps(exclude or {}, sort_keys=True)}
+                    "exclude": json.dumps(exclude or {}, sort_keys=True), "schema": SCHEMA}
             db.executemany("INSERT INTO meta VALUES (?, ?)", meta.items())
             db.commit()
         finally:
@@ -158,6 +164,10 @@ class MasterIndex:
 
     def has(self, h: bytes) -> bool:
         return self.db().execute("SELECT 1 FROM keys WHERE h = ?", (h,)).fetchone() is not None
+
+    def held_plain(self, subject: str) -> bool:
+        """The master has rows about this name that don't say which thing they are about (no ENTITY=, not OEWN)."""
+        return self.db().execute("SELECT 1 FROM plain WHERE subject = ?", (subject,)).fetchone() is not None
 
     def functional(self) -> set[str]:
         return {r for (r,) in self.db().execute("SELECT relation FROM functional")}

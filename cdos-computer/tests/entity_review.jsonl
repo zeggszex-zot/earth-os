@@ -1,0 +1,12 @@
+{"id": "E1", "cat": "entity", "src": "GEONAMES", "q": "what is the population of springfield", "expect": "answer", "must": ["170,188", "Missouri", "also"], "must_not": [], "evidence": "the most populous Springfield, the others in a note"}
+{"id": "E2", "cat": "entity", "src": "GEONAMES", "q": "what is the population of springfield, illinois", "expect": "answer", "must": ["114,394"], "must_not": ["That's"], "evidence": "named by place, with a comma"}
+{"id": "E3", "cat": "entity", "src": "GEONAMES", "q": "where is springfield, massachusetts", "expect": "answer", "must": ["Massachusetts"], "must_not": ["That's"], "evidence": "named by place"}
+{"id": "E4", "cat": "entity", "src": "GEONAMES", "q": "what is the population of birmingham", "expect": "answer", "must": ["1,157,603", "England", "Alabama"], "must_not": [], "evidence": "England's Birmingham; Alabama's in the note"}
+{"id": "E5", "cat": "entity", "src": "GEONAMES", "q": "what is the population of birmingham alabama", "expect": "answer", "must": ["196,357"], "must_not": ["That's"], "evidence": "named by place"}
+{"id": "E6", "cat": "entity", "src": "GEONAMES", "q": "what is the population of columbus", "expect": "answer", "must": ["913,175", "Ohio", "also"], "must_not": [], "evidence": "Ohio's Columbus, the others in a note"}
+{"id": "E7", "cat": "entity", "src": "GEONAMES", "q": "where is portland oregon", "expect": "answer", "must": ["Oregon"], "must_not": ["That's"], "evidence": "named by place"}
+{"id": "E8", "cat": "entity", "src": "GEONAMES", "q": "what is the population of portland maine", "expect": "answer", "must": ["66,881"], "must_not": ["That's"], "evidence": "the smaller one, named by place"}
+{"id": "G1", "cat": "entity", "src": "GEONAMES", "q": "what is the population of paris", "expect": "answer", "must": ["2,103,778"], "must_not": ["That's"], "evidence": "held back (legacy rows): answers as today"}
+{"id": "G2", "cat": "entity", "src": "GEONAMES", "q": "what is the capital of georgia", "expect": "answer", "must": ["Tbilisi"], "must_not": ["That's"], "evidence": "held back (legacy rows): answers as today"}
+{"id": "G3", "cat": "entity", "src": "GEONAMES", "q": "what is the population of luxembourg", "expect": "answer", "must": ["690,959"], "must_not": ["That's"], "evidence": "held back (legacy rows): answers as today"}
+{"id": "G4", "cat": "entity", "src": "GEONAMES", "q": "what is the population of victoria", "expect": "answer", "must": ["7,074,468"], "must_not": ["That's"], "evidence": "held back (legacy rows): answers as today"}

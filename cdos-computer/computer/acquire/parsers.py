@@ -215,7 +215,7 @@ def _text_lines(path: Path, cap: int):
 
 def parse_geonames(files: dict, cap: int = MAX_XML_BYTES) -> Iterator[tuple[int, list | None, str, str]]:
     """GeoNames dump files: `countries` (countryInfo.txt), `admin1` (admin1CodesASCII.txt) and `cities`
-    (citiesNNNNN.zip).  Countries first, then cities; codes are resolved to names through the other files, and a
+    (citiesNNNNN.zip).  Countries first, then first-level regions, then cities; codes are resolved to names through the other files, and a
     code that resolves to nothing is rejected, never guessed.  Every row carries ENTITY=gn:<geonameid>, so two places
     with one name stay two facts (Q3).  GeoNames doesn't say when a population was counted, so none is dated."""
     missing = {"countries", "admin1", "cities"} - set(files)
@@ -235,11 +235,14 @@ def parse_geonames(files: dict, cap: int = MAX_XML_BYTES) -> Iterator[tuple[int,
             continue
         countries[c[0]], gids[c[0]] = c[4], c[16]
         lines.append((n, c))
-    regions = {}
-    for _, line in _text_lines(Path(files["admin1"]), cap):
+    regions, region_lines = {}, []
+    for n, line in _text_lines(Path(files["admin1"]), cap):
         c = line.split("\t")
-        if len(c) >= 2 and c[0] and c[1]:
+        if len(c) >= 4 and c[0] and c[1]:
             regions[c[0]] = c[1]
+            region_lines.append((n, c))
+        elif line.strip():
+            region_lines.append((n, None))
 
     record = 0
     for n, c in lines:
@@ -265,6 +268,20 @@ def parse_geonames(files: dict, cap: int = MAX_XML_BYTES) -> Iterator[tuple[int,
                 yield record, row(name, "shares_border_with", "S", countries[nb], "", iso, gid), "", f"{iso} -> {nb}"
             else:
                 yield record, None, f"unknown-country: neighbour {nb!r} of {iso} isn't in countryInfo", f"{iso} {nb}"
+
+    # First-level regions (states, provinces) are things of their own: "Georgia the state" is one (D4)
+    for n, c in region_lines:
+        record += 1
+        if c is None:
+            yield record, None, "columns: a region line without code, name and geonameid", f"admin1 line {n}"
+            continue
+        code, name, gid = c[0], c[1], c[3]
+        yield record, row(name, "is_a", "S", "region", "", code, gid), "", f"{code} region"
+        cc = code.split(".", 1)[0]
+        if cc in countries:
+            yield record, row(name, "located_in", "S", countries[cc], "", code, gid), "", f"{code} in {cc}"
+        else:
+            yield record, None, f"unknown-country: {cc!r} (region {code}) isn't in countryInfo", f"{code} {name}"
 
     for n, line in _text_lines(Path(files["cities"]), cap):
         if not line.strip():

@@ -145,6 +145,33 @@ The audit below is kept as written on 2026-11-14. What has changed since:
   (no phrasing for `TIMEZONE`) and "what country is Lyon in" (the reader's
   country question doesn't use the new `LOCATED_IN` rows).
 
+- **D4, homonyms in the reader: partly closed.** When a name's facts name
+  several things (`ENTITY=`), the reader answers about the one the question
+  names, by type ("Georgia the state") or by place ("Springfield,
+  Illinois"); otherwise the most prominent (sitelinks when a source has
+  them, then population, then country > region > city), and adds a note:
+  "Springfield's population is 170,188. (That's Springfield in Missouri;
+  there are also Springfield in Massachusetts, Springfield in Illinois and
+  5 more.)" A name with one thing or none answers exactly as before. GeoNames
+  regions are now things of their own, and holding homonyms back is opt-in
+  per source. **Not closed:** the legacy Wikidata rows mix several things
+  under one name (`GEORGIA` is the country and the US state), and nothing
+  in today's corpus links them to GeoNames' ids (Wikidata's GeoNames id,
+  P1566, wasn't imported). Splitting them by their Q-id was tried on the
+  real corpus and made answers worse (France split in two, "another
+  Jupiter" on every Jupiter answer), so it was reverted. Instead the
+  pipeline holds back a new source's rows for a name the master holds
+  without entities: 268 names (3,208 rows: Paris, Georgia, Luxembourg,
+  Victoria, …) answer exactly as today; 1,869 pure homonyms are staged.
+  The Georgia answer ("…the country; there's also the US state") needs the
+  Wikidata re-import (Q2) with P1566. GeoNames now ranks just below
+  Wikidata. `tools/candidate_check.py` checks staged runs against the
+  review before integration; `tests/entity_review.jsonl` holds 12 cases.
+  On the GeoNames candidate three legacy review answers change: S1 (the
+  fact count), D14 (France's neighbours, now known) and D2 ("643,801, or
+  547,030 km²": GeoNames gives metropolitan France); these need a person's
+  decision before integration.
+
 **Also found on 2026-11-15:**
 
 - **The reader lists a word's meanings in row order** and reads out the

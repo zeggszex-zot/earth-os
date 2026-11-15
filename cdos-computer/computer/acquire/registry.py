@@ -15,6 +15,8 @@
                                                  # `pin` downloads it (never parsing it) and prints its sha256, and a
                                                  # run refuses until a person has copied that sha256 here (approval)
     replaces     = { source_type = "OEWN", source_id = "^WN_[nvar]_[0-9]{8}$" }
+    hold_homonyms = false                        # optional: true holds back the rows of a name that stands for several
+                                                 # things (held.pf), for a source whose rows can't be told apart
                                                  # optional: the generation this source replaces (Q2); those master
                                                  # rows are left out of the dedupe index and out of a swap's candidate
     max_bytes    = 50_000_000
@@ -68,6 +70,7 @@ class Source:
     bandwidth: int = 0
     replaces: dict = field(default_factory=dict)
     inputs: dict = field(default_factory=dict)       # name -> {"url", "sha256"}; empty for a single-url source
+    hold_homonyms: bool = False                      # hold back names that stand for several things (held.pf)
     raw: dict = field(default_factory=dict, compare=False)
 
     def targets(self) -> dict[str, "Source"]:
@@ -104,7 +107,8 @@ def _check(sid: str, d: dict) -> Source:
     if missing:
         bad("missing " + ", ".join(missing) + (" (it isn't approved)" if any(k.startswith("approved") for k in missing)
                                                else ""))
-    unknown = set(d) - set(REQUIRED) - {"url", "sha256", "checksum_url", "entity", "bandwidth", "replaces", "inputs"}
+    unknown = set(d) - set(REQUIRED) - {"url", "sha256", "checksum_url", "entity", "bandwidth", "replaces", "inputs",
+                                        "hold_homonyms"}
     if unknown:
         bad(f"unknown field(s) {sorted(unknown)}")
     if not SOURCE_TYPE.match(str(d["source_type"])):
@@ -151,6 +155,8 @@ def _check(sid: str, d: dict) -> Source:
             re.compile(str(rep["source_id"]))
         except re.error as e:
             bad(f"replaces.source_id isn't a regular expression: {e}")
+    if not isinstance(d.get("hold_homonyms", False), bool):
+        bad("hold_homonyms must be true or false")
     for k in ("max_bytes", "bandwidth"):
         if k in d and (not isinstance(d[k], int) or d[k] < 0 or (k == "max_bytes" and d[k] == 0)):
             bad(f"{k} must be a whole number" + (" above 0" if k == "max_bytes" else ", 0 or more"))
@@ -159,7 +165,8 @@ def _check(sid: str, d: dict) -> Source:
                   relations=dict(rels),
                   max_bytes=d["max_bytes"], approved_by=str(d["approved_by"]), approved_at=str(d["approved_at"]),
                   sha256=sha, checksum_url=curl, entity=str(d.get("entity", "")),
-                  bandwidth=int(d.get("bandwidth", 0)), replaces=dict(rep), inputs=inputs, raw=dict(d))
+                  bandwidth=int(d.get("bandwidth", 0)), replaces=dict(rep), inputs=inputs,
+                  hold_homonyms=bool(d.get("hold_homonyms", False)), raw=dict(d))
 
 
 def load(path: Path) -> tuple[dict[str, Source], dict[str, str]]:

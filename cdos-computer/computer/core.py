@@ -570,6 +570,8 @@ class Computer:
             self._last_lookup = b
             if b["matched"]:
                 spoken = phrase_block(b)
+                if spoken and b.get("note"):
+                    spoken += " " + b["note"]          # which of the name's things it was about (D4)
             else:
                 # Nothing matched what was asked.  For a bare name ("owls", "tell me about mars")
                 # say its basics; for a specific question, admit it rather than say something beside the point.

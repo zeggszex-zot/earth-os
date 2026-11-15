@@ -59,7 +59,9 @@ HINT_ALIASES = {
 LEXICAL_RELS = {"DEFINITION", "SYNONYM", "WN_SIMILAR_TO", "ANTONYM", "WN_ANTONYM", "HYPERNYM", "HYPONYM",
                 "DERIVATION", "EXAMPLE", "CATEGORY"}
 SOURCE_RANK = {"MANUAL": 0, "DOCUMENT": 0, "TABLE": 1, "INFERENCE": 1, "WIKIDATA": 2,
-               "DBPEDIA": 2, "GEONAMES": 2, "LLM": 3, "?": 3, "OEWN": 4}
+               "DBPEDIA": 2, "GEONAMES": 2.5, "LLM": 3, "?": 3, "OEWN": 4}
+# GEONAMES ranks just below Wikidata: where both give a figure (France's area), Wikidata's curated, dated one is used,
+# and GeoNames fills what Wikidata lacks.
 REL_RANK = {"IS_A": 0, "DEFINITION": 1, "SYNONYM": 2, "HYPERNYM": 3, "CATEGORY": 4}
 
 
@@ -213,6 +215,144 @@ class Fact:
 # Rows a model wrote ("speculative_model_output") are kept in the corpus, and never said as facts: house rule 4,
 # a model is a voice, not a source.  Rule-planned answers, the lookup and the estimates all read through applicable().
 NOT_KNOWLEDGE = {"LLM"}
+
+
+# ---------------------------------------------------------------------- one name, several things (D4)
+#
+# A name can stand for several things: rows carry ENTITY=<id> (computer/qualifiers.py) to say which.  When the facts
+# for one key name two or more entities, the reader answers about one of them and says which:
+#   - the one the question names, by type ("Georgia the state") or by place ("Springfield, Illinois");
+#   - otherwise the most prominent: sitelinks when a source gives them, then population, then country > region >
+#     city, then the entity id (so the choice never wobbles).
+# Rows without ENTITY (written before entities existed) join the most prominent reading only.  They can mix several
+# things under one name, and can't be linked to a new source's entities without an id both share (Wikidata's GeoNames
+# id, P1566, which the legacy import lacks), so the acquisition pipeline holds back a new source's rows for a name the
+# master already holds without entities (computer/acquire/pipeline.py).  A key with one entity or none answers exactly
+# as before.
+
+TYPE_WORDS = {"country": "country", "nation": "country", "state": "region", "province": "region",
+              "region": "region", "territory": "region", "county": "region", "city": "city", "town": "city",
+              "village": "city"}
+TYPE_RANK = {"country": 0, "region": 1, "city": 2}
+# What a class name says a thing is, for classes written out (Wikidata's "sovereign state", "U.S. state", "commune
+# of France"): the first rule a name matches.  Only to tell homonyms apart and describe them; never said as a fact.
+KIND_RULES = (("country", ("country", "sovereign state")),
+              ("region", ("u.s. state", "state of", "federated state", "province", "region", "oblast", "prefecture",
+                          "canton", "territory")),
+              ("city", ("city", "town", "commune", "municipality", "capital", "village", "metropolis")))
+
+
+def kind_of(value: str) -> str:
+    v = value.lower().replace("_", " ").strip()
+    if v in TYPE_WORDS:
+        return TYPE_WORDS[v]
+    for kind, marks in KIND_RULES:
+        if any(m in v for m in marks):
+            return kind
+    return ""
+
+
+@dataclass
+class Choice:
+    """Which of a name's entities an answer is about, and the others it could have meant."""
+    key: str
+    entity: str
+    by: str                     # "hint": the question named it; "prominence": the default reading
+    described: str              # "Springfield, Missouri", "Georgia, the country"
+    others: list                # descriptions of the others, most prominent first
+
+    def note(self) -> str:
+        """"(That's Paris in Île-de-France; there's also Paris in Texas.)" -- said only for the default reading."""
+        if self.by == "hint" or not self.others:
+            return ""
+        named = self.others[:2]
+        more = len(self.others) - len(named)
+        also = (" and ".join(named) if not more else ", ".join(named) + f" and {more} more")
+        return f"(That's {self.described}; there {'is' if len(self.others) == 1 else 'are'} also {also}.)"
+
+
+def entity_of(f) -> str:
+    return Q.get(f.qual, "ENTITY")
+
+
+def _number(v: str) -> float:
+    try:
+        return float(str(v).replace(",", ""))
+    except ValueError:
+        return 0.0
+
+
+def _profile(name: str, facts: list) -> dict:
+    """What tells one entity from another: its type, its places, and how prominent it is."""
+    kinds = [kind_of(f.value) for f in facts if f.relation == "IS_A"]
+    kind = min((k for k in kinds if k in TYPE_RANK), key=TYPE_RANK.get, default="")
+    places = [f.value for f in facts if f.relation == "LOCATED_IN"]
+    pops = [_number(f.value) for f in facts if f.relation == "POPULATION"]
+    links = [_number(f.value) for f in facts if f.relation == "SITELINKS"]
+    shown = name_of_key(name)
+    if kind == "country":
+        described = f"{shown}, the country"
+    elif kind == "region":
+        described = f"{shown}, a region of {with_article(places[-1])}" if places else f"{shown}, a region"
+    elif places:
+        described = f"{shown} in {places[-1]}"
+    else:
+        described = f"{shown} ({kind})" if kind else f"another {shown}"
+    return {"kind": kind, "places": places, "population": max(pops) if pops else None,
+            "sitelinks": max(links) if links else None, "described": described}
+
+
+def _prominence(entity: str, p: dict) -> tuple:
+    return (p["sitelinks"] is None, -(p["sitelinks"] or 0), p["population"] is None, -(p["population"] or 0),
+            TYPE_RANK.get(p["kind"], len(TYPE_RANK)), entity)
+
+
+def _hint_score(p: dict, hints: set) -> int:
+    """How many of the question's other words pick this entity out: its type, and each of its places."""
+    score = int(any(TYPE_WORDS.get(h) == p["kind"] for h in hints))
+    for place in p["places"]:
+        words = set(re.findall(r"[a-z0-9]+", place.lower()))
+        if words and words <= hints:
+            score += 1
+    return score
+
+
+def choose_entity(key: str, facts: list, hints=()) -> tuple[list, Choice | None]:
+    """(the facts to answer from, the choice made).  With one entity or none: (facts, None), unchanged."""
+    groups: dict = {}
+    for f in facts:
+        e = entity_of(f)
+        if e:
+            groups.setdefault(e, []).append(f)
+    if len(groups) < 2:
+        return facts, None
+    prof = {e: _profile(key, fs) for e, fs in groups.items()}
+    ranked = sorted(groups, key=lambda e: _prominence(e, prof[e]))
+    chosen, by = ranked[0], "prominence"
+    hints = {h.lower() for h in hints}
+    if hints:
+        scores = {e: _hint_score(prof[e], hints) for e in ranked}
+        best = max(scores.values())
+        if best:
+            chosen, by = next(e for e in ranked if scores[e] == best), "hint"
+    out = [f for f in facts if entity_of(f) == chosen or (chosen == ranked[0] and not entity_of(f))]
+    return out, Choice(key, chosen, by, prof[chosen]["described"],
+                       [prof[e]["described"] for e in ranked if e != chosen])
+
+
+THE_NAMES = {"Netherlands", "Philippines", "Bahamas", "Gambia", "Maldives", "Seychelles", "Comoros", "Vatican"}
+
+
+def with_article(place: str) -> str:
+    """"United States" -> "the United States"; most names take no article."""
+    if place in THE_NAMES or place.startswith(("United ", "Republic of ")) or place.endswith(("Islands", "Republic")):
+        return "the " + place
+    return place
+
+
+def name_of_key(key: str) -> str:
+    """A subject key as words: SPRINGFIELD -> Springfield, NEW_YORK -> New York."""
+    return " ".join(w.capitalize() for w in key.split("_"))
 
 
 def applicable(facts: list, year: int, min_conf: float) -> list:
@@ -482,7 +622,8 @@ class Corpus:
         for c in cands[:8]:
             own = set(c["words"])
             hints = expand_hints([w for w in words if w not in own])
-            facts = applicable(self.facts_for(c["key"]), year, min_conf)
+            raw, choice = choose_entity(c["key"], self.facts_for(c["key"]), {w for w in words if w not in own})
+            facts = applicable(raw, year, min_conf)
             if not facts:
                 continue
             wanted = [f for f in facts if rel_words(f.relation) & hints
@@ -492,7 +633,8 @@ class Corpus:
             rel_word = c["n"] == 1 and len(c["words"]) == 1 and (
                 c["words"][0] in self.rel_vocab() or c["words"][0] in HINT_ALIASES)
             score = (10 if wanted else 0) + (4 if curated else 0) + c["n"] * 2 - (6 if rel_word else 0) - c["pos"] * 0.01
-            scored.append({**c, "facts": facts, "wanted": wanted, "curated": curated, "rel_word": rel_word, "score": score})
+            scored.append({**c, "facts": facts, "wanted": wanted, "curated": curated, "rel_word": rel_word, "score": score,
+                           "choice": choice})
         named = any(not s.get("pronoun") and s["curated"] and not s["rel_word"] and s["wanted"] for s in scored)
         for s in scored:
             if s.get("pronoun"):
@@ -500,6 +642,8 @@ class Corpus:
         scored.sort(key=lambda s: -s["score"])
         if scored and scored[0].get("pronoun"):
             notes.append(f'(taking "it" to mean {scored[0]["key"]})')
+        if scored and scored[0].get("choice") and scored[0]["choice"].note():
+            notes.append(scored[0]["choice"].note())             # which of the name's things (D4)
 
         rank = lambda f: SOURCE_RANK.get(f.source, 3) * 10 + REL_RANK.get(f.relation, 6)
         blocks = []
@@ -515,7 +659,8 @@ class Corpus:
                     chosen.append(f)
             chosen = chosen[:room]
             blocks.append({"subject": s["key"], "facts": chosen, "matched": bool(s["wanted"]),
-                           "nwanted": min(len(s["wanted"]), len(chosen)), "total": len(s["facts"])})
+                           "nwanted": min(len(s["wanted"]), len(chosen)), "total": len(s["facts"]),
+                           "note": s["choice"].note() if s.get("choice") else ""})    # which of its things (D4)
 
         # "what orbits the sun": a named value plus a relation word.
         for v in cands[:6]:

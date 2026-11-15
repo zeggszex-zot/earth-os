@@ -262,9 +262,15 @@ class RulePlanner:
             # France and Germany" -> France's population), which is a wrong answer, so they aren't tried.
             add(calc)
             return out[:4]
-        for fn in (self._lexical, self._compare, self._logic, self._test, self._count, self._reverse, self._explain, self._measure,
-                   self._forward, self._chain):
+        readings = (self._lexical, self._compare, self._logic, self._test, self._count, self._reverse, self._explain,
+                    self._measure, self._forward, self._chain)
+        for fn in readings:
             add(fn(q))
+        if not out and ", " in q:
+            # No reading with the comma as a separator: it may be part of a name ("springfield, illinois", D4).
+            # Only tried when nothing else planned, so a list ("compare a, b and c") reads as before.
+            for fn in readings:
+                add(fn(q.replace(", ", " ")))
         return out[:4]
 
     def plan(self, question: str) -> Plan | None:

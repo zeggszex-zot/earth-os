@@ -33,7 +33,7 @@ from dataclasses import dataclass, field
 from . import qualifiers as Q
 from .calc import calculate
 from .clock import current_year
-from .corpus import NOT_KNOWLEDGE
+from .corpus import NOT_KNOWLEDGE, choose_entity
 from .phrase import listing, name_of, unit_of
 from .quantity import ELECTRICAL_DIMS, Quantity, fmt_energy, fmt_hours, fmt_num, fmt_percent, fmt_plain, fmt_power, from_fact, parse, \
     say, spell_out
@@ -290,7 +290,7 @@ class Analyst:
 
     def _figures(self, key: str) -> list[Quantity]:
         out = []
-        for f in self.corpus.facts_for(key):
+        for f in choose_entity(key, self.corpus.facts_for(key))[0]:      # one name, several things: the default (D4)
             if f.source in NOT_KNOWLEDGE or f.conf < 0.5 or (f.until is not None and f.until <= (self.year or current_year())):
                 continue
             x = from_fact(f)

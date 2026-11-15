@@ -37,7 +37,8 @@ COUNTRIES = "\n".join([
     country("ZZ", "Nowhere", "", "0", "0", "QQ", "", "1", ""),
 ]) + "\n"
 ADMIN1 = "\n".join(["FR.11\tÎle-de-France\tIle-de-France\t3012874", "US.IL\tIllinois\tIllinois\t4896861",
-                    "US.MA\tMassachusetts\tMassachusetts\t6254926", "DE.16\tBerlin\tBerlin\t2950157"]) + "\n"
+                    "US.MA\tMassachusetts\tMassachusetts\t6254926", "DE.16\tBerlin\tBerlin\t2950157",
+                    "US.TX\tTexas\tTexas\t4736286"]) + "\n"
 
 
 def city(gid, name, lat, lon, fclass, cc, adm1, pop, elev, tz):
@@ -47,6 +48,7 @@ def city(gid, name, lat, lon, fclass, cc, adm1, pop, elev, tz):
 
 CITIES = "\n".join([
     city("2988507", "Paris", "48.85341", "2.3488", "P", "FR", "11", "2138551", "", "Europe/Paris"),
+    city("4717560", "Paris", "33.66094", "-95.55551", "P", "US", "TX", "24782", "", "America/Chicago"),  # held: legacy
     city("2950159", "Berlin", "52.52437", "13.41053", "P", "DE", "16", "3426354", "74", "Europe/Berlin"),
     city("4250542", "Springfield", "39.80172", "-89.64371", "P", "US", "IL", "116565", "180", "America/Chicago"),
     city("4951788", "Springfield", "42.10148", "-72.58981", "P", "US", "MA", "155929", "21", "America/New_York"),
@@ -74,6 +76,7 @@ MASTER = "\n".join([
     row("France", "CAPITAL", "S", "Paris", "", "0", "0", "WIKIDATA", "Q142/P36", "1.0"),
     row("France", "AREA", "N", "643801", "KM2", "0", "0", "WIKIDATA", "Q142/P2046", "1.0"),
     row("Germany", "POPULATION", "N", "83200000", "", "2023", "0", "WIKIDATA", "Q183/P1082", "1.0"),
+    row("Paris", "IS_A", "S", "city", "", "0", "0", "WIKIDATA", "Q90/P31", "1.0"),    # legacy: says no ENTITY
     # legacy Wikidata rows store bare ids (D3); the build names them from other rows' source_id
     row("CONTINENT", "IS_FUNCTIONAL", "S", "TRUE", "", "0", "0", "MANUAL", "schema", "1.0"),
     row("Germany", "CONTINENT", "S", "Q46", "", "0", "0", "WIKIDATA", "Q183/P30", "1.0"),
@@ -201,27 +204,40 @@ class TestRows(GeoCase):
         self.assertNotIn("Nowhere", {s[0] for s in self.rows if s[1] in ("AREA", "POPULATION")})   # 0 = unknown
 
     def test_cities_resolve_their_codes_to_names(self):
-        self.assertIn(("Paris", "LOCATED_IN", "France", "", "0", "ENTITY=gn:2988507"), self.rows)
-        self.assertIn(("Paris", "LOCATED_IN", "Île-de-France", "", "0", "ENTITY=gn:2988507"), self.rows)
-        self.assertIn(("Paris", "LOCATED_AT", "48.85341,2.3488", "", "0", "ENTITY=gn:2988507"), self.rows)
+        self.assertIn(("Berlin", "LOCATED_IN", "Germany", "", "0", "ENTITY=gn:2950159"), self.rows)
+        self.assertIn(("Berlin", "LOCATED_IN", "Berlin", "", "0", "ENTITY=gn:2950159"), self.rows)
+        self.assertIn(("Berlin", "LOCATED_AT", "52.52437,13.41053", "", "0", "ENTITY=gn:2950159"), self.rows)
         self.assertIn(("Berlin", "ELEVATION", "74", "M", "0", "ENTITY=gn:2950159"), self.rows)
-        self.assertIn(("Paris", "TIMEZONE", "Europe/Paris", "", "0", "ENTITY=gn:2988507"), self.rows)
-        self.assertFalse(any(s[0] == "Paris" and s[1] == "ELEVATION" for s in self.rows))    # none given, none made
+        self.assertIn(("Berlin", "TIMEZONE", "Europe/Berlin", "", "0", "ENTITY=gn:2950159"), self.rows)
+        self.assertFalse(any(s[0] == "Lyon" and s[1] == "ELEVATION" for s in self.rows))     # none given, none made
+
+    def test_a_name_the_master_holds_without_entities_is_held_back(self):
+        # Paris (France and Texas) has legacy rows that don't say which Paris: nothing links them, so it waits
+        self.assertFalse(any(s[0] == "Paris" for s in self.rows))
+        d = self.root / "staging" / "geonames" / self.report["run"]
+        held = [x.split(T) for x in (d / "held.pf").read_text().splitlines() if not x.startswith("#")]
+        self.assertEqual({s[10] for s in held if s[0] == "Paris"}, {"ENTITY=gn:2988507", "ENTITY=gn:4717560"})
+        self.assertIn("PARIS", self.report["held_names_examples"])
+        self.assertNotIn("SPRINGFIELD", self.report["held_names_examples"])      # a pure homonym is staged
 
     def test_populations_are_undated(self):
         pops = [s for s in self.rows if s[1] == "POPULATION"]
         self.assertTrue(pops)
         self.assertEqual({s[4] for s in pops}, {"0"})
 
-    def test_two_places_with_one_name_are_held_back_and_stay_two(self):
-        self.assertFalse(any(s[0] == "Springfield" for s in self.rows))           # not staged (D4)
-        d = self.root / "staging" / "geonames" / self.report["run"]
-        held = [x.split(T) for x in (d / "held.pf").read_text().splitlines() if not x.startswith("#")]
-        spring = {s[10] for s in held if s[0] == "Springfield" and s[1] == "POPULATION"}
+    def test_two_places_with_one_name_are_staged_and_stay_two(self):
+        spring = {s[5] for s in self.rows if s[0] == "Springfield" and s[1] == "POPULATION"}
         self.assertEqual(spring, {"ENTITY=gn:4250542", "ENTITY=gn:4951788"})
-        self.assertEqual((self.report["names_with_several_entities"], self.report["held_names"]), (1, 1))
-        self.assertEqual(self.report["names_with_several_entities_examples"], [["SPRINGFIELD", 2]])
-        self.assertEqual(self.report["counts"]["held"], len(held))
+        d = self.root / "staging" / "geonames" / self.report["run"]
+        self.assertNotIn("Springfield", (d / "held.pf").read_text())             # staged, not held
+        self.assertIn(["SPRINGFIELD", 2], self.report["names_with_several_entities_examples"])
+
+    def test_regions_are_things_of_their_own(self):
+        self.assertIn(("Illinois", "IS_A", "region", "", "0", "ENTITY=gn:4896861"), self.rows)
+        self.assertIn(("Illinois", "LOCATED_IN", "United States", "", "0", "ENTITY=gn:4896861"), self.rows)
+        # Berlin is a city and a region: two things, both kept with what tells them apart
+        berlin = {(s[1], s[2], s[5]) for s in self.rows if s[0] == "Berlin" and s[1] == "IS_A"}
+        self.assertEqual(berlin, {("IS_A", "city", "ENTITY=gn:2950159"), ("IS_A", "region", "ENTITY=gn:2950157")})
 
     def test_different_places_with_one_name_are_never_compared(self):
         # the two Springfields' populations differ, but they are different places (ENTITY): no comparison at all

@@ -5,8 +5,8 @@
     staging/<source>/<run>/delta.pf          the rows that passed, in the source's order, PF format
                           /rejects.jsonl     one line per rejected record: line, source_id, stage, code, why, raw
                           /conflicts.jsonl   a functional relation given a different value than the master has
-                          /held.pf           rows of a name that stands for several things in this run (ENTITY=),
-                                             held back until the reader can tell them apart (D4)
+                          /held.pf           with hold_homonyms: rows of a name that stands for several things in
+                                             this run (ENTITY=), not staged
                           /report.json       counts (read = staged + held + rejected + duplicate), inputs, hashes
     staging/<source>/.<run>.part/            a run in progress; renamed into place only after report.json
 
@@ -229,11 +229,10 @@ class Acquirer:
                 if h in seen or self.index.has(h):
                     counts["duplicate"] += 1
                     continue
-                if key[-1] and self.index.has(key_hash(key[:-1] + ("",))):
-                    # the master has this fact with no ENTITY= (a legacy row, until Q2 re-imports its source)
-                    counts["duplicate"] += 1
-                    counts["duplicate_of_a_row_without_entity"] += 1
-                    continue
+                # The master has this fact with no ENTITY= (a legacy row, until Q2 re-imports its source).  A duplicate,
+                # unless the name stands for several things in this run: then this row is what says which thing it is
+                # about (D4), and is kept.  Decided once every name's things are known.
+                legacy_copy = bool(key[-1]) and self.index.has(key_hash(key[:-1] + ("",)))
                 seen.add(h)
                 # conflicts: recorded, never resolved here.  Within the run, only the same thing is compared with
                 # itself (name, relation and ENTITY); the master's rows carry no ENTITY, so they're compared by name.
@@ -246,23 +245,30 @@ class Acquirer:
                                            "value": value, "entity": entity,
                                            "existing": [{"in": w, "value": v} for w, _, v in existing]})
                     run_vals[(fsubj, rel, entity)].append((fkind, value))
-                passed.write(fsubj + "\t" + "\t".join((subj, rel, kind, value, unit, vf, vu, stype, sid_, conf,
-                                                        qual)) + "\n")
+                passed.write(fsubj + "\t" + ("L" if legacy_copy else "") + "\t" +
+                             "\t".join((subj, rel, kind, value, unit, vf, vu, stype, sid_, conf, qual)) + "\n")
                 if entity:
                     entities[fsubj].add(entity)
             for fh in (passed, rej):
                 fh.flush()
                 os.fsync(fh.fileno())
 
-        ambiguous = {k for k, v in entities.items() if len(v) > 1}
+        ambiguous = {k for k, v in entities.items() if len(v) > 1}      # the reader tells them apart (D4) ...
+        # ... except from rows that don't say which thing they're about: a name the master holds without entities
+        # (legacy rows can mix several things, and nothing links them to this source's ids) waits, as does every
+        # ambiguous name of a source that asks to hold them (hold_homonyms).
+        held_names = {k for k in ambiguous if src.hold_homonyms or self.index.held_plain(k)}
         with open(part / "passed.tmp", encoding="utf-8") as passed, \
                 open(part / "delta.pf", "w", encoding="utf-8") as delta, \
                 open(part / "held.pf", "w", encoding="utf-8") as held:
             delta.write(DELTA_HEADER)
             held.write(HELD_HEADER)
             for line in passed:
-                fsubj, row = line.split("\t", 1)
-                if fsubj in ambiguous:
+                fsubj, flag, row = line.split("\t", 2)
+                if flag == "L" and fsubj not in ambiguous:
+                    counts["duplicate"] += 1
+                    counts["duplicate_of_a_row_without_entity"] += 1
+                elif fsubj in held_names:
                     held.write(row)
                     counts["held"] += 1
                 else:
@@ -303,7 +309,8 @@ class Acquirer:
             "names_with_several_entities": sum(1 for v in entities.values() if len(v) > 1),
             "names_with_several_entities_examples": sorted(
                 ([k, len(v)] for k, v in entities.items() if len(v) > 1), key=lambda x: (-x[1], x[0]))[:10],
-            "held_names": len(ambiguous),
+            "held_names": len(held_names),
+            "held_names_examples": sorted(held_names)[:10],
             "reconciled": counts["read"] == counts["staged"] + counts["held"] + counts["rejected"] + counts["duplicate"],
             "delta_sha256": sha256_file(part / "delta.pf"),
             "integrated": False,
