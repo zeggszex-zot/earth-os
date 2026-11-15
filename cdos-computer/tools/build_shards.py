@@ -21,8 +21,9 @@ synset ids instead of words.  Checked by hand on DOG, OWL, FOOD, HAPPY, BIG, HOT
     WORDNET_POINTER_&  -> WN_SIMILAR_TO  HAPPY -> felicitous, fortunate
     other WORDNET_POINTER_x keep their label;  every WN_x_nnnnnnnn value becomes that synset's first word
     (rows whose synset has no words are dropped and counted).
-    Only OEWN rows are repaired: another source's ANTONYM or HYPERNYM means what it says (Wikidata's "opposite of"
-    is an ANTONYM), and relabelling it served 425 opposites as kinds (D1, docs/CORPUS_GROWTH_AUDIT.md §4).
+    Only legacy OEWN rows are repaired (source_type OEWN with a WN_x_nnnnnnnn source_id): another source's ANTONYM
+    or HYPERNYM means what it says (Wikidata's "opposite of" is an ANTONYM; relabelling it served 425 opposites as
+    kinds, D1), and so does an OEWN row from a new import, which names its synset oewn-nnnnnnnn-x (Q2).
 --fix-wikidata resolves the Wikidata import's ids.  In the Phase 1.5 corpus 69,125 values are bare ids
 ("France CAPITAL Q90"), which the computer would read out as "Q90".  Every Wikidata row names its own subject's id in
 source_id ("Paris ... Q90/P2046"), so the corpus already holds an id -> name table for everything it imported:
@@ -247,7 +248,9 @@ def _stream(src, out, spill, s_shards, v_shards, fix_wordnet, fix_wikidata, fix_
         if rel == "SYNSET":
             report["synset rows kept out of the shards (used to resolve ids)"] += 1
             continue
-        if fix_wordnet and stype == "OEWN":     # the swapped labels are the OEWN import's; other sources mean what they say
+        # The swapped labels and synset-id values are the legacy OEWN import's, whose rows carry a WN_x_nnnnnnnn
+        # source_id; other sources, and OEWN rows from a new import (Q2), mean what they say.
+        if fix_wordnet and stype == "OEWN" and SYNSET_ID.match(sid):
             if rel in RELABEL:
                 report[f"relabelled {rel} -> {RELABEL[rel]}"] += 1
                 rel = RELABEL[rel]

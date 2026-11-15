@@ -131,7 +131,7 @@ class Acquirer:
             if (last["input"]["sha256"], last["master"]["sha256"], last["source_fingerprint"], last["code"]) == \
                     (got.sha256, master_sha, src.fingerprint(), code):
                 return {"unchanged": True, "run": last["run"], "counts": last["counts"]}
-        meta, rebuilt = self.index.ensure(self.master)
+        meta, rebuilt = self.index.ensure(self.master, src.replaces or None)
         if rebuilt:
             self.journal.append({"event": "indexed", "master_sha256": master_sha, "keys": meta["keys"]})
 
@@ -184,7 +184,8 @@ class Acquirer:
             for n, cols, why, raw in PARSERS[src.parser](got.path):
                 counts["read"] += 1
                 if cols is None:
-                    reject(n, "", "parse", "unreadable", why, raw)
+                    code_ = why.split(":", 1)[0] if ":" in why else "unreadable"
+                    reject(n, "", "parse", code_, why, raw)
                     continue
                 subj, rel, kind, value, unit, vf, vu, _stype, sid_, conf, qual = (c.strip() for c in cols)
                 # map: the allowlist, the source's own type, the original id, the entity (Q3)
@@ -249,6 +250,7 @@ class Acquirer:
             "input": {"url": src.url, "path": str(got.path), "sha256": got.sha256, "size": got.size,
                       "etag": got.record.get("etag", "")},
             "master": {"path": str(self.master), "sha256": master_sha},
+            "replaces": src.replaces or None,
             "counts": counts, "rejected_by": dict(sorted(rejected_by.items())),
             "duplicates_of_rows_without_entity": without_entity,
             "reconciled": counts["read"] == counts["staged"] + counts["rejected"] + counts["duplicate"],

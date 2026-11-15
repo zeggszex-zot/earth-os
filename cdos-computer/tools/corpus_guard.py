@@ -37,21 +37,27 @@ def verify(candidate: Path, baseline: dict | None, cases_path: Path = REVIEW_CAS
            log=lambda *a: None) -> dict:
     """Build, validate and review a candidate corpus.pf.  ok is False with `why` on the first kind of problem."""
     import build_shards
-    import review_real_corpus
-    import validate_corpus
 
     with tempfile.TemporaryDirectory(prefix="cdos-verify-") as tmp:
         data = Path(tmp) / "data"
         build_shards._build(candidate, data, shards, shards, log=log, **BUILD_FLAGS)
-        val = validate_corpus.validate(data, loads=2)
-        out = {"version": val["integrity"]["version"], "facts": val["counts"]["rows"], "problems": val["problems"]}
-        if val["problems"]:
-            return {**out, "ok": False, "why": "the validator found problems: " + json.dumps(val["problems"])}
-        if set(val["integrity"]["status"]) != {"verified"}:
-            return {**out, "ok": False, "why": f"integrity {val['integrity']['status']}"}
-        with open(cases_path, encoding="utf-8") as fh:
-            cases = [json.loads(line) for line in fh if line.strip()]
-        rep = review_real_corpus.run(str(data), cases)
+        return check_built(data, baseline, cases_path)
+
+
+def check_built(data: Path, baseline: dict | None, cases_path: Path = REVIEW_CASES) -> dict:
+    """Validate and review an already built data/ folder: verify() without the build."""
+    import review_real_corpus
+    import validate_corpus
+
+    val = validate_corpus.validate(data, loads=2)
+    out = {"version": val["integrity"]["version"], "facts": val["counts"]["rows"], "problems": val["problems"]}
+    if val["problems"]:
+        return {**out, "ok": False, "why": "the validator found problems: " + json.dumps(val["problems"])}
+    if set(val["integrity"]["status"]) != {"verified"}:
+        return {**out, "ok": False, "why": f"integrity {val['integrity']['status']}"}
+    with open(cases_path, encoding="utf-8") as fh:
+        cases = [json.loads(line) for line in fh if line.strip()]
+    rep = review_real_corpus.run(str(data), cases) if cases else {"results": []}
     review = {x["id"]: x["verdict"] for x in rep["results"]}
     before = (baseline or {}).get("review") or {}
     regressed = sorted(k for k, v in before.items() if v == "pass" and review.get(k) != "pass")

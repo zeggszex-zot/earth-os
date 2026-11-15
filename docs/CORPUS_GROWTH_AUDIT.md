@@ -80,6 +80,19 @@ The audit below is kept as written on 2026-11-14. What has changed since:
   source approval never covers them. The searcher runs sandboxed, with no corpus
   writer, git access or tokens, a budget and an e-stop, and treats web
   pages as untrusted input.
+- **Phase 4, OEWN 2025 as a generation swap: the code is built, nothing is
+  downloaded yet.** The 2025 edition (common words only, like the legacy
+  rows, which have essentially no proper nouns) is read by the `gwa_xml`
+  parser into rows of the legacy shape with words as values, never synset
+  ids (D2); a registry `replaces` names the legacy generation (`OEWN` rows
+  with `WN_x_nnnnnnnn` ids), which the dedupe index leaves out;
+  `tools/swap_preview.py` writes the candidate (the master without that
+  generation, plus the run's delta) in staging, builds the master and the
+  candidate, compares their served rows relation by relation and checks
+  the candidate against the review baseline. `build_shards --fix-wordnet`
+  now repairs only legacy-id rows; the real corpus still builds to
+  `sha256:87ee23f5…`. Next: the `sources.toml` entry and the 11.4 MB
+  download, each approved first.
 
 **Open items found on 2026-11-15:**
 

@@ -9,6 +9,9 @@
     parser       = "pf"
     relations    = { CAPITAL = "CAPITAL", POP = "POPULATION" }   # source relation -> CDOS relation; the allowlist
     entity       = "ex"                          # optional: ENTITY=ex:<id> on rows that don't carry one (Q3)
+    replaces     = { source_type = "OEWN", source_id = "^WN_[nvar]_[0-9]{8}$" }
+                                                 # optional: the generation this source replaces (Q2); those master
+                                                 # rows are left out of the dedupe index and out of a swap's candidate
     max_bytes    = 50_000_000
     bandwidth    = 0                             # bytes per second; 0: no limit
     approved_by  = "richie"
@@ -55,6 +58,7 @@ class Source:
     checksum_url: str = ""
     entity: str = ""
     bandwidth: int = 0
+    replaces: dict = field(default_factory=dict)
     raw: dict = field(default_factory=dict, compare=False)
 
     @property
@@ -79,7 +83,7 @@ def _check(sid: str, d: dict) -> Source:
     if missing:
         bad("missing " + ", ".join(missing) + (" (it isn't approved)" if any(k.startswith("approved") for k in missing)
                                                else ""))
-    unknown = set(d) - set(REQUIRED) - {"sha256", "checksum_url", "entity", "bandwidth"}
+    unknown = set(d) - set(REQUIRED) - {"sha256", "checksum_url", "entity", "bandwidth", "replaces"}
     if unknown:
         bad(f"unknown field(s) {sorted(unknown)}")
     if not SOURCE_TYPE.match(str(d["source_type"])):
@@ -97,6 +101,15 @@ def _check(sid: str, d: dict) -> Source:
     if not isinstance(rels, dict) or not all(isinstance(k, str) and isinstance(v, str) and RELATION.match(v)
                                              for k, v in rels.items()):
         bad("relations must map source relation names to upper-case CDOS relation names")
+    rep = d.get("replaces", {})
+    if rep:
+        if not isinstance(rep, dict) or set(rep) != {"source_type", "source_id"} or \
+                not SOURCE_TYPE.match(str(rep["source_type"])):
+            bad("replaces must be { source_type = \"...\", source_id = \"<regular expression>\" }")
+        try:
+            re.compile(str(rep["source_id"]))
+        except re.error as e:
+            bad(f"replaces.source_id isn't a regular expression: {e}")
     for k in ("max_bytes", "bandwidth"):
         if k in d and (not isinstance(d[k], int) or d[k] < 0 or (k == "max_bytes" and d[k] == 0)):
             bad(f"{k} must be a whole number" + (" above 0" if k == "max_bytes" else ", 0 or more"))
@@ -104,7 +117,7 @@ def _check(sid: str, d: dict) -> Source:
                   attribution=str(d["attribution"]), url=str(d["url"]), parser=d["parser"], relations=dict(rels),
                   max_bytes=d["max_bytes"], approved_by=str(d["approved_by"]), approved_at=str(d["approved_at"]),
                   sha256=sha, checksum_url=curl, entity=str(d.get("entity", "")),
-                  bandwidth=int(d.get("bandwidth", 0)), raw=dict(d))
+                  bandwidth=int(d.get("bandwidth", 0)), replaces=dict(rep), raw=dict(d))
 
 
 def load(path: Path) -> tuple[dict[str, Source], dict[str, str]]:

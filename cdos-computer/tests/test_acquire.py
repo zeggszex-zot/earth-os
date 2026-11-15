@@ -270,7 +270,7 @@ class TestRun(AcquireCase):
         self.assertTrue(r["reconciled"])
         self.assertEqual(r["duplicates_of_rows_without_entity"], 2)        # Lion/Mammal and HE: legacy rows
         self.assertEqual(r["rejected_by"], {
-            "map: relation": 1, "map: source-id": 1, "normalise: empty": 1, "parse: unreadable": 2,
+            "map: relation": 1, "map: source-id": 1, "normalise: empty": 1, "parse: columns": 1, "parse: not-utf8": 1,
             "validate: N value isn't a number": 1, "validate: confidence outside 0..1": 1,
             "validate: start/until isn't a year": 1, "validate: unknown kind": 1})
         d = self.run_dir(r)
