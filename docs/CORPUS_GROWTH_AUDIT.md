@@ -39,6 +39,16 @@ The audit below is kept as written on 2026-11-14. What has changed since:
   served corpus changes in exactly 425 rows (Wikidata `HYPERNYM` →
   `ANTONYM`); its version is now `sha256:87ee23f5…`. The `cdos-computer`
   suite is 516 run, OK (97 skipped).
+- **Phase 1, the corpus guard, is built** (`cdos-computer/computer/corpus_guard.py`,
+  command line `cdos-computer/tools/corpus_guard.py`). One writer at a time
+  (flock, refused at once when held), a full backup checked by sha256
+  before every change, a manifest with a pending record so a crash between
+  the rename and the manifest is recovered, a hash-chained journal, and
+  `verify` = build + `validate_corpus` + the 73 review cases, failing only
+  when a case that passed on the last verified build no longer does.
+  `build_shards.py` reads a guarded corpus under the shared lock. The real
+  `corpus.pf` is not guarded yet: `init` on it is a separate, deliberate
+  step.
 
 **Open items found on 2026-11-15:**
 

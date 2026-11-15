@@ -38,7 +38,9 @@ Without it, the 72,800 subjects written in mixed or lower case (nearly all of th
 the shards but can never be found: the computer asks for YEMEN and the shard holds "Yemen".  A thing that is in the corpus
 twice ("FRANCE" curated, "France" from Wikidata) becomes one subject with both sets of facts.
 
-corpus.pf itself is never written.  The report says how many rows each repair touched.
+corpus.pf itself is never written.  The report says how many rows each repair touched.  A guarded corpus.pf (one with
+a corpus.pf.lock beside it: computer/corpus_guard.py) is read under the guard's shared lock, so a build never mixes
+two versions of it; while its writer holds the lock, the build is refused at once.
 """
 
 from __future__ import annotations
@@ -54,6 +56,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from computer.corpus import content_hash, fnv1a, key_of  # noqa: E402
+from computer.corpus_guard import CorpusGuard  # noqa: E402
 
 TEXT_RELS = {"DEFINITION", "EXAMPLE", "DESCRIPTION"}
 RELABEL = {"ANTONYM": "HYPERNYM", "HYPERNYM": "HYPONYM", "WORDNET_POINTER_!": "WN_ANTONYM",
@@ -93,6 +96,15 @@ def wikidata_names(src) -> dict[str, str]:
 
 
 def build(src, out, s_shards=256, v_shards=256, fix_wordnet=False, fix_wikidata=False, fix_keys=False, log=print):
+    """Build data/ from src.  src is read three times, so a guarded corpus is read under its shared lock."""
+    guard = CorpusGuard(src)
+    if not guard.guarded:
+        return _build(src, out, s_shards, v_shards, fix_wordnet, fix_wikidata, fix_keys, log)
+    with guard.reading():
+        return _build(src, out, s_shards, v_shards, fix_wordnet, fix_wikidata, fix_keys, log)
+
+
+def _build(src, out, s_shards=256, v_shards=256, fix_wordnet=False, fix_wikidata=False, fix_keys=False, log=print):
     out = Path(out)
     report = Counter()
     qnames = wikidata_names(src) if fix_wikidata else {}
