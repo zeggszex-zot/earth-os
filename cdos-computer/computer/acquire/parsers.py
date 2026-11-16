@@ -396,20 +396,49 @@ def _wd_year(t) -> str:
     return m.group(1) if m else ""
 
 
+DEEP_TIME = 1_000_000      # years: a date this far back is written even when Wikidata gives it to less than a year
+
+
 def _wd_time(t) -> tuple[str, str]:
-    """(value, "") or ("", why): YYYY, YYYY-MM or YYYY-MM-DD, as the legacy rows wrote dates."""
+    """(value, "") or ("", why): YYYY, YYYY-MM or YYYY-MM-DD as the legacy rows wrote dates; a year before year 1
+    is negative ("-753", "-4540000000"), and written as a year whatever its precision.  A date less precise than a
+    year is written only for deep time (the reader says those as "about 4.54 billion years ago"); "the 16th
+    century" isn't written as "1500"."""
     m = re.match(r"^([+-])0*([0-9]+)-([0-9]{2})-([0-9]{2})T", str(t.get("time", "")))
     prec = int(t.get("precision", 0))
-    if not m:
+    if not m or m.group(2) == "":
         return "", "time: not a date"
-    if m.group(1) == "-" or m.group(2) == "0":
-        return "", "time-bce: a date before year 1 (the reader doesn't say those yet)"
+    bce, y = m.group(1) == "-", int(m.group(2))
+    if y == 0:
+        return "", "time: year 0"
     if prec < 9:
-        return "", "time-precision: less precise than a year"
+        if y < DEEP_TIME:
+            return "", "time-precision: less precise than a year, and not deep time"
+        return f"-{y}" if bce else str(y), ""
+    if bce:
+        return f"-{y}", ""
     if str(t.get("calendarmodel", "")).rsplit("/", 1)[-1] != GREGORIAN and prec > 9:
         return "", "time-julian: a Julian month or day (the year alone would be kept; this isn't converted)"
-    y, mo, d = m.group(2), m.group(3), m.group(4)
-    return (y if prec == 9 else f"{y}-{mo}" if prec == 10 else f"{y}-{mo}-{d}"), ""
+    mo, d = m.group(3), m.group(4)
+    return (str(y) if prec == 9 else f"{y}-{mo}" if prec == 10 else f"{y}-{mo}-{d}"), ""
+
+
+def _best(stmts: list) -> tuple[list, list]:
+    """(kept, outranked): Wikidata's best statements, as its own "truthy" reading has them: the preferred ones when
+    there are any, else the normal ones; deprecated ones are refused elsewhere.  A normal statement next to a
+    preferred one is kept only as dated history (a P580/P585/P582 date) beside a dated preferred one: France's
+    population series stays, Everest's 8844.43 m (2005) doesn't stand beside its preferred, undated 8848.86 m."""
+    live = [s for s in stmts if s.get("rank") != "deprecated"]
+    preferred = [s for s in live if s.get("rank") == "preferred"]
+    if not preferred:
+        return live, []
+
+    def dated(s):
+        return any(_wd_year(t) for k in ("P580", "P582", "P585") for t in (s.get("qualifiers") or {}).get(k, []))
+
+    series = all(dated(s) for s in preferred)
+    kept = [s for s in live if s.get("rank") == "preferred" or (series and dated(s))]
+    return kept, [s for s in live if s not in kept]
 
 
 def parse_wikidata_snapshot(files: dict, cap: int = MAX_XML_BYTES) -> Iterator[tuple[int, list | None, str, str]]:
@@ -481,10 +510,14 @@ def _wikidata_rows(n: int, o: dict, labels: dict):
     for p, stmts in o.get("claims", {}).items():
         if p == "P1566":
             continue
+        kept, outranked = _best(stmts)
         for s in stmts:
             raw = f"{q} {p} {json.dumps(s.get('value'), ensure_ascii=False)[:150]}"
             if s.get("rank") == "deprecated":
                 yield n, None, "deprecated: Wikidata marks the statement wrong or superseded", raw
+                continue
+            if any(s is x for x in outranked):
+                yield n, None, "outranked: Wikidata prefers another statement of this property", raw
                 continue
             v = s.get("value")
             if v is None:

@@ -45,7 +45,7 @@ def cases_of(path: Path) -> list[dict]:
 
 def write_candidate(master: Path, runs: list[tuple[Path, dict | None]], out: Path) -> dict:
     """The master without each replaced generation, then each run's delta; returns row counts."""
-    skips = [replaced_by(rep) for _, rep in runs if rep]
+    skips = [replaced_by(rep, delta.parent / "held.pf") for delta, rep in runs if rep]
     kept = removed = added = 0
     with open(master, encoding="utf-8") as m, open(out, "w", encoding="utf-8") as fh:
         for line in m:

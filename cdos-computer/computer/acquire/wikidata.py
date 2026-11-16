@@ -344,9 +344,11 @@ class Collector:
             t = self._trim(e)
             if t["label"]:
                 labels.setdefault(q, t["label"])
+            # the one GeoNames id of this item that is a staged place and names only this item (Paris has two
+            # GeoNames ids, one of them a staged place)
             gns = {s["value"] for s in t["claims"].get("P1566", []) if s["rank"] != "deprecated" and s["value"]}
-            g = next(iter(gns)) if len(gns) == 1 else None
-            t["entity"] = f"gn:{g}" if g and g in planned_gn and one_item.get(g) == q else f"wd:{q}"
+            mine = [g for g in gns if g in planned_gn and one_item.get(g) == q]
+            t["entity"] = f"gn:{mine[0]}" if len(mine) == 1 else f"wd:{q}"
             counts["linked_to_geonames"] += t["entity"].startswith("gn:")
             entities.append(t)
         entities.sort(key=lambda t: _qnum(t["id"]))

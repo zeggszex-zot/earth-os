@@ -282,11 +282,21 @@ def _number(v: str) -> float:
         return 0.0
 
 
-def _profile(name: str, facts: list) -> dict:
-    """What tells one entity from another: its type, its places, and how prominent it is."""
+def _profile(name: str, facts: list, place_kind=None) -> dict:
+    """What tells one entity from another: its type, its places, and how prominent it is.  A place that has ended
+    ("Kingdom of England", until 1707) isn't one of its places now.  It's described by the region it's in when
+    `place_kind` (a place name -> its kind, from the corpus) says which of its places is a region: "Springfield in
+    Illinois", not "in Sangamon County"; else by a place that isn't a country, else by its last place."""
+    year = current_year()
     kinds = [kind_of(f.value) for f in facts if f.relation == "IS_A"]
     kind = min((k for k in kinds if k in TYPE_RANK), key=TYPE_RANK.get, default="")
-    places = [f.value for f in facts if f.relation == "LOCATED_IN"]
+    places = list(dict.fromkeys(f.value for f in facts if f.relation == "LOCATED_IN"
+                                and (f.until is None or f.until > year)))
+    where = places[-1] if places else ""
+    if place_kind and places:
+        pk = {p: place_kind(p) for p in places}
+        where = next((p for p in reversed(places) if pk[p] == "region"), "") or \
+            next((p for p in reversed(places) if pk[p] != "country"), "") or places[-1]
     pops = [_number(f.value) for f in facts if f.relation == "POPULATION"]
     links = [_number(f.value) for f in facts if f.relation == "SITELINKS"]
     shown = name_of_key(name)
@@ -295,7 +305,7 @@ def _profile(name: str, facts: list) -> dict:
     elif kind == "region":
         described = f"{shown}, a region of {with_article(places[-1])}" if places else f"{shown}, a region"
     elif places:
-        described = f"{shown} in {places[-1]}"
+        described = f"{shown} in {where}"
     else:
         described = f"{shown} ({kind})" if kind else f"another {shown}"
     return {"kind": kind, "places": places, "population": max(pops) if pops else None,
@@ -317,8 +327,9 @@ def _hint_score(p: dict, hints: set) -> int:
     return score
 
 
-def choose_entity(key: str, facts: list, hints=()) -> tuple[list, Choice | None]:
-    """(the facts to answer from, the choice made).  With one entity or none: (facts, None), unchanged."""
+def choose_entity(key: str, facts: list, hints=(), place_kind=None) -> tuple[list, Choice | None]:
+    """(the facts to answer from, the choice made).  With one entity or none: (facts, None), unchanged.
+    `place_kind` (optional): a place name -> "country", "region", "city" or "", to describe each by its region."""
     groups: dict = {}
     for f in facts:
         e = entity_of(f)
@@ -326,7 +337,7 @@ def choose_entity(key: str, facts: list, hints=()) -> tuple[list, Choice | None]
             groups.setdefault(e, []).append(f)
     if len(groups) < 2:
         return facts, None
-    prof = {e: _profile(key, fs) for e, fs in groups.items()}
+    prof = {e: _profile(key, fs, place_kind) for e, fs in groups.items()}
     ranked = sorted(groups, key=lambda e: _prominence(e, prof[e]))
     chosen, by = ranked[0], "prominence"
     hints = {h.lower() for h in hints}
@@ -519,6 +530,18 @@ class Corpus:
             except OSError:
                 pass
 
+    def place_kind(self, name: str) -> str:
+        """What kind of place a place name is, by its own IS_A rows: "region" when any says so (Georgia, the US
+        state, is a region to Columbus, Georgia), else the highest of country > city, else ""."""
+        cache = self.__dict__.setdefault("_place_kinds", {})
+        if name not in cache:
+            kinds = {kind_of(f.value) for f in self.facts_for(key_of(name)) if f.relation == "IS_A"}
+            cache[name] = "region" if "region" in kinds else min((k for k in kinds if k in TYPE_RANK),
+                                                                 key=TYPE_RANK.get, default="")
+            if len(cache) > 4096:
+                cache.clear()
+        return cache[name]
+
     def facts_for(self, key: str) -> list[Fact]:
         if not self.meta or key not in self.subjects:
             return []
@@ -622,7 +645,8 @@ class Corpus:
         for c in cands[:8]:
             own = set(c["words"])
             hints = expand_hints([w for w in words if w not in own])
-            raw, choice = choose_entity(c["key"], self.facts_for(c["key"]), {w for w in words if w not in own})
+            raw, choice = choose_entity(c["key"], self.facts_for(c["key"]), {w for w in words if w not in own},
+                                        self.place_kind)
             facts = applicable(raw, year, min_conf)
             if not facts:
                 continue

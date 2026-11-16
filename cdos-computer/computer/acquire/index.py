@@ -44,12 +44,27 @@ def code_fingerprint() -> str:
     return "sha256:" + h.hexdigest()
 
 
-def replaced_by(spec: dict | None):
-    """A test for the rows of the generation a source replaces: same source_type, source_id matching."""
+def held_ids(held: Path | None) -> set[str]:
+    """The original ids ("Q90" of "Q90/P1082") of a run's held-back rows (held.pf beside its delta.pf)."""
+    out = set()
+    if held and Path(held).exists():
+        with open(held, encoding="utf-8") as fh:
+            for line in fh:
+                if line.strip() and not line.startswith("#"):
+                    c = line.rstrip("\n").split("\t")
+                    if len(c) > 8 and c[8]:
+                        out.add(c[8].split("/", 1)[0])
+    return out
+
+
+def replaced_by(spec: dict | None, held: Path | None = None):
+    """A test for the rows of the generation a source replaces: same source_type, source_id matching -- except the
+    rows of a thing whose new rows the run held back (held.pf): until those are staged, its old rows stay, or the
+    swap would lose what the corpus knows about it (Paris, Earth: held, D4)."""
     if not spec:
         return lambda c: False
-    st, rx = spec["source_type"], re.compile(spec["source_id"])
-    return lambda c: c[7] == st and rx.search(c[8]) is not None
+    st, rx, keep = spec["source_type"], re.compile(spec["source_id"]), held_ids(held)
+    return lambda c: c[7] == st and rx.search(c[8]) is not None and c[8].split("/", 1)[0] not in keep
 
 
 def master_rows(path: Path, exclude: dict | None = None):

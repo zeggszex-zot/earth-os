@@ -207,7 +207,7 @@ class Navigator:
         else:
             # One name, several things (ENTITY=): the entity first, then the time policy, so one thing's dated
             # figures never hide another's (computer/corpus.py choose_entity, applicable).
-            raw, choice = choose_entity(key, self.corpus.facts_for(key), hints)
+            raw, choice = choose_entity(key, self.corpus.facts_for(key), hints, self.corpus.place_kind)
             out = applicable(raw, year, self.min_conf)
             if len(self._cache) > 512:
                 self._cache.clear()

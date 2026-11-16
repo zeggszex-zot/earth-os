@@ -180,6 +180,34 @@ class TestThePublicPath(EntityCase):
         self.assertNotIn("That's", said)
 
 
+class TestTheNoteNamesTheRegion(unittest.TestCase):
+    """With Wikidata's places beside GeoNames', a thing is in a country, a region and a county: the note names the
+    region ("Springfield in Illinois", not "in Sangamon County"), and never a place it has stopped being in."""
+
+    def test_region_first_and_ended_places_left_out(self):
+        rows = (place("Springfield", "gn:4250542", "city", ["United States", "Illinois", "Sangamon County"], "114394")
+                + place("Springfield", "gn:4409896", "city", ["United States", "Missouri", "Greene County"], "169176")
+                + place("Birmingham", "gn:2655603", "city", ["United Kingdom", "England"], "1137100")
+                + [T.join(["Birmingham", "LOCATED_IN", "S", "Kingdom of England", "", "0", "1707", "WIKIDATA",
+                           "Q2256/P17", "1.0", "ENTITY=gn:2655603"])]
+                + place("Birmingham", "gn:4049979", "city", ["United States", "Alabama", "Jefferson County"], "200733")
+                + [r(n, "IS_A", "S", k, src="WIKIDATA") for n, k in (
+                    ("Illinois", "U.S. state"), ("Missouri", "U.S. state"), ("Alabama", "U.S. state"),
+                    ("Sangamon County", "county of Illinois"), ("Greene County", "county of Missouri"),
+                    ("Jefferson County", "county of Alabama"), ("England", "constituent country"),
+                    ("United States", "sovereign state"), ("United Kingdom", "sovereign state"))])
+        with tempfile.TemporaryDirectory() as t:
+            c = build(Path(t), "places", rows)
+            say = lambda q: navigate(q, [RulePlanner(c)], Navigator(c))[1].text   # noqa: E731
+            self.assertEqual(say("what is the population of springfield"),
+                             "Springfield's population is 169,176. (That's Springfield in Missouri; there is also "
+                             "Springfield in Illinois.)")
+            said = say("what is the population of birmingham")
+            self.assertIn("That's Birmingham in England", said)
+            self.assertIn("Birmingham in Alabama", said)
+            self.assertNotIn("Kingdom of England", said)
+
+
 class TestKinds(unittest.TestCase):
     def test_class_names_say_what_kind_of_thing(self):
         from computer.corpus import kind_of

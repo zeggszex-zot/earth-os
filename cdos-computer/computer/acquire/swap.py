@@ -1,7 +1,8 @@
 """A generation swap, staged (Q2): the candidate corpus a source's run would make, written beside the run, never
 over the master.
 
-    candidate.pf = the master without the rows of the generation the source replaces (registry `replaces`)
+    candidate.pf = the master without the rows of the generation the source replaces (registry `replaces`), except
+                   those of things whose new rows the run held back (held.pf)
                    + the run's delta.pf
 
 The master is read under the corpus guard's shared lock when it is guarded, and only read.  Making the candidate the
@@ -26,7 +27,7 @@ def write_candidate(master: Path, delta: Path, replaces: dict, out: Path) -> dic
     """Write candidate.pf; return what changed: rows kept, and rows removed and added by relation."""
     if not replaces:
         raise AcquireError("this source replaces no generation; there is no swap to preview")
-    skip = replaced_by(replaces)
+    skip = replaced_by(replaces, delta.parent / "held.pf")
     removed, added, kept = Counter(), Counter(), 0
     tmp = out.with_name(f".{out.name}.part")
     guard = CorpusGuard(master)

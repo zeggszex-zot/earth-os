@@ -67,15 +67,21 @@ WORLD = {
     "Q142": ent("Q142", "France", {
         "P31": [stmt(item("Q6256"))],
         "P36": [stmt(item("Q90"), "preferred", P580=year(1944)), stmt(item("Q1"), "deprecated")],
-        "P1082": [stmt(qty("+68000000"), P585=year(2024))],
+        "P1082": [stmt(qty("+68000000"), "preferred", P585=year(2024)), stmt(qty("+67000000"), P585=year(2020)),
+                  stmt(qty("+60000000"))],                         # an undated one beside a dated series: dropped
         "P2046": [stmt(qty("+643801", "Q712226"))],
         "P17": [stmt(item("Q142"))],                                    # itself: not a row
         "P1566": [stmt({"value": "3017382", "type": "string"})],
         "P2044": [stmt(None)],                                          # an unknown value
     }, desc="country in Western Europe", sitelinks=3),
     "Q90": ent("Q90", "Paris", {"P17": [stmt(item("Q142"))], "P625": [stmt(coord(48.8566, 2.3522))],
-                                "P1566": [stmt({"value": "2988507", "type": "string"})]}),
-    "Q405": ent("Q405", "Moon", {"P625": [stmt(coord(0, 0, "Q405"))]}),
+                                "P1566": [stmt({"value": "2968815", "type": "string"}),     # not a staged place
+                                          stmt({"value": "2988507", "type": "string"})]}),
+    "Q513": ent("Q513", "Mount Everest", {"P2044": [
+        stmt(qty("+8848.86", "Q11573"), "preferred"), stmt(qty("+8844.43", "Q11573"), P585=year(2005)),
+        stmt(qty("+29030", "Q11573"), "deprecated")]}),
+    "Q405": ent("Q405", "Moon", {"P625": [stmt(coord(0, 0, "Q405"))],
+                                 "P571": [stmt(time_("-4527000000-00-00T00:00:00Z", 3))]}),   # deep time
     "Q556": ent("Q556", "hydrogen", {"P2067": [stmt(qty("+1.008", "Q483261"))],
                                      "P2101": [stmt(qty("-259.14", "Q25267"))],
                                      "P2054": [stmt(qty("+0.08987", "Q99999"))]}),     # an unknown unit
@@ -84,14 +90,15 @@ WORLD = {
         "P27": [stmt(item("Q183"), P582=year(1896))],
         "P106": [stmt(item("Q777"))],                                   # an item with no English label
         "P571": [stmt(time_("-0753-00-00T00:00:00Z", 9))],
-        "P576": [stmt(time_("+1500-03-01T00:00:00Z", 11, "Q1985786"))]}),
+        "P576": [stmt(time_("+1500-03-01T00:00:00Z", 11, "Q1985786"))],
+        "P577": [stmt(time_("+1500-00-00T00:00:00Z", 7))]}),           # a century: not "1500"
     "Q999": ent("Q999", "", {"P31": [stmt(item("Q6256"))]}),
     "Q78": ent("Q78", "Basel", {"P31": [stmt(item("Q515"))], "P1566": [stmt({"value": "5555", "type": "string"})]}),
     "Q79": ent("Q79", "Basle", {"P1566": [stmt({"value": "5555", "type": "string"})]}),
     # labels only
     "Q6256": ent("Q6256", "country", {}), "Q515": ent("Q515", "city", {}), "Q777": ent("Q777", "", {}), "Q1": ent("Q1", "universe", {}), "Q183": ent("Q183", "Germany", {}),
     "Q712226": ent("Q712226", "square kilometre", {}), "Q483261": ent("Q483261", "dalton", {}),
-    "Q25267": ent("Q25267", "degree Celsius", {}), "Q99999": ent("Q99999", "furlong per fortnight", {}),
+    "Q25267": ent("Q25267", "degree Celsius", {}), "Q11573": ent("Q11573", "metre", {}), "Q99999": ent("Q99999", "furlong per fortnight", {}),
 }
 REDIRECTS = {"Q77": "Q78"}
 LINKS = {"3017382": ["Q142"], "2988507": ["Q90"], "5555": ["Q78", "Q79"]}
@@ -100,12 +107,12 @@ MASTER_ROWS = [
     ("France", "CAPITAL", "S", "Q90", "Q142/P36"), ("hydrogen", "ATOMIC_MASS", "N", "1.008", "Q556/P2067"),
     ("Q937", "BORN", "D", "1879-03-14", "Q937/P569"), ("Moon", "LOCATED_AT", "S", "0,0", "Q405/P625"),
     ("Q999", "IS_A", "S", "Q6256", "Q999/P31"), ("Basel", "IS_A", "S", "Q515", "Q77/P31"),
-    ("Earth", "DEFINITION", "S", "third planet", "Q2/description"),
+    ("Earth", "DEFINITION", "S", "third planet", "Q2/description"), ("Mount Everest", "ELEVATION", "N", "8848.86", "Q513/P2044"),
 ]
 RELATIONS = ('{ P31 = "IS_A", P36 = "CAPITAL", P1082 = "POPULATION", P2046 = "AREA", P17 = "LOCATED_IN", '
              'P625 = "LOCATED_AT", P2067 = "MASS", P2067_atomic = "ATOMIC_MASS", P2101 = "MELTING_POINT", '
              'P2054 = "DENSITY", P569 = "BORN", P27 = "CITIZENSHIP", P571 = "FOUNDED", P576 = "DISSOLVED", '
-             'P2044 = "ELEVATION", P106 = "OCCUPATION", description = "DEFINITION", sitelinks = "SITELINKS" }')
+             'P2044 = "ELEVATION", P106 = "OCCUPATION", P577 = "PUBLICATION_DATE", description = "DEFINITION", sitelinks = "SITELINKS" }')
 
 
 class Resp:
@@ -237,10 +244,11 @@ class TestRequests(Case):
     def test_the_selection(self):
         c = self.collector()
         plan = c.plan()
-        self.assertEqual(plan["legacy"], ["Q2", "Q77", "Q142", "Q405", "Q556", "Q937", "Q999"])   # not manual-3
+        self.assertEqual(plan["legacy"], ["Q2", "Q77", "Q142", "Q405", "Q513", "Q556", "Q937", "Q999"])   # not manual-3
         self.assertEqual(plan["geonames"], ["5555", "2988507", "3017382"])                         # held ones too
         links = c.links(plan)
-        self.assertEqual(c.entity_ids(plan, links), ["Q2", "Q77", "Q90", "Q142", "Q405", "Q556", "Q937", "Q999"])
+        self.assertEqual(c.entity_ids(plan, links), ["Q2", "Q77", "Q90", "Q142", "Q405", "Q513", "Q556", "Q937",
+                                                     "Q999"])
 
     def test_maxlag_waits_as_told_and_failures_back_off(self):
         c = self.collector()
@@ -308,7 +316,7 @@ class TestRows(Case):
 
     def test_values_in_the_legacy_shape(self):
         self.assertEqual(self.by[("France", "P2046")][2:5], ["N", "643801", "KM2"])
-        self.assertEqual(self.by[("France", "P1082")][3:6], ["68000000", "", "2024"])
+        self.assertIn(["68000000", "", "2024"], [c[3:6] for c in self.good if c[:2] == ["France", "P1082"]])
         self.assertEqual(self.by[("France", "P36")][5], "1944")
         self.assertEqual(self.by[("hydrogen", "P2067_atomic")][3:5], ["1.008", "U"])
         self.assertEqual(self.by[("hydrogen", "P2101")][3:5], ["-259.14", "C"])
@@ -320,15 +328,27 @@ class TestRows(Case):
 
     def test_what_is_refused_and_why(self):
         why = {w for w, _ in self.bad}
-        for w in ("deprecated", "self-reference", "no-value", "globe", "unit", "no-label", "time-bce", "time-julian"):
+        for w in ("deprecated", "self-reference", "no-value", "globe", "unit", "no-label", "time-julian",
+                  "time-precision", "outranked"):
             self.assertIn(w, why)
         self.assertNotIn(("France", "P17"), self.by)
         self.assertNotIn(("Albert Einstein", "P106"), self.by)            # Q777 has no English label
-        self.assertFalse([c for c in self.good if c[0] == "Moon"])
+        self.assertFalse([c for c in self.good if c[0] == "Moon" and c[1] == "P625"])
+
+    def test_wikidata_s_best_statements(self):
+        everest = [c[3] for c in self.good if c[0] == "Mount Everest" and c[1] == "P2044"]
+        self.assertEqual(everest, ["8848.86"])                              # the preferred one, not 2005's
+        pop = sorted((c[5], c[3]) for c in self.good if c[:2] == ["France", "P1082"])
+        self.assertEqual(pop, [("2020", "67000000"), ("2024", "68000000")])  # a dated series keeps its history
+
+    def test_dates_before_year_one_and_deep_time(self):
+        self.assertEqual(self.by[("Albert Einstein", "P571")][3], "-753")
+        self.assertEqual(self.by[("Moon", "P571")][2:4], ["D", "-4527000000"])
+        self.assertNotIn(("Albert Einstein", "P577"), self.by)                 # a century isn't a year
 
     def test_entities_linked_to_geonames(self):
         self.assertEqual(self.by[("France", "P36")][10], "ENTITY=gn:3017382")
-        self.assertEqual(self.by[("Paris", "P625")][10], "ENTITY=gn:2988507")
+        self.assertEqual(self.by[("Paris", "P625")][10], "ENTITY=gn:2988507")   # one of its two ids is staged
         self.assertEqual(self.by[("hydrogen", "P2101")][10], "ENTITY=wd:Q556")
         basel = [c for c in self.good if c[0] == "Basel"]                  # 5555 names two items: no link
         self.assertTrue(basel and all(c[10] == "ENTITY=wd:Q78" for c in basel))
@@ -376,6 +396,38 @@ class TestWhereItWrites(Case):
             with self.subTest(rel), self.assertRaises(AcquireError):
                 keep(src, rel, b"x")
         self.assertTrue(keep(src, "links/00000.json.gz", b"x").is_file())
+
+
+class TestHeldThingsKeepTheirOldRows(unittest.TestCase):
+    """A run that holds back a name's rows (D4) mustn't let the swap remove that thing's old rows: Paris and Earth
+    lost every Wikidata fact in the first candidate check."""
+
+    def test_the_swap_and_the_candidate_check_keep_them(self):
+        sys.path.insert(0, str(ROOT / "tools"))
+        import candidate_check
+        from computer.acquire.swap import write_candidate
+        rep = {"source_type": "WIKIDATA", "source_id": "^Q[0-9]+/"}
+        with tempfile.TemporaryDirectory() as t:
+            t = Path(t)
+            (t / "corpus.pf").write_text("".join(T.join([s_, r, "S", v, "", "0", "0", "WIKIDATA", sid, "1.0", ""]) + "\n"
+                                                 for s_, r, v, sid in (("Paris", "CAPITAL_OF", "Q142", "Q90/P1376"),
+                                                                       ("France", "CAPITAL", "Q90", "Q142/P36"),
+                                                                       ("Q937", "BORN", "1879", "Q937/P569"))))
+            run = t / "run"
+            run.mkdir()
+            (run / "delta.pf").write_text(T.join(["France", "CAPITAL", "S", "Paris", "", "0", "0", "WIKIDATA",
+                                                   "Q142/P36", "1.0", "ENTITY=wd:Q142"]) + "\n")
+            (run / "held.pf").write_text("# held\n" + "".join(
+                T.join([s_, "IS_A", "S", "city", "", "0", "0", "WIKIDATA", sid, "1.0", e]) + "\n"
+                for s_, sid, e in (("Paris", "Q90/P31", "ENTITY=gn:2988507"),
+                                   ("Albert Einstein", "Q937/P31", "ENTITY=wd:Q937"))))
+            write_candidate(t / "corpus.pf", run / "delta.pf", rep, t / "a.pf")
+            candidate_check.write_candidate(t / "corpus.pf", [(run / "delta.pf", rep)], t / "b.pf")
+            for out in ("a.pf", "b.pf"):
+                ids = [x.split(T)[8] for x in (t / out).read_text().splitlines()]
+                self.assertIn("Q90/P1376", ids, out)                 # Paris: held, its old row stays
+                self.assertIn("Q937/P569", ids, out)                 # under a bare id too
+                self.assertEqual(ids.count("Q142/P36"), 1, out)      # France: replaced by the new row
 
 
 class TestTheCollectTable(unittest.TestCase):
