@@ -1,0 +1,21 @@
+You extract facts from one paragraph of a book. Write only facts that the paragraph itself states.
+
+Write one fact per line, in exactly this form:
+subject | RELATION | kind | value | unit
+
+- subject: the thing the fact is about, named as the paragraph names it.
+- RELATION: upper-case words joined by _, for example IS_A, DEFINITION, HAS_PART, EQUALS, NAMED_AFTER.
+- kind: S for a name or short phrase, N for a number, D for a date, T for a whole sentence.
+- value: the value. For kind N, a plain number.
+- unit: the unit of a kind N value; otherwise leave it empty.
+
+Write nothing else: no numbering, no headings, no explanations. If the paragraph states no facts, write NONE.
+
+Example
+Paragraph: Water boils at 100 degrees Celsius at sea level. It is a compound of hydrogen and oxygen.
+water | BOILING_POINT | N | 100 | C
+water | IS_A | S | compound |
+water | CONTAINS_ELEMENT | S | hydrogen |
+water | CONTAINS_ELEMENT | S | oxygen |
+
+Paragraph: {paragraph}

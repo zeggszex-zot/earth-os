@@ -1,0 +1,487 @@
+n	book	block	line	repeats	subject	relation	kind	value	unit	auto_check	mark	note
+1	calculus	b-00046	The Earth | IS_A | S | 6371 | km	1	The Earth	IS_A	S	6371	km	ok		
+1	calculus	b-00046	The Sun | IS_A | S | 149.6 | AU	1	The Sun	IS_A	S	149.6	AU	ok		
+1	calculus	b-00046	The Moon | IS_A | S | 384400 | km	1	The Moon	IS_A	S	384400	km	ok		
+1	calculus	b-00046	The Sun | CONTAINS_ELEMENT | S | hydrogen	1	The Sun	CONTAINS_ELEMENT	S	hydrogen		ok		
+1	calculus	b-00046	The Earth | CONTAINS_ELEMENT | S | oxygen	14	The Earth	CONTAINS_ELEMENT	S	oxygen		ok		
+1	calculus	b-00046	The Sun | CONTAINS_ELEMENT | S | helium	14	The Sun	CONTAINS_ELEMENT	S	helium		ok		
+1	calculus	b-00046	The Moon | CONTAINS_ELEMENT | S | iron	13	The Moon	CONTAINS_ELEMENT	S	iron		ok		
+1	calculus	b-00046	The Moon | CONTAINS_ELEMENT |	1						malformed: 3 fields, not 5		
+2	calculus	b-00063	The Earth | IS_A | S | planet | km	1	The Earth	IS_A	S	planet	km	ok		
+2	calculus	b-00063	The Sun | IS_A | S | star | AU	1	The Sun	IS_A	S	star	AU	ok		
+2	calculus	b-00063	The Moon | IS_A | S | moon | km	1	The Moon	IS_A	S	moon	km	ok		
+2	calculus	b-00063	The Sun | CONTAINS_ELEMENT | S | hydrogen | AU	1	The Sun	CONTAINS_ELEMENT	S	hydrogen	AU	ok		
+2	calculus	b-00063	The Sun | CONTAINS_ELEMENT | S | helium | AU	1	The Sun	CONTAINS_ELEMENT	S	helium	AU	ok		
+2	calculus	b-00063	The Sun | CONTAINS_ELEMENT | S | oxygen | AU	5	The Sun	CONTAINS_ELEMENT	S	oxygen	AU	ok		
+2	calculus	b-00063	The Sun | CONTAINS_ELEMENT | S | neon | AU	5	The Sun	CONTAINS_ELEMENT	S	neon	AU	ok		
+2	calculus	b-00063	The Sun | CONTAINS_ELEMENT | S | argon | AU	5	The Sun	CONTAINS_ELEMENT	S	argon	AU	ok		
+2	calculus	b-00063	The Sun | CONTAINS_ELEMENT | S | calcium | AU	5	The Sun	CONTAINS_ELEMENT	S	calcium	AU	ok		
+2	calculus	b-00063	The Sun | CONTAINS_ELEMENT | S | iron | AU	5	The Sun	CONTAINS_ELEMENT	S	iron	AU	ok		
+2	calculus	b-00063	The Sun | CONTAINS_ELEMENT | S | nickel | AU	5	The Sun	CONTAINS_ELEMENT	S	nickel	AU	ok		
+2	calculus	b-00063	The Sun | CONTAINS_ELEMENT | S | sulfur | AU	4	The Sun	CONTAINS_ELEMENT	S	sulfur	AU	ok		
+2	calculus	b-00063	The Sun |	1						malformed: 2 fields, not 5		
+3	calculus	b-00078	sun | RISES_IN | D | NONE |	2	sun	RISES_IN	D	NONE		malformed: D value isn't a date		
+3	calculus	b-00078	sun | IS_A | S | star |	2	sun	IS_A	S	star		ok		
+3	calculus	b-00078	sun | CONTAINS_ELEMENT | S | hydrogen |	8	sun	CONTAINS_ELEMENT	S	hydrogen		ok		
+3	calculus	b-00078	sun | CONTAINS_ELEMENT | S | helium |	9	sun	CONTAINS_ELEMENT	S	helium		ok		
+3	calculus	b-00078	sun | CONTAINS_ELEMENT | S | oxygen |	8	sun	CONTAINS_ELEMENT	S	oxygen		ok		
+3	calculus	b-00078	sun | CONTAINS_ELEMENT | S | iron |	7	sun	CONTAINS_ELEMENT	S	iron		ok		
+3	calculus	b-00078	sun | CONTAINS_ELEMENT | S | carbon |	7	sun	CONTAINS_ELEMENT	S	carbon		ok		
+3	calculus	b-00078	sun | CONTAINS_ELEMENT | S | nitrogen |	7	sun	CONTAINS_ELEMENT	S	nitrogen		ok		
+3	calculus	b-00078	sun |	1						malformed: 2 fields, not 5		
+4	calculus	b-00201	The Earth | IS_A | S | 6371 | km	3	The Earth	IS_A	S	6371	km	ok		
+4	calculus	b-00201	The Sun | IS_A | S | 149.6 | AU	4	The Sun	IS_A	S	149.6	AU	ok		
+4	calculus	b-00201	The Moon | IS_A | S | 384400 | km	3	The Moon	IS_A	S	384400	km	ok		
+5	calculus	b-00353	Water | BOILING_POINT | N | 100 | C	1	Water	BOILING_POINT	N	100	C	ok		
+5	calculus	b-00353	Water | IS_A | S | compound |	1	Water	IS_A	S	compound		ok		
+5	calculus	b-00353	Water | CONTAINS_ELEMENT | S | hydrogen |	1	Water	CONTAINS_ELEMENT	S	hydrogen		ok		
+5	calculus	b-00353	Water | CONTAINS_ELEMENT | S | oxygen |	1	Water	CONTAINS_ELEMENT	S	oxygen		ok		
+5	calculus	b-00353	example1 | IS_A | S | product |	1	example1	IS_A	S	product		ok		
+5	calculus	b-00353	example8 | IS_A | S | product |	1	example8	IS_A	S	product		ok		
+6	calculus	b-00433	The sun rises in the east. It is a star. The sun rises in the east. sun | RISES_IN | D | east |	1	The sun rises in the east. It is a star. The sun rises in the east. sun	RISES_IN	D	east		malformed: D value isn't a date		
+6	calculus	b-00433	sun | IS_A | S | star |	1	sun	IS_A	S	star		ok		
+7	calculus	b-00477	Water | BOILING_POINT | N | 100 | C	1	Water	BOILING_POINT	N	100	C	ok		
+7	calculus	b-00477	water | IS_A | S | compound |	1	water	IS_A	S	compound		ok		
+7	calculus	b-00477	water | CONTAINS_ELEMENT | S | hydrogen |	1	water	CONTAINS_ELEMENT	S	hydrogen		ok		
+7	calculus	b-00477	water | CONTAINS_ELEMENT | S | oxygen |	1	water	CONTAINS_ELEMENT	S	oxygen		ok		
+7	calculus	b-00477	time | RELATION | N | 10 | seconds	1	time	RELATION	N	10	seconds	ok		
+7	calculus	b-00477	seconds | RELATION | N | 5 | seconds	1	seconds	RELATION	N	5	seconds	ok		
+7	calculus	b-00477	distance | RELATION | N |  | meters	1	distance	RELATION	N		meters	malformed: no value; N value isn't a number		
+7	calculus	b-00477	seconds | RELATION | N |  | seconds	2	seconds	RELATION	N		seconds	malformed: no value; N value isn't a number		
+7	calculus	b-00477	velocity | RELATION | N |  | m/s	1	velocity	RELATION	N		m/s	malformed: no value; N value isn't a number		
+7	calculus	b-00477	acceleration | RELATION | N |  | m/s^2	1	acceleration	RELATION	N		m/s^2	malformed: no value; N value isn't a number		
+8	calculus	b-00705	Water | BOILING_POINT | N | 100 | C	1	Water	BOILING_POINT	N	100	C	ok		
+8	calculus	b-00705	water | IS_A | S | compound |	7	water	IS_A	S	compound		ok		
+8	calculus	b-00705	water | CONTAINS_ELEMENT | S | hydrogen |	6	water	CONTAINS_ELEMENT	S	hydrogen		ok		
+8	calculus	b-00705	water | CONTAINS_ELEMENT | S | oxygen |	6	water	CONTAINS_ELEMENT	S	oxygen		ok		
+8	calculus	b-00705	water | HAS_PART | N | 1 | C	6	water	HAS_PART	N	1	C	ok		
+9	calculus	b-00839	cylinder | VOLUME | N | 0 |	1	cylinder	VOLUME	N	0		ok		
+9	calculus	b-00839	cylinder | CONTAINS_ELEMENT | S | radius |	1	cylinder	CONTAINS_ELEMENT	S	radius		ok		
+9	calculus	b-00839	cylinder | CONTAINS_ELEMENT | S | height |	1	cylinder	CONTAINS_ELEMENT	S	height		ok		
+9	calculus	b-00839	cylinder | CONTAINS_ELEMENT | S | surface_area |	1	cylinder	CONTAINS_ELEMENT	S	surface_area		ok		
+9	calculus	b-00839	cylinder | CONTAINS_ELEMENT | S | volume |	1	cylinder	CONTAINS_ELEMENT	S	volume		ok		
+10	calculus	b-00925	Water | BOILING_POINT | N | 100 | C	1	Water	BOILING_POINT	N	100	C	ok		
+10	calculus	b-00925	water | IS_A | S | compound |	1	water	IS_A	S	compound		ok		
+10	calculus	b-00925	water | CONTAINS_ELEMENT | S | hydrogen |	1	water	CONTAINS_ELEMENT	S	hydrogen		ok		
+10	calculus	b-00925	water | CONTAINS_ELEMENT | S | oxygen |	1	water	CONTAINS_ELEMENT	S	oxygen		ok		
+10	calculus	b-00925	We | NAMED_AFTER | D | 1952 | year	1	We	NAMED_AFTER	D	1952	year	ok		
+11	calculus	b-01028	Water | BOILING_POINT | N | 100 | C	1	Water	BOILING_POINT	N	100	C	ok		
+11	calculus	b-01028	water | IS_A | S | compound |	1	water	IS_A	S	compound		ok		
+11	calculus	b-01028	water | CONTAINS_ELEMENT | S | hydrogen |	1	water	CONTAINS_ELEMENT	S	hydrogen		ok		
+11	calculus	b-01028	water | CONTAINS_ELEMENT | S | oxygen |	1	water	CONTAINS_ELEMENT	S	oxygen		ok		
+11	calculus	b-01028	Earth | ROTATION_PERIOD | N | 24 | hours	1	Earth	ROTATION_PERIOD	N	24	hours	ok		
+12	calculus	b-01039	Water | BOILING_POINT | N | 100 | C	1	Water	BOILING_POINT	N	100	C	ok		
+12	calculus	b-01039	Water | IS_A | S | compound |	1	Water	IS_A	S	compound		ok		
+12	calculus	b-01039	Water | CONTAINS_ELEMENT | S | hydrogen |	1	Water	CONTAINS_ELEMENT	S	hydrogen		ok		
+12	calculus	b-01039	Water | CONTAINS_ELEMENT | S | oxygen |	1	Water	CONTAINS_ELEMENT	S	oxygen		ok		
+12	calculus	b-01039	Money | IS_A | S | currency |	1	Money	IS_A	S	currency		ok		
+12	calculus	b-01039	Interest | IS_A | S | financial |	1	Interest	IS_A	S	financial		ok		
+12	calculus	b-01039	Capital | IS_A | S | financial |	1	Capital	IS_A	S	financial		ok		
+12	calculus	b-01039	Rate | IS_A | S | financial |	2	Rate	IS_A	S	financial		ok		
+12	calculus	b-01039	Time | IS_A | S | unitless |	1	Time	IS_A	S	unitless		ok		
+12	calculus	b-01039	Quantity | IS_A | S | quantity |	1	Quantity	IS_A	S	quantity		ok		
+12	calculus	b-01039	Growth | IS_A | S | process |	1	Growth	IS_A	S	process		ok		
+12	calculus	b-01039	Proportion | IS_A | S | relationship |	2	Proportion	IS_A	S	relationship		ok		
+12	calculus	b-01039	Fixed | IS_A | S | rate |	2	Fixed	IS_A	S	rate		ok		
+13	calculus	b-01095	sun | RISES_IN | D | east |	1	sun	RISES_IN	D	east		malformed: D value isn't a date		
+13	calculus	b-01095	sun | IS_A | S | celestial_body |	1	sun	IS_A	S	celestial_body		ok		
+13	calculus	b-01095	sun | CONTAINS_ELEMENT | S | hydrogen |	1	sun	CONTAINS_ELEMENT	S	hydrogen		ok		
+13	calculus	b-01095	sun | CONTAINS_ELEMENT | S | helium |	1	sun	CONTAINS_ELEMENT	S	helium		ok		
+13	calculus	b-01095	sun | HAS_PART | D | day |	1	sun	HAS_PART	D	day		malformed: D value isn't a date		
+14	calculus	b-01231	Water | BOILING_POINT | N | 100 | C	1	Water	BOILING_POINT	N	100	C	ok		
+14	calculus	b-01231	Water | IS_A | S | compound |	1	Water	IS_A	S	compound		ok		
+14	calculus	b-01231	Water | CONTAINS_ELEMENT | S | hydrogen |	1	Water	CONTAINS_ELEMENT	S	hydrogen		ok		
+14	calculus	b-01231	Water | CONTAINS_ELEMENT | S | oxygen |	1	Water	CONTAINS_ELEMENT	S	oxygen		ok		
+14	calculus	b-01231	The | NAMED_AFTER | T | 1800 | years	1	The	NAMED_AFTER	T	1800	years	ok		
+15	calculus	b-01271	Water | BOILING_POINT | N | 100 | C	1	Water	BOILING_POINT	N	100	C	ok		
+15	calculus	b-01271	water | IS_A | S | compound |	1	water	IS_A	S	compound		ok		
+15	calculus	b-01271	water | CONTAINS_ELEMENT | S | hydrogen |	1	water	CONTAINS_ELEMENT	S	hydrogen		ok		
+15	calculus	b-01271	water | CONTAINS_ELEMENT | S | oxygen |	1	water	CONTAINS_ELEMENT	S	oxygen		ok		
+15	calculus	b-01271	hot_body | COOLING | N | 24 | minutes	1	hot_body	COOLING	N	24	minutes	ok		
+15	calculus	b-01271	hot_body | COOLING_RATE | N | 0.5 | minutes^(-1)	14	hot_body	COOLING_RATE	N	0.5	minutes^(-1)	ok		
+15	calculus	b-01271	hot_body | TIME_CONSTANT | N | 24 | minutes	13	hot_body	TIME_CONSTANT	N	24	minutes	ok		
+15	calculus	b-01271	hot_body | TIME_CONSTANT | N	1						malformed: 3 fields, not 5		
+16	calculus	b-01443	The Earth | IS_A | S | planet | km	1	The Earth	IS_A	S	planet	km	ok		
+16	calculus	b-01443	The Sun | IS_A | S | star | AU	1	The Sun	IS_A	S	star	AU	ok		
+16	calculus	b-01443	The Moon | IS_A | S | moon | km	1	The Moon	IS_A	S	moon	km	ok		
+16	calculus	b-01443	The Sun | CONTAINS_ELEMENT | S | hydrogen | AU	8	The Sun	CONTAINS_ELEMENT	S	hydrogen	AU	ok		
+16	calculus	b-01443	The Sun | CONTAINS_ELEMENT | S | helium | AU	14	The Sun	CONTAINS_ELEMENT	S	helium	AU	ok		
+16	calculus	b-01443	The Sun | CONTAINS_ELEMENT | S | oxygen | AU	7	The Sun	CONTAINS_ELEMENT	S	oxygen	AU	ok		
+16	calculus	b-01443	The Sun | CONTAINS_ELEMENT | S | neon | AU	7	The Sun	CONTAINS_ELEMENT	S	neon	AU	ok		
+16	calculus	b-01443	The Sun | CONTAINS_ELEMENT | S	1						malformed: 3 fields, not 5		
+17	calculus	b-01469	curve | IS_A | D | 1 | unit	1	curve	IS_A	D	1	unit	ok		
+17	calculus	b-01469	curve | CONTAINS_POINT | S | x |	1	curve	CONTAINS_POINT	S	x		ok		
+17	calculus	b-01469	curve | CONTAINS_POINT | S | y |	1	curve	CONTAINS_POINT	S	y		ok		
+17	calculus	b-01469	curve | CONTAINS_POINT | S | dx |	24	curve	CONTAINS_POINT	S	dx		ok		
+17	calculus	b-01469	curve | CONTAINS_POINT | S | dy |	24	curve	CONTAINS_POINT	S	dy		ok		
+18	calculus	b-01522	sun | RISES_IN | D | east |	1	sun	RISES_IN	D	east		malformed: D value isn't a date		
+18	calculus	b-01522	sun | IS_A | S | celestial_body |	1	sun	IS_A	S	celestial_body		ok		
+18	calculus	b-01522	sun | CONTAINS_ELEMENT | S | hydrogen |	1	sun	CONTAINS_ELEMENT	S	hydrogen		ok		
+18	calculus	b-01522	sun | CONTAINS_ELEMENT | S | helium |	1	sun	CONTAINS_ELEMENT	S	helium		ok		
+18	calculus	b-01522	sun | HAS_PART | D | day |	1	sun	HAS_PART	D	day		malformed: D value isn't a date		
+19	calculus	b-01634	Water | BOILING_POINT | N | 100 | C	1	Water	BOILING_POINT	N	100	C	ok		
+19	calculus	b-01634	water | IS_A | S | compound |	1	water	IS_A	S	compound		ok		
+19	calculus	b-01634	water | CONTAINS_ELEMENT | S | hydrogen |	1	water	CONTAINS_ELEMENT	S	hydrogen		ok		
+19	calculus	b-01634	water | CONTAINS_ELEMENT | S | oxygen |	1	water	CONTAINS_ELEMENT	S	oxygen		ok		
+19	calculus	b-01634	triangle | HAS_BASE | N | 12 | m	1	triangle	HAS_BASE	N	12	m	ok		
+19	calculus	b-01634	triangle | HAS_HEIGHT | N | 4 | m	1	triangle	HAS_HEIGHT	N	4	m	ok		
+19	calculus	b-01634	triangle | HAS_AREA | T | 53 | m^2	1	triangle	HAS_AREA	T	53	m^2	ok		
+20	calculus	b-01747	The Earth | IS_A | S | planet |	1	The Earth	IS_A	S	planet		ok		
+20	calculus	b-01747	THE | IS_A | S | celestial body |	1	THE	IS_A	S	celestial body		ok		
+20	calculus	b-01747	THE | CONTAINS_ELEMENT | S | oxygen |	1	THE	CONTAINS_ELEMENT	S	oxygen		ok		
+20	calculus	b-01747	THE | CONTAINS_ELEMENT | S | nitrogen |	1	THE	CONTAINS_ELEMENT	S	nitrogen		ok		
+20	calculus	b-01747	THE | CONTAINS_ELEMENT | S | carbon |	1	THE	CONTAINS_ELEMENT	S	carbon		ok		
+20	calculus	b-01747	THE | CONTAINS_ELEMENT | S | hydrogen |	1	THE	CONTAINS_ELEMENT	S	hydrogen		ok		
+20	calculus	b-01747	THE | CONTAINS_ELEMENT | S | helium |	1	THE	CONTAINS_ELEMENT	S	helium		ok		
+20	calculus	b-01747	THE | CONTAINS_ELEMENT | S | neon |	1	THE	CONTAINS_ELEMENT	S	neon		ok		
+20	calculus	b-01747	THE | CONTAINS_ELEMENT | S | argon |	1	THE	CONTAINS_ELEMENT	S	argon		ok		
+20	calculus	b-01747	THE | CONTAINS_ELEMENT | S | krypton |	1	THE	CONTAINS_ELEMENT	S	krypton		ok		
+20	calculus	b-01747	THE | CONTAINS_ELEMENT | S | xenon |	1	THE	CONTAINS_ELEMENT	S	xenon		ok		
+20	calculus	b-01747	THE | CONTAINS_ELEMENT | S | radon |	1	THE	CONTAINS_ELEMENT	S	radon		ok		
+20	calculus	b-01747	THE | CONTAINS_ELEMENT | S | protactinium |	1	THE	CONTAINS_ELEMENT	S	protactinium		ok		
+20	calculus	b-01747	THE | CONTAINS_ELEMENT | S | uranium |	1	THE	CONTAINS_ELEMENT	S	uranium		ok		
+20	calculus	b-01747	THE | CONTAINS_ELEMENT | S | thorium |	6	THE	CONTAINS_ELEMENT	S	thorium		ok		
+20	calculus	b-01747	THE | CONTAINS_ELEMENT | S | lead |	6	THE	CONTAINS_ELEMENT	S	lead		ok		
+20	calculus	b-01747	THE | CONTAINS_ELEMENT | S | bismuth |	6	THE	CONTAINS_ELEMENT	S	bismuth		ok		
+20	calculus	b-01747	THE | CONTAINS_ELEMENT | S | polonium |	5	THE	CONTAINS_ELEMENT	S	polonium		ok		
+20	calculus	b-01747	THE | CONTAINS_ELEMENT | S | radium |	5	THE	CONTAINS_ELEMENT	S	radium		ok		
+20	calculus	b-01747	THE | CONTAINS_ELEMENT | S | actinium |	5	THE	CONTAINS_ELEMENT	S	actinium		ok		
+20	calculus	b-01747	THE | CONT	1						malformed: 2 fields, not 5		
+21	calculus	b-01840	sun | RISES_IN | D | NONE |	1	sun	RISES_IN	D	NONE		malformed: D value isn't a date		
+21	calculus	b-01840	sun | IS_A | S | celestial_body |	1	sun	IS_A	S	celestial_body		ok		
+21	calculus	b-01840	sun | CONTAINS_ELEMENT | S | hydrogen |	1	sun	CONTAINS_ELEMENT	S	hydrogen		ok		
+21	calculus	b-01840	sun | CONTAINS_ELEMENT | S | helium |	2	sun	CONTAINS_ELEMENT	S	helium		ok		
+21	calculus	b-01840	sun | HAS_PART | D | NONE |	1	sun	HAS_PART	D	NONE		malformed: D value isn't a date		
+21	calculus	b-01840	sun | IS_A | S | star |	1	sun	IS_A	S	star		ok		
+21	calculus	b-01840	sun | CONTAINS_ELEMENT | S | oxygen |	1	sun	CONTAINS_ELEMENT	S	oxygen		ok		
+21	calculus	b-01840	sun | CONTAINS_ELEMENT | S | iron |	7	sun	CONTAINS_ELEMENT	S	iron		ok		
+21	calculus	b-01840	sun | CONTAINS_ELEMENT | S | nickel |	6	sun	CONTAINS_ELEMENT	S	nickel		ok		
+21	calculus	b-01840	sun | CONTAINS_ELEMENT | S | sulfur |	6	sun	CONTAINS_ELEMENT	S	sulfur		ok		
+21	calculus	b-01840	sun | CONTAINS_ELEMENT | S | carbon |	6	sun	CONTAINS_ELEMENT	S	carbon		ok		
+21	calculus	b-01840	sun | CONTAINS_ELEMENT | S | neon |	6	sun	CONTAINS_ELEMENT	S	neon		ok		
+21	calculus	b-01840	sun | CONTAINS_ELEMENT | S | magnesium |	6	sun	CONTAINS_ELEMENT	S	magnesium		ok		
+21	calculus	b-01840	sun | CONTAINS_ELEMENT | S | calcium |	5	sun	CONTAINS_ELEMENT	S	calcium		ok		
+21	calculus	b-01840	sun | CONT	1						malformed: 2 fields, not 5		
+22	calculus	b-01923	Water | BOILING_POINT | N | 100 | C	1	Water	BOILING_POINT	N	100	C	ok		
+22	calculus	b-01923	Water | IS_A | S | compound |	1	Water	IS_A	S	compound		ok		
+22	calculus	b-01923	Water | CONTAINS_ELEMENT | S | hydrogen |	1	Water	CONTAINS_ELEMENT	S	hydrogen		ok		
+22	calculus	b-01923	Water | CONTAINS_ELEMENT | S | oxygen |	1	Water	CONTAINS_ELEMENT	S	oxygen		ok		
+22	calculus	b-01923	Exponential | FUNCTION | N | 0 |	2	Exponential	FUNCTION	N	0		ok		
+23	calculus	b-01955	The book | IS_A | N | NONE | NONE	1	The book	IS_A	N	NONE	NONE	malformed: N value isn't a number		
+23	calculus	b-01955	The book | CONTAINS_TEXT | S | NONE | NONE	1	The book	CONTAINS_TEXT	S	NONE	NONE	ok		
+23	calculus	b-01955	The book | HAS_PART | N | NONE | NONE	40	The book	HAS_PART	N	NONE	NONE	malformed: N value isn't a number		
+23	calculus	b-01955	The book | HAS_PART | N	1						malformed: 3 fields, not 5		
+24	calculus	b-01961	Water | BOILING_POINT | N | 100 | C	1	Water	BOILING_POINT	N	100	C	ok		
+24	calculus	b-01961	water | IS_A | S | compound |	1	water	IS_A	S	compound		ok		
+24	calculus	b-01961	water | CONTAINS_ELEMENT | S | hydrogen |	1	water	CONTAINS_ELEMENT	S	hydrogen		ok		
+24	calculus	b-01961	water | CONTAINS_ELEMENT | S | oxygen |	1	water	CONTAINS_ELEMENT	S	oxygen		ok		
+24	calculus	b-01961	ONE | N | 0 | 1 |	1	ONE	N	0	1		malformed: unknown kind		
+24	calculus	b-01961	mathematicians | NAMED_AFTER | S | professed	1	mathematicians	NAMED_AFTER	S	professed		ok		
+25	calculus	b-02199	The Earth | IS_A | S | 6371 | km	1	The Earth	IS_A	S	6371	km	ok		
+25	calculus	b-02199	The Sun | IS_A | S | 696340000 | km	1	The Sun	IS_A	S	696340000	km	ok		
+25	calculus	b-02199	The Moon | IS_A | S | 1737 | km	1	The Moon	IS_A	S	1737	km	ok		
+25	calculus	b-02199	The Sun | CONTAINS_ELEMENT | S | hydrogen | km	1	The Sun	CONTAINS_ELEMENT	S	hydrogen	km	ok		
+25	calculus	b-02199	The Earth | CONTAINS_ELEMENT | S | oxygen | km	2	The Earth	CONTAINS_ELEMENT	S	oxygen	km	ok		
+25	calculus	b-02199	The Sun | CONTAINS_ELEMENT | S | helium | km	1	The Sun	CONTAINS_ELEMENT	S	helium	km	ok		
+25	calculus	b-02199	The Moon | CONTAINS_ELEMENT | S | iron | km	1	The Moon	CONTAINS_ELEMENT	S	iron	km	ok		
+25	calculus	b-02199	The Earth | CONTAINS_ELEMENT | S | silicon | km	1	The Earth	CONTAINS_ELEMENT	S	silicon	km	ok		
+25	calculus	b-02199	The Sun | CONTAINS_ELEMENT | S | carbon | km	1	The Sun	CONTAINS_ELEMENT	S	carbon	km	ok		
+25	calculus	b-02199	The Moon | CONTAINS_ELEMENT | S | aluminum | km	1	The Moon	CONTAINS_ELEMENT	S	aluminum	km	ok		
+25	calculus	b-02199	The Earth | CONTAINS_ELEMENT | S | iron | km	2	The Earth	CONTAINS_ELEMENT	S	iron	km	ok		
+25	calculus	b-02199	The Sun | CONTAINS_ELEMENT | S | nickel | km	1	The Sun	CONTAINS_ELEMENT	S	nickel	km	ok		
+25	calculus	b-02199	The Moon | CONTAINS_ELEMENT | S | sulfur | km	1	The Moon	CONTAINS_ELEMENT	S	sulfur	km	ok		
+25	calculus	b-02199	The Sun | CONTAINS_ELEMENT | S | neon | km	1	The Sun	CONTAINS_ELEMENT	S	neon	km	ok		
+25	calculus	b-02199	The Moon | CONTAINS_ELEMENT | S | argon | km	1	The Moon	CONTAINS_ELEMENT	S	argon	km	ok		
+25	calculus	b-02199	The Earth | CONTAINS_ELEMENT | S | potassium | km	1	The Earth	CONTAINS_ELEMENT	S	potassium	km	ok		
+25	calculus	b-02199	The Sun | CONTAINS_ELEMENT | S | calcium | km	1	The Sun	CONTAINS_ELEMENT	S	calcium	km	ok		
+25	calculus	b-02199	The Moon | CONTAINS_ELEMENT | S | titanium | km	1	The Moon	CONTAINS_ELEMENT	S	titanium	km	ok		
+25	calculus	b-02199	The Sun | CONTAINS_ELEMENT | S | vanadium | km	2	The Sun	CONTAINS_ELEMENT	S	vanadium	km	ok		
+25	calculus	b-02199	The Moon | CONTAINS_ELEMENT | S | chromium | km	2	The Moon	CONTAINS_ELEMENT	S	chromium	km	ok		
+25	calculus	b-02199	The Earth | CONTAINS_ELEMENT | S | manganese | km	2	The Earth	CONTAINS_ELEMENT	S	manganese	km	ok		
+25	calculus	b-02199	The Sun | CONTAINS_ELEMENT | S | iron | km	2	The Sun	CONTAINS_ELEMENT	S	iron	km	ok		
+25	calculus	b-02199	The Moon | CONTAINS_ELEMENT | S | nickel | km	2	The Moon	CONTAINS_ELEMENT	S	nickel	km	ok		
+25	calculus	b-02199	The Earth | CONTAINS_ELEMENT | S | sulfur | km	2	The Earth	CONTAINS_ELEMENT	S	sulfur	km	ok		
+25	calculus	b-02199	The Sun | CONTAINS_ELEMENT | S | oxygen | km	1	The Sun	CONTAINS_ELEMENT	S	oxygen	km	ok		
+25	calculus	b-02199	The Moon | CONTAINS_ELEMENT | S | neon | km	1	The Moon	CONTAINS_ELEMENT	S	neon	km	ok		
+25	calculus	b-02199	The Earth | CONTAINS_ELEMENT | S | argon | km	1	The Earth	CONTAINS_ELEMENT	S	argon	km	ok		
+25	calculus	b-02199	The Sun | CONTAINS_ELEMENT | S | potassium | km	1	The Sun	CONTAINS_ELEMENT	S	potassium	km	ok		
+25	calculus	b-02199	The Moon | CONTAINS_ELEMENT | S | calcium | km	1	The Moon	CONTAINS_ELEMENT	S	calcium	km	ok		
+25	calculus	b-02199	The Earth | CONTAINS_ELEMENT | S | titanium | km	1	The Earth	CONTAINS_ELEMENT	S	titanium	km	ok		
+25	calculus	b-02199	The Sun | CONTAINS_ELEMENT | S | oxygen	1	The Sun	CONTAINS_ELEMENT	S	oxygen		ok		
+26	gibbs	b-00008	The Earth | IS_A | S | planet |	1	The Earth	IS_A	S	planet		ok		
+26	gibbs	b-00008	THE | IS_A | S | galaxy |	1	THE	IS_A	S	galaxy		ok		
+26	gibbs	b-00008	THE | CONTAINS_ELEMENT | S | hydrogen |	1	THE	CONTAINS_ELEMENT	S	hydrogen		ok		
+26	gibbs	b-00008	THE | CONTAINS_ELEMENT | S | helium |	1	THE	CONTAINS_ELEMENT	S	helium		ok		
+26	gibbs	b-00008	THE | CONTAINS_ELEMENT | S | oxygen |	1	THE	CONTAINS_ELEMENT	S	oxygen		ok		
+26	gibbs	b-00008	THE | CONTAINS_ELEMENT | S | neon |	1	THE	CONTAINS_ELEMENT	S	neon		ok		
+26	gibbs	b-00008	THE | CONTAINS_ELEMENT | S | argon |	1	THE	CONTAINS_ELEMENT	S	argon		ok		
+26	gibbs	b-00008	THE | CONTAINS_ELEMENT | S | krypton |	1	THE	CONTAINS_ELEMENT	S	krypton		ok		
+26	gibbs	b-00008	THE | CONTAINS_ELEMENT | S | xenon |	1	THE	CONTAINS_ELEMENT	S	xenon		ok		
+26	gibbs	b-00008	THE | CONTAINS_ELEMENT | S | radon |	1	THE	CONTAINS_ELEMENT	S	radon		ok		
+26	gibbs	b-00008	THE | CONTAINS_ELEMENT | S | uranium |	2	THE	CONTAINS_ELEMENT	S	uranium		ok		
+26	gibbs	b-00008	THE | CONTAINS_ELEMENT | S | thorium |	2	THE	CONTAINS_ELEMENT	S	thorium		ok		
+26	gibbs	b-00008	THE | CONTAINS_ELEMENT | S | lead |	1	THE	CONTAINS_ELEMENT	S	lead		ok		
+26	gibbs	b-00008	THE | CONTAINS_ELEMENT | S | bismuth |	1	THE	CONTAINS_ELEMENT	S	bismuth		ok		
+26	gibbs	b-00008	THE | CONTAINS_ELEMENT | S | polonium |	1	THE	CONTAINS_ELEMENT	S	polonium		ok		
+26	gibbs	b-00008	THE | CONTAINS_ELEMENT | S | radium |	1	THE	CONTAINS_ELEMENT	S	radium		ok		
+26	gibbs	b-00008	THE | CONTAINS_ELEMENT | S | actinium |	1	THE	CONTAINS_ELEMENT	S	actinium		ok		
+26	gibbs	b-00008	THE | CONTAINS_ELEMENT | S | protactinium |	1	THE	CONTAINS_ELEMENT	S	protactinium		ok		
+26	gibbs	b-00008	THE | CONTAINS_ELEMENT | S | neptunium |	1	THE	CONTAINS_ELEMENT	S	neptunium		ok		
+26	gibbs	b-00008	THE | CONTAINS_ELEMENT | S | plutonium |	1	THE	CONTAINS_ELEMENT	S	plutonium		ok		
+26	gibbs	b-00008	THE | CONTAINS_ELEMENT | S | americium |	1	THE	CONTAINS_ELEMENT	S	americium		ok		
+26	gibbs	b-00008	THE | CONTAINS_ELEMENT | S | curium |	1	THE	CONTAINS_ELEMENT	S	curium		ok		
+26	gibbs	b-00008	THE | CONTAINS_ELEMENT | S | berkelium |	1	THE	CONTAINS_ELEMENT	S	berkelium		ok		
+26	gibbs	b-00008	THE | CONTAINS_ELEMENT | S | californium |	1	THE	CONTAINS_ELEMENT	S	californium		ok		
+26	gibbs	b-00008	THE | CONTAINS_ELEMENT | S | einsteinium |	1	THE	CONTAINS_ELEMENT	S	einsteinium		ok		
+26	gibbs	b-00008	THE | CONTAINS_ELEMENT | S | fermium |	1	THE	CONTAINS_ELEMENT	S	fermium		ok		
+26	gibbs	b-00008	THE | CONTAINS_ELEMENT | S | mendelevium |	1	THE	CONTAINS_ELEMENT	S	mendelevium		ok		
+26	gibbs	b-00008	THE | CONTAINS_ELEMENT | S | nobelium |	1	THE	CONTAINS_ELEMENT	S	nobelium		ok		
+26	gibbs	b-00008	THE | CONTAINS_ELEMENT | S | lawrencium |	1	THE	CONTAINS_ELEMENT	S	lawrencium		ok		
+26	gibbs	b-00008	THE | CONTAINS_ELEMENT | S | rutherfordium |	1	THE	CONTAINS_ELEMENT	S	rutherfordium		ok		
+26	gibbs	b-00008	THE | CONTAINS_ELEMENT | S | dubnium |	1	THE	CONTAINS_ELEMENT	S	dubnium		ok		
+26	gibbs	b-00008	THE | CONTAINS_ELEMENT | S | seaborgium |	1	THE	CONTAINS_ELEMENT	S	seaborgium		ok		
+26	gibbs	b-00008	THE | CONTAINS_ELEMENT | S | bohrium |	1	THE	CONTAINS_ELEMENT	S	bohrium		ok		
+26	gibbs	b-00008	THE | CONTAINS_ELEMENT | S | hassium |	1	THE	CONTAINS_ELEMENT	S	hassium		ok		
+26	gibbs	b-00008	THE | CONTAINS_ELEMENT | S | meitnerium |	1	THE	CONTAINS_ELEMENT	S	meitnerium		ok		
+26	gibbs	b-00008	THE | CONTAINS_ELEMENT | S | darmstadtium |	1	THE	CONTAINS_ELEMENT	S	darmstadtium		ok		
+26	gibbs	b-00008	THE | CONTAINS_ELEMENT | S | roentgenium |	1	THE	CONTAINS_ELEMENT	S	roentgenium		ok		
+26	gibbs	b-00008	THE | CONTAINS_ELEMENT | S | copernicium |	1	THE	CONTAINS_ELEMENT	S	copernicium		ok		
+26	gibbs	b-00008	THE | CONTAINS_ELEMENT | S | nihonium |	1	THE	CONTAINS_ELEMENT	S	nihonium		ok		
+26	gibbs	b-00008	THE | CONTAINS_ELEMENT | S | flerovium |	1	THE	CONTAINS_ELEMENT	S	flerovium		ok		
+26	gibbs	b-00008	THE | CONTAINS_ELEMENT | S | moscovium |	1	THE	CONTAINS_ELEMENT	S	moscovium		ok		
+26	gibbs	b-00008	THE | CONTAINS_ELEMENT | S | livermorium |	1	THE	CONTAINS_ELEMENT	S	livermorium		ok		
+26	gibbs	b-00008	THE | CONTAINS_ELEMENT | S | tennessine	1	THE	CONTAINS_ELEMENT	S	tennessine		ok		
+27	gibbs	b-00017	Water | BOILING_POINT | N | 100 | C	1	Water	BOILING_POINT	N	100	C	ok		
+27	gibbs	b-00017	water | IS_A | S | compound |	1	water	IS_A	S	compound		ok		
+27	gibbs	b-00017	water | CONTAINS_ELEMENT | S | hydrogen |	1	water	CONTAINS_ELEMENT	S	hydrogen		ok		
+27	gibbs	b-00017	water | CONTAINS_ELEMENT | S | oxygen |	1	water	CONTAINS_ELEMENT	S	oxygen		ok		
+27	gibbs	b-00017	statistical | MECHANICS | N |  |	1	statistical	MECHANICS	N			malformed: no value; N value isn't a number		
+27	gibbs	b-00017	equilibrium | N |  |	1	equilibrium	N				malformed: no value; unknown kind		
+27	gibbs	b-00017	conservation | N |  |	1	conservation	N				malformed: no value; unknown kind		
+28	gibbs	b-00203	Water | BOILING_POINT | N | 100 | C	1	Water	BOILING_POINT	N	100	C	ok		
+28	gibbs	b-00203	water | IS_A | S | compound |	1	water	IS_A	S	compound		ok		
+28	gibbs	b-00203	water | CONTAINS_ELEMENT | S | hydrogen |	1	water	CONTAINS_ELEMENT	S	hydrogen		ok		
+28	gibbs	b-00203	water | CONTAINS_ELEMENT | S | oxygen |	1	water	CONTAINS_ELEMENT	S	oxygen		ok		
+28	gibbs	b-00203	Paragraph | EXTENSION_IN_PHASE | N | NONE |	1	Paragraph	EXTENSION_IN_PHASE	N	NONE		malformed: N value isn't a number		
+28	gibbs	b-00203	Paragraph | SYSTEM | N | NONE |	1	Paragraph	SYSTEM	N	NONE		malformed: N value isn't a number		
+29	gibbs	b-00267	Water | BOILING_POINT | N | 100 | C	1	Water	BOILING_POINT	N	100	C	ok		
+29	gibbs	b-00267	water | IS_A | S | compound |	1	water	IS_A	S	compound		ok		
+29	gibbs	b-00267	water | CONTAINS_ELEMENT | S | hydrogen |	1	water	CONTAINS_ELEMENT	S	hydrogen		ok		
+29	gibbs	b-00267	water | CONTAINS_ELEMENT | S | oxygen |	1	water	CONTAINS_ELEMENT	S	oxygen		ok		
+29	gibbs	b-00267	water | CONTAINS_ELEMENT | S | carbon |	1	water	CONTAINS_ELEMENT	S	carbon		ok		
+29	gibbs	b-00267	water | CONTAINS_ELEMENT | S | nitrogen |	1	water	CONTAINS_ELEMENT	S	nitrogen		ok		
+29	gibbs	b-00267	water | CONTAINS_ELEMENT | S | sulfur |	7	water	CONTAINS_ELEMENT	S	sulfur		ok		
+29	gibbs	b-00267	water | CONTAINS_ELEMENT | S | chlorine |	6	water	CONTAINS_ELEMENT	S	chlorine		ok		
+29	gibbs	b-00267	water | CONTAINS_ELEMENT | S | fluorine |	6	water	CONTAINS_ELEMENT	S	fluorine		ok		
+29	gibbs	b-00267	water | CONTAINS_ELEMENT | S | argon |	6	water	CONTAINS_ELEMENT	S	argon		ok		
+29	gibbs	b-00267	water | CONTAINS_ELEMENT | S | potassium |	6	water	CONTAINS_ELEMENT	S	potassium		ok		
+29	gibbs	b-00267	water | CONTAINS_ELEMENT | S | calcium |	6	water	CONTAINS_ELEMENT	S	calcium		ok		
+29	gibbs	b-00267	water | CONTAINS_ELEMENT | S | magnesium |	6	water	CONTAINS_ELEMENT	S	magnesium		ok		
+29	gibbs	b-00267	water | CONTAINS_ELEMENT | S |	1	water	CONTAINS_ELEMENT	S			malformed: no value		
+30	gibbs	b-00350	The Earth | IS_A | S | planet |	1	The Earth	IS_A	S	planet		ok		
+30	gibbs	b-00350	THE | RELATION | IS_A | S | earth |	1						malformed: 6 fields, not 5		
+30	gibbs	b-00350	THE | CONTAINS_ELEMENT | S | oxygen |	1	THE	CONTAINS_ELEMENT	S	oxygen		ok		
+30	gibbs	b-00350	THE | CONTAINS_ELEMENT | S | nitrogen |	1	THE	CONTAINS_ELEMENT	S	nitrogen		ok		
+30	gibbs	b-00350	THE | CONTAINS_ELEMENT | S | carbon |	1	THE	CONTAINS_ELEMENT	S	carbon		ok		
+30	gibbs	b-00350	THE | CONTAINS_ELEMENT | S | hydrogen |	1	THE	CONTAINS_ELEMENT	S	hydrogen		ok		
+30	gibbs	b-00350	THE | CONTAINS_ELEMENT | S | helium |	1	THE	CONTAINS_ELEMENT	S	helium		ok		
+30	gibbs	b-00350	THE | CONTAINS_ELEMENT | S | neon |	1	THE	CONTAINS_ELEMENT	S	neon		ok		
+30	gibbs	b-00350	THE | CONTAINS_ELEMENT | S | argon |	1	THE	CONTAINS_ELEMENT	S	argon		ok		
+30	gibbs	b-00350	THE | CONTAINS_ELEMENT | S | krypton |	1	THE	CONTAINS_ELEMENT	S	krypton		ok		
+30	gibbs	b-00350	THE | CONTAINS_ELEMENT | S | xenon |	1	THE	CONTAINS_ELEMENT	S	xenon		ok		
+30	gibbs	b-00350	THE | CONTAINS_ELEMENT | S | radon |	1	THE	CONTAINS_ELEMENT	S	radon		ok		
+30	gibbs	b-00350	THE | CONTAINS_ELEMENT | S | protactinium |	1	THE	CONTAINS_ELEMENT	S	protactinium		ok		
+30	gibbs	b-00350	THE | CONTAINS_ELEMENT | S | uranium |	1	THE	CONTAINS_ELEMENT	S	uranium		ok		
+30	gibbs	b-00350	THE | CONTAINS_ELEMENT | S | thorium |	6	THE	CONTAINS_ELEMENT	S	thorium		ok		
+30	gibbs	b-00350	THE | CONTAINS_ELEMENT | S | lead |	6	THE	CONTAINS_ELEMENT	S	lead		ok		
+30	gibbs	b-00350	THE | CONTAINS_ELEMENT | S | bismuth |	6	THE	CONTAINS_ELEMENT	S	bismuth		ok		
+30	gibbs	b-00350	THE | CONTAINS_ELEMENT | S | polonium |	5	THE	CONTAINS_ELEMENT	S	polonium		ok		
+30	gibbs	b-00350	THE | CONTAINS_ELEMENT | S | radium |	5	THE	CONTAINS_ELEMENT	S	radium		ok		
+30	gibbs	b-00350	THE | CONTAINS_ELEMENT | S | actinium |	5	THE	CONTAINS_ELEMENT	S	actinium		ok		
+31	gibbs	b-00426	The Earth | IS_A | S | 6371 | km	4	The Earth	IS_A	S	6371	km	ok		
+31	gibbs	b-00426	The Sun | IS_A | S | 149.6 | AU	4	The Sun	IS_A	S	149.6	AU	ok		
+31	gibbs	b-00426	The Moon | IS_A | S | 384400 | km	4	The Moon	IS_A	S	384400	km	ok		
+32	gibbs	b-00465	The Earth | IS_A | S | planet | km	1	The Earth	IS_A	S	planet	km	ok		
+32	gibbs	b-00465	The Sun | IS_A | S | star | AU	1	The Sun	IS_A	S	star	AU	ok		
+32	gibbs	b-00465	The Moon | IS_A | S | moon | km	1	The Moon	IS_A	S	moon	km	ok		
+32	gibbs	b-00465	The Sun | CONTAINS_ELEMENT | S | hydrogen | AU	1	The Sun	CONTAINS_ELEMENT	S	hydrogen	AU	ok		
+32	gibbs	b-00465	The Earth | CONTAINS_ELEMENT | S | oxygen | km	1	The Earth	CONTAINS_ELEMENT	S	oxygen	km	ok		
+32	gibbs	b-00465	The Sun | CONTAINS_ELEMENT | S | helium | AU	10	The Sun	CONTAINS_ELEMENT	S	helium	AU	ok		
+32	gibbs	b-00465	The Moon | CONTAINS_ELEMENT | S | iron | km	9	The Moon	CONTAINS_ELEMENT	S	iron	km	ok		
+32	gibbs	b-00465	The Earth | CONTAINS_ELEMENT | S | silicon | km	6	The Earth	CONTAINS_ELEMENT	S	silicon	km	ok		
+32	gibbs	b-00465	The Sun | CONTAINS_ELEMENT | S | oxygen | AU	6	The Sun	CONTAINS_ELEMENT	S	oxygen	AU	ok		
+32	gibbs	b-00465	The Earth | CONTAINS_ELEMENT | S | oxygen | AU	3	The Earth	CONTAINS_ELEMENT	S	oxygen	AU	ok		
+32	gibbs	b-00465	The Moon | CONTAINS_ELEMENT | S	1						malformed: 3 fields, not 5		
+33	gibbs	b-00545	The Earth | IS_A | S | planet |	1	The Earth	IS_A	S	planet		ok		
+33	gibbs	b-00545	Earth | ROTATION | N | 1 | year |	1						malformed: 6 fields, not 5		
+33	gibbs	b-00545	Earth | CONTAINS_ELEMENT | S | oxygen |	3	Earth	CONTAINS_ELEMENT	S	oxygen		ok		
+33	gibbs	b-00545	Earth | CONTAINS_ELEMENT | S | iron |	2	Earth	CONTAINS_ELEMENT	S	iron		ok		
+33	gibbs	b-00545	Earth | CONTAINS_ELEMENT | S | silicon |	2	Earth	CONTAINS_ELEMENT	S	silicon		ok		
+33	gibbs	b-00545	Earth | CONTAINS_ELEMENT | S | magnesium |	2	Earth	CONTAINS_ELEMENT	S	magnesium		ok		
+33	gibbs	b-00545	Earth | CONTAINS_ELEMENT | S | sulfur |	2	Earth	CONTAINS_ELEMENT	S	sulfur		ok		
+34	gibbs	b-00707	Water | BOILING_POINT | N | 100 | C	1	Water	BOILING_POINT	N	100	C	ok		
+34	gibbs	b-00707	Water | IS_A | S | compound |	1	Water	IS_A	S	compound		ok		
+34	gibbs	b-00707	Water | CONTAINS_ELEMENT | S | hydrogen |	1	Water	CONTAINS_ELEMENT	S	hydrogen		ok		
+34	gibbs	b-00707	Water | CONTAINS_ELEMENT | S | oxygen |	1	Water	CONTAINS_ELEMENT	S	oxygen		ok		
+34	gibbs	b-00707	Systems | HAVE_PARTICIPANTS | N | 172 |	1	Systems	HAVE_PARTICIPANTS	N	172		ok		
+34	gibbs	b-00707	Systems | HAVE_PARTICIPANTS | N | 177 |	1	Systems	HAVE_PARTICIPANTS	N	177		ok		
+35	gibbs	b-00905	The Earth | SIZE | D | 12,742,000 | km	1	The Earth	SIZE	D	12,742,000	km	malformed: D value isn't a date		
+35	gibbs	b-00905	The Sun | SIZE | D | 1,392,684,000,000 | km	1	The Sun	SIZE	D	1,392,684,000,000	km	malformed: D value isn't a date		
+35	gibbs	b-00905	The Moon | SIZE | D | 3,475,000 | km	1	The Moon	SIZE	D	3,475,000	km	malformed: D value isn't a date		
+35	gibbs	b-00905	The Sun | MASS | D | 1,989,000,000,000,000 | kg	1	The Sun	MASS	D	1,989,000,000,000,000	kg	malformed: D value isn't a date		
+35	gibbs	b-00905	The Earth | MASS | D | 5,972,000,000,000,000 | kg	1	The Earth	MASS	D	5,972,000,000,000,000	kg	malformed: D value isn't a date		
+35	gibbs	b-00905	The Moon | MASS | D | 7,349,000,000,000,000 | kg	1	The Moon	MASS	D	7,349,000,000,000,000	kg	malformed: D value isn't a date		
+35	gibbs	b-00905	The Sun | LUMEN | D | 3.846 x 10^26 | W	1	The Sun	LUMEN	D	3.846 x 10^26	W	malformed: D value isn't a date		
+35	gibbs	b-00905	The Earth | LUMEN | D | 1.083 x 10^26 | W	1	The Earth	LUMEN	D	1.083 x 10^26	W	malformed: D value isn't a date		
+35	gibbs	b-00905	The Moon | LUMEN | D | 1.63 x 10^25 | W	1	The Moon	LUMEN	D	1.63 x 10^25	W	malformed: D value isn't a date		
+36	gibbs	b-01075	Water | BOILING_POINT | N | 100 | C	1	Water	BOILING_POINT	N	100	C	ok		
+36	gibbs	b-01075	water | IS_A | S | compound |	1	water	IS_A	S	compound		ok		
+36	gibbs	b-01075	water | CONTAINS_ELEMENT | S | hydrogen |	1	water	CONTAINS_ELEMENT	S	hydrogen		ok		
+36	gibbs	b-01075	water | CONTAINS_ELEMENT | S | oxygen |	1	water	CONTAINS_ELEMENT	S	oxygen		ok		
+36	gibbs	b-01075	n | IS_A | S | number |	1	n	IS_A	S	number		ok		
+36	gibbs	b-01075	e | NAMED_AFTER | S | number |	1	e	NAMED_AFTER	S	number		ok		
+37	gibbs	b-01227	Water | BOILING_POINT | N | 100 | C	1	Water	BOILING_POINT	N	100	C	ok		
+37	gibbs	b-01227	water | IS_A | S | compound |	1	water	IS_A	S	compound		ok		
+37	gibbs	b-01227	water | CONTAINS_ELEMENT | S | hydrogen |	1	water	CONTAINS_ELEMENT	S	hydrogen		ok		
+37	gibbs	b-01227	water | CONTAINS_ELEMENT | S | oxygen |	1	water	CONTAINS_ELEMENT	S	oxygen		ok		
+37	gibbs	b-01227	water | CONTAINS_ELEMENT | S | nitrogen |	1	water	CONTAINS_ELEMENT	S	nitrogen		ok		
+37	gibbs	b-01227	water | CONTAINS_ELEMENT | S | carbon |	1	water	CONTAINS_ELEMENT	S	carbon		ok		
+37	gibbs	b-01227	water | CONTAINS_ELEMENT | S | sulfur |	1	water	CONTAINS_ELEMENT	S	sulfur		ok		
+37	gibbs	b-01227	water | CONTAINS_ELEMENT | S | chlorine |	1	water	CONTAINS_ELEMENT	S	chlorine		ok		
+37	gibbs	b-01227	water | CONTAINS_ELEMENT | S | argon |	1	water	CONTAINS_ELEMENT	S	argon		ok		
+37	gibbs	b-01227	water | CONTAINS_ELEMENT | S | calcium |	11	water	CONTAINS_ELEMENT	S	calcium		ok		
+37	gibbs	b-01227	water | CONTAINS_ELEMENT | S | magnesium |	10	water	CONTAINS_ELEMENT	S	magnesium		ok		
+37	gibbs	b-01227	water | CONTAINS_ELEMENT | S | potassium |	10	water	CONTAINS_ELEMENT	S	potassium		ok		
+37	gibbs	b-01227	water | CONTAINS_ELEMENT | S | sodium |	10	water	CONTAINS_ELEMENT	S	sodium		ok		
+37	gibbs	b-01227	water | CONTAINS_ELEMENT | S | magnesium	1	water	CONTAINS_ELEMENT	S	magnesium		ok		
+38	gibbs	b-01293	sun | RISES_IN | D | NONE |	1	sun	RISES_IN	D	NONE		malformed: D value isn't a date		
+38	gibbs	b-01293	sun | IS_A | S | star |	1	sun	IS_A	S	star		ok		
+38	gibbs	b-01293	sun | CONTAINS_ELEMENT | S | hydrogen |	23	sun	CONTAINS_ELEMENT	S	hydrogen		ok		
+38	gibbs	b-01293	sun | CONTAINS_ELEMENT | S | helium |	23	sun	CONTAINS_ELEMENT	S	helium		ok		
+38	gibbs	b-01293	sun | HAS_PART | D | NONE |	1	sun	HAS_PART	D	NONE		malformed: D value isn't a date		
+38	gibbs	b-01293	sun | IS_A | S | celestial body |	1	sun	IS_A	S	celestial body		ok		
+38	gibbs	b-01293	sun | CONT	1						malformed: 2 fields, not 5		
+39	gibbs	b-01395	The sun | IS_A | S | 93 million | M	1	The sun	IS_A	S	93 million	M	ok		
+39	gibbs	b-01395	The Earth | IS_A | S | 7.9 x 10^8 | km	1	The Earth	IS_A	S	7.9 x 10^8	km	ok		
+39	gibbs	b-01395	The Moon | IS_A | S | 3.3 x 10^8 | km	1	The Moon	IS_A	S	3.3 x 10^8	km	ok		
+39	gibbs	b-01395	The International Space Station | IS_A | S | 1.6 x 10^8 | m	20	The International Space Station	IS_A	S	1.6 x 10^8	m	ok		
+39	gibbs	b-01395	The International Space Station | IS_A | S | 1.6 x 10^	1	The International Space Station	IS_A	S	1.6 x 10^		ok		
+40	gibbs	b-01520	Water | BOILING_POINT | N | 100 | C	1	Water	BOILING_POINT	N	100	C	ok		
+40	gibbs	b-01520	water | IS_A | S | compound |	1	water	IS_A	S	compound		ok		
+40	gibbs	b-01520	water | CONTAINS_ELEMENT | S | hydrogen |	1	water	CONTAINS_ELEMENT	S	hydrogen		ok		
+40	gibbs	b-01520	water | CONTAINS_ELEMENT | S | oxygen |	1	water	CONTAINS_ELEMENT	S	oxygen		ok		
+40	gibbs	b-01520	ensemble | CONTAINS_SYSTEM | N | NONE |	1	ensemble	CONTAINS_SYSTEM	N	NONE		malformed: N value isn't a number		
+40	gibbs	b-01520	extension-in-phase | CONTAINS_SYSTEM | N | NONE |	1	extension-in-phase	CONTAINS_SYSTEM	N	NONE		malformed: N value isn't a number		
+41	gibbs	b-01535	Water | BOILING_POINT | N | 100 | C	1	Water	BOILING_POINT	N	100	C	ok		
+41	gibbs	b-01535	water | IS_A | S | compound |	1	water	IS_A	S	compound		ok		
+41	gibbs	b-01535	water | CONTAINS_ELEMENT | S | hydrogen |	1	water	CONTAINS_ELEMENT	S	hydrogen		ok		
+41	gibbs	b-01535	water | CONTAINS_ELEMENT | S | oxygen |	1	water	CONTAINS_ELEMENT	S	oxygen		ok		
+41	gibbs	b-01535	cylinder | MOVES_IN | N | 0 | m	1	cylinder	MOVES_IN	N	0	m	ok		
+41	gibbs	b-01535	cylinder | HAS_AXIS | S | vertical |	1	cylinder	HAS_AXIS	S	vertical		ok		
+41	gibbs	b-01535	cylinder | HAS_PLANE | S | horizontal |	1	cylinder	HAS_PLANE	S	horizontal		ok		
+41	gibbs	b-01535	cylinder | HAS_ENERGY | N | 0 | J	1	cylinder	HAS_ENERGY	N	0	J	ok		
+42	gibbs	b-01553	Water | BOILING_POINT | N | 100 | C	1	Water	BOILING_POINT	N	100	C	ok		
+42	gibbs	b-01553	water | IS_A | S | compound |	1	water	IS_A	S	compound		ok		
+42	gibbs	b-01553	water | CONTAINS_ELEMENT | S | hydrogen |	1	water	CONTAINS_ELEMENT	S	hydrogen		ok		
+42	gibbs	b-01553	water | CONTAINS_ELEMENT | S | oxygen |	1	water	CONTAINS_ELEMENT	S	oxygen		ok		
+42	gibbs	b-01553	Hence | RELATION | N |  |	3	Hence	RELATION	N			malformed: no value; N value isn't a number		
+43	gibbs	b-01568	Water | BOILING_POINT | N | 100 | C	1	Water	BOILING_POINT	N	100	C	ok		
+43	gibbs	b-01568	water | IS_A | S | compound |	1	water	IS_A	S	compound		ok		
+43	gibbs	b-01568	water | CONTAINS_ELEMENT | S | hydrogen |	1	water	CONTAINS_ELEMENT	S	hydrogen		ok		
+43	gibbs	b-01568	water | CONTAINS_ELEMENT | S | oxygen |	1	water	CONTAINS_ELEMENT	S	oxygen		ok		
+43	gibbs	b-01568	water | CONTAINS_ELEMENT | S | nitrogen |	1	water	CONTAINS_ELEMENT	S	nitrogen		ok		
+43	gibbs	b-01568	water | CONTAINS_ELEMENT | S | carbon |	1	water	CONTAINS_ELEMENT	S	carbon		ok		
+43	gibbs	b-01568	water | CONTAINS_ELEMENT | S | sulfur |	1	water	CONTAINS_ELEMENT	S	sulfur		ok		
+43	gibbs	b-01568	water | CONTAINS_ELEMENT | S | chlorine |	1	water	CONTAINS_ELEMENT	S	chlorine		ok		
+43	gibbs	b-01568	water | CONTAINS_ELEMENT | S | fluorine |	1	water	CONTAINS_ELEMENT	S	fluorine		ok		
+43	gibbs	b-01568	water | CONTAINS_ELEMENT | S | bromine |	1	water	CONTAINS_ELEMENT	S	bromine		ok		
+43	gibbs	b-01568	water | CONTAINS_ELEMENT | S | iodine |	1	water	CONTAINS_ELEMENT	S	iodine		ok		
+43	gibbs	b-01568	water | CONTAINS_ELEMENT | S | astatine |	1	water	CONTAINS_ELEMENT	S	astatine		ok		
+43	gibbs	b-01568	water | CONTAINS_ELEMENT | S | radon |	1	water	CONTAINS_ELEMENT	S	radon		ok		
+43	gibbs	b-01568	water | CONTAINS_ELEMENT | S | polonium |	1	water	CONTAINS_ELEMENT	S	polonium		ok		
+43	gibbs	b-01568	water | CONTAINS_ELEMENT | S | lead |	1	water	CONTAINS_ELEMENT	S	lead		ok		
+43	gibbs	b-01568	water | CONTAINS_ELEMENT | S | bismuth |	1	water	CONTAINS_ELEMENT	S	bismuth		ok		
+43	gibbs	b-01568	water | CONTAINS_ELEMENT | S | mercury |	7	water	CONTAINS_ELEMENT	S	mercury		ok		
+43	gibbs	b-01568	water | CONTAINS_ELEMENT | S | thallium |	7	water	CONTAINS_ELEMENT	S	thallium		ok		
+43	gibbs	b-01568	water | CONTAINS_ELEMENT | S | silver |	6	water	CONTAINS_ELEMENT	S	silver		ok		
+43	gibbs	b-01568	water | CONTAINS_ELEMENT | S | gold |	6	water	CONTAINS_ELEMENT	S	gold		ok		
+43	gibbs	b-01568	water | CONTAINS_ELEMENT | S | cadmium |	6	water	CONTAINS_ELEMENT	S	cadmium		ok		
+44	gibbs	b-01629	Water | BOILING_POINT | N | 100 | C	1	Water	BOILING_POINT	N	100	C	ok		
+44	gibbs	b-01629	water | IS_A | S | compound |	1	water	IS_A	S	compound		ok		
+44	gibbs	b-01629	water | CONTAINS_ELEMENT | S | hydrogen |	1	water	CONTAINS_ELEMENT	S	hydrogen		ok		
+44	gibbs	b-01629	water | CONTAINS_ELEMENT | S | oxygen |	1	water	CONTAINS_ELEMENT	S	oxygen		ok		
+44	gibbs	b-01629	Paragraph | IS_A | N | 2023 | YEAR	1	Paragraph	IS_A	N	2023	YEAR	ok		
+45	gibbs	b-01647	Water | BOILING_POINT | N | 100 | C	1	Water	BOILING_POINT	N	100	C	ok		
+45	gibbs	b-01647	water | IS_A | S | compound |	3	water	IS_A	S	compound		ok		
+45	gibbs	b-01647	water | CONTAINS_ELEMENT | S | hydrogen |	3	water	CONTAINS_ELEMENT	S	hydrogen		ok		
+45	gibbs	b-01647	water | CONTAINS_ELEMENT | S | oxygen |	41	water	CONTAINS_ELEMENT	S	oxygen		ok		
+45	gibbs	b-01647	water | HAS_PART | N | 2 | mol |	2						malformed: 6 fields, not 5		
+45	gibbs	b-01647	water | CONTAINS_ELEMENT | S |	1	water	CONTAINS_ELEMENT	S			malformed: no value		
+46	gibbs	b-01699	Water | BOILING_POINT | N | 100 | C	1	Water	BOILING_POINT	N	100	C	ok		
+46	gibbs	b-01699	water | IS_A | S | compound |	1	water	IS_A	S	compound		ok		
+46	gibbs	b-01699	water | CONTAINS_ELEMENT | S | hydrogen |	1	water	CONTAINS_ELEMENT	S	hydrogen		ok		
+46	gibbs	b-01699	water | CONTAINS_ELEMENT | S | oxygen |	1	water	CONTAINS_ELEMENT	S	oxygen		ok		
+46	gibbs	b-01699	microcanonically | DISTRIBUTED | N |  |	1	microcanonically	DISTRIBUTED	N			malformed: no value; N value isn't a number		
+46	gibbs	b-01699	system | PHASE | N |  |	1	system	PHASE	N			malformed: no value; N value isn't a number		
+47	gibbs	b-01749	Water | BOILING_POINT | N | 100 | C	1	Water	BOILING_POINT	N	100	C	ok		
+47	gibbs	b-01749	water | IS_A | S | compound |	1	water	IS_A	S	compound		ok		
+47	gibbs	b-01749	water | CONTAINS_ELEMENT | S | hydrogen |	1	water	CONTAINS_ELEMENT	S	hydrogen		ok		
+47	gibbs	b-01749	water | CONTAINS_ELEMENT | S | oxygen |	1	water	CONTAINS_ELEMENT	S	oxygen		ok		
+47	gibbs	b-01749	microcanonical | ENERGY | N | 0 | J	3	microcanonical	ENERGY	N	0	J	ok		
+47	gibbs	b-01749	microcanonical | PHASES | N | 1 | 2	29	microcanonical	PHASES	N	1	2	ok		
+48	gibbs	b-01788	sun | RISES_IN | D | east |	1	sun	RISES_IN	D	east		malformed: D value isn't a date		
+48	gibbs	b-01788	sun | IS_A | S | celestial_body |	1	sun	IS_A	S	celestial_body		ok		
+48	gibbs	b-01788	sun | CONTAINS_ELEMENT | S | hydrogen |	1	sun	CONTAINS_ELEMENT	S	hydrogen		ok		
+48	gibbs	b-01788	sun | CONTAINS_ELEMENT | S | helium |	1	sun	CONTAINS_ELEMENT	S	helium		ok		
+49	gibbs	b-01829	The Earth | IS_A | S | planet |	1	The Earth	IS_A	S	planet		ok		
+49	gibbs	b-01829	THE | CONTAINS_ELEMENT | S | nitrogen |	1	THE	CONTAINS_ELEMENT	S	nitrogen		ok		
+49	gibbs	b-01829	THE | CONTAINS_ELEMENT | S | oxygen |	1	THE	CONTAINS_ELEMENT	S	oxygen		ok		
+49	gibbs	b-01829	THE | CONTAINS_ELEMENT | S | carbon |	1	THE	CONTAINS_ELEMENT	S	carbon		ok		
+49	gibbs	b-01829	THE | CONTAINS_ELEMENT | S | hydrogen |	1	THE	CONTAINS_ELEMENT	S	hydrogen		ok		
+49	gibbs	b-01829	THE | CONTAINS_ELEMENT | S | iron |	10	THE	CONTAINS_ELEMENT	S	iron		ok		
+49	gibbs	b-01829	THE | CONTAINS_ELEMENT | S | magnesium |	9	THE	CONTAINS_ELEMENT	S	magnesium		ok		
+49	gibbs	b-01829	THE | CONTAINS_ELEMENT | S | sulfur |	9	THE	CONTAINS_ELEMENT	S	sulfur		ok		
+49	gibbs	b-01829	THE | CONTAINS_ELEMENT | S | aluminum |	9	THE	CONTAINS_ELEMENT	S	aluminum		ok		
+49	gibbs	b-01829	THE | CONTAINS_ELEMENT | S | calcium |	9	THE	CONTAINS_ELEMENT	S	calcium		ok		
+49	gibbs	b-01829	THE |	1						malformed: 2 fields, not 5		
+50	gibbs	b-01947	Water | BOILING_POINT | N | 100 | C	1	Water	BOILING_POINT	N	100	C	ok		
+50	gibbs	b-01947	water | IS_A | S | compound |	1	water	IS_A	S	compound		ok		
+50	gibbs	b-01947	water | CONTAINS_ELEMENT | S | hydrogen |	1	water	CONTAINS_ELEMENT	S	hydrogen		ok		
+50	gibbs	b-01947	water | CONTAINS_ELEMENT | S | oxygen |	1	water	CONTAINS_ELEMENT	S	oxygen		ok		
+50	gibbs	b-01947	water | CONTAINS_ELEMENT | S | nitrogen |	1	water	CONTAINS_ELEMENT	S	nitrogen		ok		
+50	gibbs	b-01947	water | CONTAINS_ELEMENT | S | carbon |	1	water	CONTAINS_ELEMENT	S	carbon		ok		
+50	gibbs	b-01947	water | CONTAINS_ELEMENT | S | sulfur |	1	water	CONTAINS_ELEMENT	S	sulfur		ok		
+50	gibbs	b-01947	water | CONTAINS_ELEMENT | S | chlorine |	1	water	CONTAINS_ELEMENT	S	chlorine		ok		
+50	gibbs	b-01947	water | CONTAINS_ELEMENT | S | fluorine |	1	water	CONTAINS_ELEMENT	S	fluorine		ok		
+50	gibbs	b-01947	water | CONTAINS_ELEMENT | S | bromine |	1	water	CONTAINS_ELEMENT	S	bromine		ok		
+50	gibbs	b-01947	water | CONTAINS_ELEMENT | S | iodine |	1	water	CONTAINS_ELEMENT	S	iodine		ok		
+50	gibbs	b-01947	water | CONTAINS_ELEMENT | S | astatine |	2	water	CONTAINS_ELEMENT	S	astatine		ok		
+50	gibbs	b-01947	water | CONTAINS_ELEMENT | S | radon |	2	water	CONTAINS_ELEMENT	S	radon		ok		
+50	gibbs	b-01947	water | CONTAINS_ELEMENT | S | francium |	2	water	CONTAINS_ELEMENT	S	francium		ok		
+50	gibbs	b-01947	water | CONTAINS_ELEMENT | S | rubidium |	1	water	CONTAINS_ELEMENT	S	rubidium		ok		
+50	gibbs	b-01947	water | CONTAINS_ELEMENT | S | cesium |	1	water	CONTAINS_ELEMENT	S	cesium		ok		
+50	gibbs	b-01947	water | CONTAINS_ELEMENT | S | strontium |	1	water	CONTAINS_ELEMENT	S	strontium		ok		
+50	gibbs	b-01947	water | CONTAINS_ELEMENT | S | barium |	1	water	CONTAINS_ELEMENT	S	barium		ok		
+50	gibbs	b-01947	water | CONTAINS_ELEMENT | S | potassium |	1	water	CONTAINS_ELEMENT	S	potassium		ok		
+50	gibbs	b-01947	water | CONTAINS_ELEMENT | S | sodium |	1	water	CONTAINS_ELEMENT	S	sodium		ok		
+50	gibbs	b-01947	water | CONTAINS_ELEMENT | S | magnesium |	1	water	CONTAINS_ELEMENT	S	magnesium		ok		
+50	gibbs	b-01947	water | CONTAINS_ELEMENT | S | calcium |	1	water	CONTAINS_ELEMENT	S	calcium		ok		
+50	gibbs	b-01947	water | CONTAINS_ELEMENT | S | iron |	1	water	CONTAINS_ELEMENT	S	iron		ok		
+50	gibbs	b-01947	water | CONTAINS_ELEMENT | S | zinc |	1	water	CONTAINS_ELEMENT	S	zinc		ok		
+50	gibbs	b-01947	water | CONTAINS_ELEMENT | S | copper |	1	water	CONTAINS_ELEMENT	S	copper		ok		
+50	gibbs	b-01947	water | CONTAINS_ELEMENT | S | silver |	2	water	CONTAINS_ELEMENT	S	silver		ok		
+50	gibbs	b-01947	water | CONTAINS_ELEMENT | S | lead |	2	water	CONTAINS_ELEMENT	S	lead		ok		
+50	gibbs	b-01947	water | CONTAINS_ELEMENT | S | bismuth |	2	water	CONTAINS_ELEMENT	S	bismuth		ok		
+50	gibbs	b-01947	water | CONTAINS_ELEMENT | S | mercury |	2	water	CONTAINS_ELEMENT	S	mercury		ok		
+50	gibbs	b-01947	water | CONTAINS_ELEMENT | S | gold |	1	water	CONTAINS_ELEMENT	S	gold		ok		
+50	gibbs	b-01947	water | CONTAINS_ELEMENT | S | tin |	1	water	CONTAINS_ELEMENT	S	tin		ok		
+50	gibbs	b-01947	water | CONTAINS_ELEMENT | S | platinum |	1	water	CONTAINS_ELEMENT	S	platinum		ok		
+50	gibbs	b-01947	water | CONTAINS_ELEMENT | S | iridium |	1	water	CONTAINS_ELEMENT	S	iridium		ok		
+50	gibbs	b-01947	water | CONTAINS_ELEMENT | S | osmium |	1	water	CONTAINS_ELEMENT	S	osmium		ok		
+50	gibbs	b-01947	water | CONTAINS_ELEMENT | S | ruthenium |	1	water	CONTAINS_ELEMENT	S	ruthenium		ok		
+50	gibbs	b-01947	water | CONTAINS_ELEMENT | S | rhodium |	1	water	CONTAINS_ELEMENT	S	rhodium		ok		
+50	gibbs	b-01947	water | CONTAINS_ELEMENT | S | palladium |	1	water	CONTAINS_ELEMENT	S	palladium		ok		
+50	gibbs	b-01947	water | CONTAINS_ELEMENT | S | cadmium |	1	water	CONTAINS_ELEMENT	S	cadmium		ok		
+50	gibbs	b-01947	water | CONTAINS_ELEMENT | S | thallium |	1	water	CONTAINS_ELEMENT	S	thallium		ok		
+50	gibbs	b-01947	water | CONTAINS_ELEMENT | S | polonium |	1	water	CONTAINS_ELEMENT	S	polonium		ok		
+50	gibbs	b-01947	water | CONTAINS_ELEMENT | S |	1	water	CONTAINS_ELEMENT	S			malformed: no value		

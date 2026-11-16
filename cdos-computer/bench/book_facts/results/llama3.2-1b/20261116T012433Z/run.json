@@ -1,0 +1,35 @@
+{
+ "format": "cdos-book-bench/1",
+ "model": "llama3.2:1b",
+ "model_digest": "baf6a787fdffd633537aa2eb51cfd54cb93ff08e28040095462bb63daf552878",
+ "model_details": {
+  "parent_model": "",
+  "format": "gguf",
+  "family": "llama",
+  "families": [
+   "llama"
+  ],
+  "parameter_size": "1.2B",
+  "quantization_level": "Q8_0",
+  "context_length": 131072,
+  "embedding_length": 2048
+ },
+ "model_size": 1321098329,
+ "ollama": "0.35.0",
+ "options": {
+  "temperature": 0,
+  "seed": 42,
+  "num_ctx": 4096,
+  "num_predict": 512
+ },
+ "prompt_sha256": "sha256:bdaf3a318fbcf084474f842e0ff85e8564544828486e8234a0175d3b1ad03b4d",
+ "sample_sha256": "sha256:a3bed43dba00382c4841d21795e25fb30b231149842e8690cac38af9da253401",
+ "paragraphs": 50,
+ "started": "2026-11-16T01:24:33Z",
+ "cpus": 4,
+ "finished": "2026-11-16T02:26:27Z",
+ "reproducible": {
+  "paragraph": 1,
+  "same_output": true
+ }
+}
