@@ -32,5 +32,6 @@ overwrite a scorecard, so your marks are never lost.
 
 ## Another model
 
-See `docs/DOWNLOADS_NEEDED.md` for what to fetch, and for the commands that
-run `llama3.1:8b` on the same sample and compare the two runs.
+See `docs/DOWNLOADS_NEEDED.md` for what to fetch. `tools/books.py trial` runs
+another model on this sample and compares it with every earlier run; the same
+code then reads the whole of both books (`docs/BOOKS_TO_CORPUS.md`).
