@@ -18,5 +18,28 @@ INTEGRATE_OFF = ("corpus.integrate is off (Q1, docs/CORPUS_GROWTH_AUDIT.md §9):
                  "phase 8 passes. Staged runs stay in staging/ for review.")
 
 
+INTEGRATE_ELSEWHERE = ("corpus.integrate is on, but this package never writes corpus.pf: integrate with "
+                      "tools/integrate.py, which writes through the corpus guard (verify, backup, replace).")
+
+
 class AcquireError(RuntimeError):
     """Refused or failed; str(e) says why."""
+
+
+def integrate_on(root: Path = DEFAULT_ROOT) -> bool:
+    """The corpus.integrate switch: `[corpus] integrate = true` in <root>/settings.toml, written by a person (Q1).
+    No file, or anything but exactly that, is off; a file that can't be read is an error, not off-by-accident."""
+    import tomllib
+    p = Path(root) / "settings.toml"
+    if not p.exists():
+        return False
+    try:
+        data = tomllib.loads(p.read_text(encoding="utf-8"))
+    except (OSError, tomllib.TOMLDecodeError, UnicodeDecodeError) as e:
+        raise AcquireError(f"{p} can't be read: {e}") from None
+    if set(data) - {"corpus"} or set(data.get("corpus", {})) - {"integrate"}:
+        raise AcquireError(f"{p} may hold only [corpus] integrate = true|false")
+    v = data.get("corpus", {}).get("integrate", False)
+    if not isinstance(v, bool):
+        raise AcquireError(f"{p}: corpus.integrate must be true or false")
+    return v

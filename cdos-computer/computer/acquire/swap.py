@@ -23,6 +23,29 @@ from . import AcquireError
 from .index import replaced_by
 
 
+def candidate_lines(master: Path, runs: list[tuple[Path, dict | None]], counts: dict):
+    """The lines of the corpus several staged runs would make together: the master without each replaced generation
+    (except the rows of things a run held back), then each run's delta.pf in order.  `counts` gets kept, removed and
+    added.  One definition for the candidate check (tools/candidate_check.py) and integration (tools/integrate.py),
+    so what is checked is what is integrated."""
+    skips = [replaced_by(rep, delta.parent / "held.pf") for delta, rep in runs if rep]
+    counts.update(kept=0, removed=0, added=0)
+    with open(master, encoding="utf-8") as m:
+        for line in m:
+            c = (line.rstrip("\n").split("\t") + [""] * 11)[:11]
+            if line.strip() and not line.startswith("#") and any(s(c) for s in skips):
+                counts["removed"] += 1
+                continue
+            yield line if line.endswith("\n") else line + "\n"
+            counts["kept"] += 1
+    for delta, _ in runs:
+        with open(delta, encoding="utf-8") as d:
+            for line in d:
+                if line.strip() and not line.startswith("#"):
+                    yield line if line.endswith("\n") else line + "\n"
+                    counts["added"] += 1
+
+
 def write_candidate(master: Path, delta: Path, replaces: dict, out: Path) -> dict:
     """Write candidate.pf; return what changed: rows kept, and rows removed and added by relation."""
     if not replaces:

@@ -10,6 +10,33 @@ code was changed. Every number below was measured on the uploaded
 `cdos-computer/docs/REAL_CORPUS_REVIEW.md` and in the `v1.0.0` tag of
 `zeggszex-zot/earth-os-corpus`.
 
+### Where things stand (2026-11-15, end of the corpus growth project)
+
+- **Integrated.** OEWN 2025, GeoNames and Wikidata are in `corpus.pf`, through the
+  corpus guard with verify: generation 2, `9e791281…128b0f23` (generation 1,
+  `f17a638f…`, is backed up). Built: **1,687,666 facts about 180,022 subjects**
+  (was 1,210,591 about 140,428), content version `5d3f14db…`. Review: 54 pass,
+  9 observed, 5 known, 5 fail (W8, X1, X2, X3, X6, as before); no regressions.
+- **Sources.** OEWN 2025 replaces the legacy WordNet rows (meanings in each
+  word's own sense order). GeoNames adds countries, regions and cities over
+  15,000 people (no country areas: D2). Wikidata was re-imported from the API
+  (option C: 13,321 legacy entities + 30,323 linked one-to-one to GeoNames
+  places by P1566), snapshot `8c0f41ca…` approved by sha256 with each entity's
+  revision id; values are names, never bare Q-ids (D3), and only Wikidata's
+  best-ranked statements are kept.
+- **corpus.integrate is on** (`~/cdos/acquire/settings.toml`). Integration is
+  `tools/integrate.py`, never `computer/acquire` (which still can't write the
+  master): approved sources only, runs staged against the exact master, the
+  same candidate the check built, guard verify, backup, replace.
+- **Left as they are, on purpose.** 59 held-back names (Paris, Earth, London,
+  Mercury, …) keep their legacy rows until there's a rule for their curated
+  rows without ENTITY=; 2,131 Wikidata figures in units the corpus lacks
+  (hectare, foot, square mile, …) are refused, not converted; some
+  disambiguation notes name a county where an item gives no state.
+- **The Pi's web searcher** stays under per-fact review (Q5), integrate or not.
+- **Next project:** a local model (Llama) reading books for the corpus. Its
+  findings are not an approved source: they go to review, like the Pi's.
+
 ### Status on 2026-11-15
 
 The audit below is kept as written on 2026-11-14. What has changed since:

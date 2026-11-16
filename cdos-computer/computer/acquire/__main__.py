@@ -29,7 +29,8 @@ def main(argv=None) -> int:
     acq = Acquirer(Path(a.root), Path(a.master))
     try:
         if a.command == "integrate":
-            raise AcquireError(INTEGRATE_OFF)
+            from . import INTEGRATE_ELSEWHERE, integrate_on
+            raise AcquireError(INTEGRATE_ELSEWHERE if integrate_on(acq.root) else INTEGRATE_OFF)
         if a.command == "status":
             out = acq.status()
         elif a.command == "plan":

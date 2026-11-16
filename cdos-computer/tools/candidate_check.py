@@ -30,7 +30,7 @@ sys.path.insert(0, str(ROOT / "tools"))
 import build_shards  # noqa: E402
 import review_real_corpus  # noqa: E402
 from computer.acquire import DEFAULT_MASTER, DEFAULT_ROOT, AcquireError  # noqa: E402
-from computer.acquire.index import replaced_by  # noqa: E402
+from computer.acquire.swap import candidate_lines  # noqa: E402
 from computer.acquire.pipeline import Acquirer  # noqa: E402
 from computer.corpus import Corpus, entity_of  # noqa: E402
 from computer.corpus_guard import CorpusGuard  # noqa: E402
@@ -45,23 +45,10 @@ def cases_of(path: Path) -> list[dict]:
 
 def write_candidate(master: Path, runs: list[tuple[Path, dict | None]], out: Path) -> dict:
     """The master without each replaced generation, then each run's delta; returns row counts."""
-    skips = [replaced_by(rep, delta.parent / "held.pf") for delta, rep in runs if rep]
-    kept = removed = added = 0
-    with open(master, encoding="utf-8") as m, open(out, "w", encoding="utf-8") as fh:
-        for line in m:
-            c = (line.rstrip("\n").split("\t") + [""] * 11)[:11]
-            if line.strip() and not line.startswith("#") and any(s(c) for s in skips):
-                removed += 1
-                continue
-            fh.write(line if line.endswith("\n") else line + "\n")
-            kept += 1
-        for delta, _ in runs:
-            with open(delta, encoding="utf-8") as d:
-                for line in d:
-                    if line.strip() and not line.startswith("#"):
-                        fh.write(line if line.endswith("\n") else line + "\n")
-                        added += 1
-    return {"kept": kept, "removed": removed, "added": added}
+    counts: dict = {}
+    with open(out, "w", encoding="utf-8") as fh:
+        fh.writelines(candidate_lines(master, runs, counts))
+    return counts
 
 
 def subjects_cited(result: dict) -> set[str]:
