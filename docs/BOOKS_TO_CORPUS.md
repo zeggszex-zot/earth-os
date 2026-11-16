@@ -18,6 +18,7 @@ has, talks only to `127.0.0.1`, and never writes `corpus.pf`.
 |---|---|---|
 | plan | `books.py plan` | nothing: what is covered and, after a trial, how long it takes |
 | trial | `books.py trial` | `bench/book_facts/results/<model>/<run>/`: the fixed 50 paragraphs |
+| trial, kept loaded (optional) | `books.py trial --warm` | the same, plus `warm_check.json`: whether every fact matched |
 | extract | `books.py extract` | `~/cdos/books/<model>/outputs.jsonl`, one answer per paragraph, kept as it comes |
 | stage | `books.py stage` (`extract` does it at the end) | `staged.jsonl`, `rejects.jsonl`, `stage.json` |
 | review | `books.py review` | `decisions.jsonl` |
@@ -30,12 +31,13 @@ has, talks only to `127.0.0.1`, and never writes `corpus.pf`.
   ("and", "Therefore,", "If we set") are left out. `plan` counts each reason.
 - **Asking:** the bench's prompt (`bench/book_facts/prompt.txt`) and options
   (temperature 0, seed 42, a 4,096-token context, at most 512 output tokens).
-  Each paragraph is asked cold (`keep_alive 0`), so its answer doesn't depend
-  on the paragraph before it. The run is the trial's code, so a trial
+  By default each paragraph is asked cold (`keep_alive 0`), so its answer
+  doesn't depend on the paragraph before it. `--warm` keeps the model loaded,
+  but only after step 2b shows it gives the same facts. The run is the trial's code, so a trial
   paragraph gives the same facts in both.
 - **Resuming:** stop it any way you like (Ctrl-C, closing the lid, a power
-  cut). Every finished answer is on disk, and `extract` carries on at the first
-  paragraph without one. It refuses to resume if the model's digest, the
+  cut), and resume another night. Every finished answer is on disk, and
+  `extract` carries on at the first paragraph without one. It refuses to resume if the model's digest, the
   prompt, the options or a book file has changed, so one run's answers all
   come from one setup.
 - **Staging:** a fact line is staged only if it is well-formed (5 fields, an
@@ -82,9 +84,39 @@ python3 tools/books.py plan      # the full run's hours, now from the 8B's own t
 Decide from the precision whether the full run is worth its days. Any later
 model is compared the same way: `trial --model <name>`.
 
+### 2b. Optional: try keeping the instructions loaded
+
+Every paragraph starts with the same instructions: about 265 of its ~314
+prompt tokens. Asked fresh-start, the model reads them again each time and is
+reloaded too. Kept loaded, Ollama reuses what it has already read, which could
+save much of a multi-day run. The catch is that reusing it changes the
+arithmetic slightly. With `llama3.2:1b`, that changed which facts came out for
+the same paragraph. So the faster mode is used only if it changes nothing:
+
+```bash
+python3 tools/books.py trial --warm      # the same 50 paragraphs, the model kept loaded
+```
+
+It needs the fresh-start trial from step 2 (same model digest, prompt and
+sample), and refuses to start without one. It compares every paragraph's fact
+lines with that trial's, and saves the verdict as `warm_check.json` in its
+run folder:
+
+- **Every fact identical:** the full run may use `extract --warm`.
+  `books.py plan --warm` gives its hours from the kept-loaded trial's timings.
+- **Any fact different, in any paragraph:** use the fresh-start run (step 3
+  as written). `extract --warm` is refused unless a kept-loaded trial of this
+  exact model digest found every fact identical, so this can't be skipped by
+  accident.
+
+Identical facts on 50 paragraphs are evidence, not proof, about the other
+2,016; that is why the check is all or nothing. Your scorecard marks come
+from the fresh-start trial either way.
+
 ### 3. The full books
 
-The run takes days, so keep the machine awake and run it in the background:
+The run takes days, so keep the machine awake and run it in the background
+(add `--warm` only if step 2b passed):
 
 ```bash
 systemd-inhibit --what=idle:sleep --why="book facts" \
@@ -93,9 +125,24 @@ tail -f ~/cdos/books/extract.log                       # paragraph n/N, tokens, 
 python3 tools/books.py status                          # any time: asked, staged, reviewed
 ```
 
-Smaller pieces work too: `--book calculus` or `--book gibbs`, and `--limit N`
-stops after N paragraphs. Running the same command again carries on. To
-start over, move `~/cdos/books/llama3.1-8b/` away.
+**It doesn't have to run straight through: stop and resume across nights.**
+Start it in the evening, and stop it in the morning with Ctrl-C or
+`pkill -f "books.py extract"`. Closing the lid or losing power is fine too.
+Every finished paragraph is already on disk; only the one in progress is
+asked again. The next evening, run exactly the same command and it carries on
+at the next paragraph. The full books then take as many nights as the hours
+allow. At about 4 minutes a paragraph, an 8-hour night is about 120
+paragraphs, so roughly 17 nights.
+
+- To stop on its own, `--limit N` asks N paragraphs and ends. For example,
+  `--limit 120` is about one night.
+- `--book calculus` or `--book gibbs` does one book at a time.
+- `python3 tools/books.py status` says how many are done.
+- Resume in the mode you started in: a run begun with `--warm` continues
+  with `--warm`, and one begun without it continues without. The other mode
+  is refused, so one run's answers all come from one setup. So is a model
+  pulled again with a new digest.
+- To start over, move `~/cdos/books/llama3.1-8b/` away.
 
 To review while it runs, stage what it has so far. The dedupe index takes
 about 40 seconds the first time and again after each integration:

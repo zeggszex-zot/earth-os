@@ -63,8 +63,9 @@ class FakeOllama:
     """Answers by the paragraph's first words; records every request; knows only /api/version, /api/tags and
     /api/generate, so a pull (or anything else) fails the test."""
 
-    def __init__(self, models=("llama3.1:8b",), digest="d8b", stop_after=None):
+    def __init__(self, models=("llama3.1:8b",), digest="d8b", stop_after=None, warm_drift=False):
         self.models, self.digest, self.asked, self.stop_after = models, digest, [], stop_after
+        self.warm_drift = warm_drift          # kept loaded, the second paragraph comes out differently
 
     def __call__(self, req):
         assert req.full_url.startswith("http://127.0.0.1:11434/"), req.full_url
@@ -80,6 +81,8 @@ class FakeOllama:
                 raise KeyboardInterrupt
             para = body["prompt"].rsplit("Paragraph: ", 1)[1]
             out = next((v for k, v in ANSWERS.items() if para.startswith(k)), "NONE")
+            if self.warm_drift and body["keep_alive"] != 0 and len(self.generated()) == 2:
+                out = "water | IS_A | S | liquid |"
             return Resp(json.dumps({"response": out, "done_reason": "stop", "eval_count": 30,
                                     "eval_duration": 3_000_000_000, "prompt_eval_count": 300,
                                     "prompt_eval_duration": 10_000_000_000, "load_duration": 1_000_000_000}).encode())
@@ -344,28 +347,65 @@ class TestExportAndIntegrate(Case):
 
 
 class TestTrialAndSettings(Case):
+    def setUp(self):
+        super().setUp()
+        self.sample = self.d / "sample.jsonl"
+        self.sample.write_text("".join(json.dumps({"n": i + 1, "book": "calculus", "block": f"b-{i:05d}",
+                                                   "text": t}) + "\n" for i, t in enumerate(
+            ["Water boils at 100 degrees.", "A sovereign is worth twenty shillings.", "The ensemble is canonical."])))
+        self.results = self.d / "results"
+
+    def trial(self, model="llama3.1:8b", warm=False, **fake):
+        fake = FakeOllama(models=(model,), **fake)
+        return books.trial(model, bench.Ollama(opener=fake, keep_alive=books.WARM if warm else 0), self.results,
+                           log=lambda *a: None, sample=self.sample)
+
     def test_trial_is_the_bench_on_its_fixed_sample_with_a_scorecard_and_a_comparison(self):
-        sample = [{"n": i + 1, "book": "calculus", "block": f"b-{i:05d}", "text": f"Water boils {i}."} for i in range(3)]
-        results = self.d / "results"
-        orig = bench.SAMPLE
-        bench.SAMPLE = self.d / "sample.jsonl"
-        bench.SAMPLE.write_text("".join(json.dumps(r) + "\n" for r in sample))
-        try:
-            run = bench.run.__defaults__
-            bench.run.__defaults__ = (None, bench.SAMPLE) + run[2:]
-            try:
-                books.trial("llama3.2:1b", bench.Ollama(opener=FakeOllama(models=("llama3.2:1b",))), results,
-                            log=lambda *a: None)
-                res = books.trial("llama3.1:8b", bench.Ollama(opener=FakeOllama()), results, log=lambda *a: None)
-            finally:
-                bench.run.__defaults__ = run
-        finally:
-            bench.SAMPLE = orig
+        self.trial("llama3.2:1b")
+        res = self.trial()
         out = Path(res["run"])
         self.assertTrue((out / "scorecard.tsv").exists())
+        self.assertEqual(len(books.fact_lines(out)), 3)                     # the given sample, not the real one
         self.assertIn("# Book-facts bench: llama3.1:8b", res["summary"])
         self.assertEqual(len(res["compared"]), 1)
         self.assertIn("| llama3.2:1b | llama3.1:8b |", next(iter(res["compared"].values())))
+        self.assertIsNone(res["warm_check"])
+
+    def warm_extract(self):
+        return books.extract("llama3.1:8b", bench.Ollama(opener=FakeOllama(), keep_alive=books.WARM), self.root, self.books,
+            log=lambda *a: None, results=self.results)
+
+    def test_a_kept_loaded_trial_needs_a_fresh_start_one_first(self):
+        with self.assertRaisesRegex(books.BooksError, "fresh-start"):
+            self.trial(warm=True)
+        self.assertFalse(self.results.exists())                             # refused before any paragraph
+
+    def test_identical_facts_let_the_full_run_keep_the_model_loaded(self):
+        with self.assertRaisesRegex(books.BooksError, "--warm needs"):
+            self.warm_extract()                                             # no kept-loaded trial yet
+        self.trial()
+        res = self.trial(warm=True)
+        self.assertTrue(res["warm_check"]["identical"])
+        self.assertEqual(json.loads((Path(res["run"]) / "run.json").read_text())["keep_alive"], books.WARM)
+        self.warm_extract()
+        meta = json.loads((self.rundir / "run.json").read_text())
+        self.assertEqual(meta["keep_alive"], books.WARM)
+        with self.assertRaisesRegex(books.BooksError, "keep_alive"):
+            self.extract()                                                  # one run, one mode
+
+    def test_a_single_different_fact_keeps_the_full_run_fresh_start(self):
+        self.trial()
+        res = self.trial(warm=True, warm_drift=True)
+        self.assertEqual((res["warm_check"]["identical"], res["warm_check"]["differing"]), (False, [2]))
+        with self.assertRaisesRegex(books.BooksError, "--warm needs"):
+            self.warm_extract()
+
+    def test_another_model_digest_needs_its_own_check(self):
+        self.trial()
+        self.trial(warm=True)
+        with self.assertRaisesRegex(books.BooksError, "--warm needs"):
+            books.extract("llama3.1:8b", bench.Ollama(opener=FakeOllama(digest="new"), keep_alive=books.WARM),
+                          self.root, self.books, log=lambda *a: None, results=self.results)
 
     def test_the_model_is_a_setting_defaulting_to_llama3_1_8b(self):
         self.assertEqual(books.DEFAULT_MODEL, "llama3.1:8b")

@@ -19,7 +19,9 @@ second, and repeats the first paragraph at the end to check the output is reprod
 model cold (keep_alive 0): Ollama otherwise reuses the cached start of the previous prompt, which changes the
 arithmetic, so an output would depend on the paragraph asked before it (measured 2026-11-15 with llama3.2:1b: the
 same paragraph gave different facts warm and cold, and the same facts every time cold).  Load time is recorded
-apart from generation, so tokens per second aren't affected.
+apart from generation, so tokens per second aren't affected.  A run may keep the model loaded instead
+(Ollama(keep_alive=...), tools/books.py trial --warm): run.json records which, and tools/books.py only lets the full
+run use it once a kept-loaded trial gave exactly the facts of a cold one.
 
 Only a model already installed is used: the bench asks Ollama which models it has and refuses one it hasn't
 (docs/DOWNLOADS_NEEDED.md lists what to fetch).  It never asks Ollama to pull, and talks only to a loopback address.
@@ -121,8 +123,9 @@ def _loopback(url: str) -> str:
 
 
 class Ollama:
-    def __init__(self, url: str = OLLAMA, opener=None):
+    def __init__(self, url: str = OLLAMA, opener=None, keep_alive=0):
         self.url = _loopback(url)
+        self.keep_alive = keep_alive          # 0: cold every time (the default); else how long to stay loaded
         self.open = opener or (lambda req: urllib.request.urlopen(req, timeout=TIMEOUT))
 
     def _call(self, path: str, body: dict | None = None) -> dict:
@@ -145,7 +148,7 @@ class Ollama:
 
     def generate(self, model: str, prompt: str) -> dict:
         return self._call("/api/generate", {"model": model, "prompt": prompt, "stream": False, "options": OPTIONS,
-                                            "keep_alive": 0})          # cold every time: see the module docstring
+                                            "keep_alive": self.keep_alive})     # 0 by default: see the module docstring
 
 
 # ---- the output, as facts ----------------------------------------------------------------------------------------
@@ -195,12 +198,20 @@ def run(model: str, ollama: Ollama | None = None, sample_path: Path = SAMPLE, re
     sample = load_sample(sample_path)[:limit] if limit else load_sample(sample_path)
     template = PROMPT.read_text(encoding="utf-8")
     info = ollama.installed(model)
-    run_id = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
-    out = results / re.sub(r"[^A-Za-z0-9.]+", "-", model) / run_id
-    out.mkdir(parents=True)
+    run_id = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime()) + ("-warm" if ollama.keep_alive else "")
+    base = results / re.sub(r"[^A-Za-z0-9.]+", "-", model)
+    base.mkdir(parents=True, exist_ok=True)
+    out, k = base / run_id, 1
+    while True:                                   # never two runs in one folder, even started in the same second
+        try:
+            out.mkdir()
+            break
+        except FileExistsError:
+            k += 1
+            out = base / f"{run_id}-{k}"
     meta = {"format": "cdos-book-bench/1", "model": model, "model_digest": info.get("digest", ""),
             "model_details": info.get("details", {}), "model_size": info.get("size"), "ollama": ollama.version(),
-            "options": OPTIONS, "prompt_sha256": sha256_bytes(template.encode()),
+            "options": OPTIONS, "keep_alive": ollama.keep_alive, "prompt_sha256": sha256_bytes(template.encode()),
             "sample_sha256": sha256_bytes(sample_path.read_bytes()), "paragraphs": len(sample),
             "started": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "cpus": os.cpu_count()}
     write_text(out / "run.json", json.dumps(meta, indent=1) + "\n")

@@ -4,7 +4,8 @@ it proposes, and only accepted facts reach corpus.pf, as an approved source inte
 
     python3 tools/books.py plan                 # the paragraphs a full run covers, and (after a trial) how long it takes
     python3 tools/books.py trial                # the fixed 50 paragraphs (bench/book_facts): scorecard, summary, compare
-    python3 tools/books.py extract [--book calculus|gibbs] [--limit N]
+    python3 tools/books.py trial --warm         # optional: the same, the model kept loaded; checked fact for fact
+    python3 tools/books.py extract [--book calculus|gibbs] [--limit N] [--warm]
                                                 # every prose paragraph; resumes where it stopped; stages at the end
     python3 tools/books.py stage                # outputs -> staged.jsonl: well-formed, not already known, with source
     python3 tools/books.py review               # one fact at a time beside its sentence: a / r / s; remembers its place
@@ -19,6 +20,13 @@ One definition of the extraction: the prompt, the options (temperature 0, seed 4
 only, never a pull, loopback only, each paragraph asked cold) and the fact-line check are the bench's
 (bench/book_facts/bench.py), so the trial measures exactly what a full run does, and a trial paragraph gives the same
 facts in both.
+
+Kept loaded (--warm): by default every paragraph is asked cold, because a model kept loaded lets Ollama reuse the
+cached start of the previous prompt, and with llama3.2:1b that changed the facts.  The start is mostly the same
+instructions (about 265 of 314 prompt tokens), so keeping it loaded could save much of a multi-day run.  `trial
+--warm` runs the 50 paragraphs that way and compares every paragraph's fact lines with the latest cold trial of the
+same model digest, prompt and sample (warm_check.json); `extract --warm` is refused unless such a check found them all
+identical.  50 identical paragraphs are evidence, not proof, that the other 2,016 would be.
 
 Nothing here writes corpus.pf.  Model output is staged, never integrated: a fact reaches the corpus only after a person
 accepts it here, approves the exported file in ~/cdos/acquire/sources.toml (its sha256), and integrates it with
@@ -62,6 +70,7 @@ SOURCE_TYPE = "DOCUMENT"                 # ranked with MANUAL (computer/corpus.p
 ID_PREFIX = "book/"
 REPLACES = {"source_type": SOURCE_TYPE, "source_id": "^book/"}
 CONFIDENCE = "0.9"
+WARM = "15m"                             # how long a kept-loaded model stays loaded between paragraphs
 DECISIONS = ("accept", "reject", "skip")
 KEYS = {"a": "accept", "r": "reject", "s": "skip"}
 STOP = set("the a an of to in and or is are was be by for with as on at it its this that from which".split())
@@ -192,7 +201,7 @@ def _meta(model: str, ollama: bench.Ollama, books: dict) -> dict:
     docs = {name: load_book(name, p) for name, p in books.items()}
     return {"format": "cdos-books-run/1", "model": model, "model_digest": info.get("digest", ""),
             "model_details": info.get("details", {}), "model_size": info.get("size"), "ollama": ollama.version(),
-            "options": bench.OPTIONS, "keep_alive": 0, "prompt_sha256": sha256_bytes(template.encode()),
+            "options": bench.OPTIONS, "keep_alive": ollama.keep_alive, "prompt_sha256": sha256_bytes(template.encode()),
             "min_words": MIN_WORDS,
             "books": {n: {k: d[k] for k in ("ebook", "document", "document_sha256", "book_sha256", "book_file",
                                             "title", "author")} for n, d in docs.items()}}
@@ -202,13 +211,21 @@ SAME = ("model", "model_digest", "options", "keep_alive", "prompt_sha256", "min_
 
 
 def extract(model: str, ollama: bench.Ollama, root: Path = DEFAULT_ROOT, books: dict = bench.BOOKS,
-            only: str | None = None, limit: int | None = None, log=print, clock=time.perf_counter) -> dict:
+            only: str | None = None, limit: int | None = None, log=print, clock=time.perf_counter,
+            results: Path = bench.RESULTS) -> dict:
     """Ask the model about every paragraph not yet asked, appending each answer to outputs.jsonl as it comes.  A run
     stopped at any point (Ctrl-C, power) resumes at the first paragraph without an answer.  Resuming with another
     model digest, prompt, options, rule or book file is refused: a run's answers all come from one setup."""
+    meta = _meta(model, ollama, books)
+    if ollama.keep_alive != 0:
+        ok = warm_passed(model, meta["model_digest"], meta["prompt_sha256"], ollama.keep_alive, results)
+        if not ok:
+            raise BooksError(f"--warm needs a kept-loaded trial of {model} ({meta['model_digest'][:12]}) whose facts "
+                             "were identical to a fresh-start trial's: `tools/books.py trial --warm` (and a plain "
+                             "`trial` before it). Without one, run extract without --warm")
+        log(f"kept loaded: {ok} found every fact identical to the fresh-start trial")
     d = run_dir(root, model)
     d.mkdir(parents=True, exist_ok=True)
-    meta = _meta(model, ollama, books)
     rj = d / "run.json"
     if rj.exists():
         old = json.loads(rj.read_text(encoding="utf-8"))
@@ -502,12 +519,68 @@ def export(run: Path, today: str | None = None) -> dict:
 
 # ---- trial, plan, status ------------------------------------------------------------------------------------------
 
-def trial(model: str, ollama: bench.Ollama, results: Path = bench.RESULTS, log=print) -> dict:
+def _runs(results: Path, model: str) -> list[tuple[Path, dict]]:
+    out = []
+    for p in sorted((Path(results) / re.sub(r"[^A-Za-z0-9.]+", "-", model)).glob("*/run.json")):
+        with contextlib.suppress(OSError, ValueError):
+            out.append((p.parent, json.loads(p.read_text(encoding="utf-8"))))
+    return out
+
+
+def cold_baseline(results: Path, model: str, digest: str, prompt_sha: str, sample_sha: str) -> Path | None:
+    """The latest finished fresh-start trial of this model digest, prompt and sample."""
+    found = [d for d, m in _runs(results, model) if m.get("finished") and not m.get("keep_alive")
+             and (m.get("model_digest"), m.get("prompt_sha256"), m.get("sample_sha256")) == (digest, prompt_sha,
+                                                                                            sample_sha)]
+    return found[-1] if found else None
+
+
+def fact_lines(run: Path) -> dict[int, list[str]]:
+    """Each paragraph's fact lines, in order, as the model wrote them."""
+    return {o["n"]: [f["line"] for f in bench.facts_of(o["output"])]
+            for o in (json.loads(x) for x in (Path(run) / "outputs.jsonl").read_text(encoding="utf-8").splitlines()
+                      if x.strip())}
+
+
+def same_facts(cold: Path, warm: Path) -> dict:
+    a, b = fact_lines(cold), fact_lines(warm)
+    differ = sorted(n for n in set(a) | set(b) if a.get(n) != b.get(n))
+    return {"cold": str(cold), "warm": str(warm), "paragraphs": len(set(a) | set(b)), "differing": differ,
+            "identical": not differ and bool(a)}
+
+
+def warm_passed(model: str, digest: str, prompt_sha: str, keep_alive, results: Path = bench.RESULTS) -> str | None:
+    """The kept-loaded trial that licenses a kept-loaded full run: same model digest, prompt and keep_alive, and a
+    warm_check.json that found every paragraph's facts identical to a fresh-start trial's."""
+    for d, m in reversed(_runs(results, model)):
+        c = d / "warm_check.json"
+        if (m.get("model_digest"), m.get("prompt_sha256"), m.get("keep_alive")) == (digest, prompt_sha, keep_alive) \
+                and c.exists() and json.loads(c.read_text(encoding="utf-8")).get("identical") is True:
+            return str(d)
+    return None
+
+
+def trial(model: str, ollama: bench.Ollama, results: Path = bench.RESULTS, log=print,
+          sample: Path = bench.SAMPLE) -> dict:
     """The bench on its fixed 50 paragraphs: run, a blank scorecard to mark, a summary, and a comparison with every
-    earlier run of the same sample and prompt (other models, or this one before)."""
-    out = bench.run(model, ollama, results=results, log=log)
+    earlier run of the same sample and prompt (other models, or this one before).  Kept loaded (ollama.keep_alive),
+    it first needs a fresh-start trial to compare with, and writes warm_check.json: whether every paragraph's fact
+    lines came out identical."""
+    cold = None
+    if ollama.keep_alive != 0:
+        digest = ollama.installed(model).get("digest", "")
+        cold = cold_baseline(results, model, digest, sha256_bytes(bench.PROMPT.read_bytes()),
+                             sha256_bytes(Path(sample).read_bytes()))
+        if cold is None:
+            raise BooksError(f"a kept-loaded trial is compared with a fresh-start one: run `tools/books.py trial "
+                             f"--model {model}` first")
+    out = bench.run(model, ollama, sample_path=Path(sample), results=results, log=log)
     bench.make_scorecard(out)
     bench.summary(out)
+    check = None
+    if cold is not None:
+        check = same_facts(cold, out)
+        write_text(out / "warm_check.json", json.dumps(check, indent=1) + "\n")
     compared = {}
     for other in sorted(Path(results).glob("*/*/run.json")):
         o = other.parent
@@ -515,7 +588,8 @@ def trial(model: str, ollama: bench.Ollama, results: Path = bench.RESULTS, log=p
             continue
         with contextlib.suppress(bench.BenchError, KeyError, ValueError):
             compared[str(o)] = bench.compare(o, out)
-    return {"run": str(out), "summary": (out / "summary.md").read_text(encoding="utf-8"), "compared": compared}
+    return {"run": str(out), "summary": (out / "summary.md").read_text(encoding="utf-8"), "compared": compared,
+            "warm_check": check}
 
 
 def estimate(trial_dir: Path, paras: list[dict]) -> dict:
@@ -537,14 +611,15 @@ def estimate(trial_dir: Path, paras: list[dict]) -> dict:
             "load_s": round(load, 1), "hours": round(secs / 3600, 1)}
 
 
-def plan(model: str, books: dict = bench.BOOKS, results: Path = bench.RESULTS) -> dict:
+def plan(model: str, books: dict = bench.BOOKS, results: Path = bench.RESULTS, warm: bool = False) -> dict:
     paras, skipped = paragraphs(books)
     by = Counter(p["book"] for p in paras)
     out = {"model": model, "paragraphs": dict(by), "total": len(paras), "left_out": skipped,
            "characters": sum(len(p["text"]) for p in paras)}
-    trials = sorted((Path(results) / re.sub(r"[^A-Za-z0-9.]+", "-", model)).glob("*/outputs.jsonl"))
-    out["estimate"] = estimate(trials[-1].parent, paras) if trials else (
-        f"no trial of {model} yet: `tools/books.py trial --model {model}` measures its speed on this machine")
+    trials = [d for d, m in _runs(results, model) if m.get("finished") and bool(m.get("keep_alive")) == warm]
+    out["estimate"] = estimate(trials[-1], paras) if trials else (
+        f"no {'kept-loaded ' if warm else ''}trial of {model} yet: `tools/books.py trial --model {model}"
+        f"{' --warm' if warm else ''}` measures its speed on this machine")
     return out
 
 
@@ -576,6 +651,8 @@ def main(argv=None) -> int:
     ap.add_argument("--book", choices=sorted(bench.BOOKS))
     ap.add_argument("--limit", type=int, help="extract: ask at most this many paragraphs, then stop")
     ap.add_argument("--no-stage", action="store_true", help="extract: don't stage at the end")
+    ap.add_argument("--warm", action="store_true", help="trial, extract, plan: keep the model loaded between "
+                    "paragraphs (extract: only after a kept-loaded trial matched a fresh-start one)")
     a = ap.parse_args(argv)
     root = Path(a.root).expanduser()
     log = lambda m: print(m, flush=True)                                                     # noqa: E731
@@ -584,16 +661,22 @@ def main(argv=None) -> int:
         model = a.model or s.get("model") or DEFAULT_MODEL
         url = a.url or s.get("url") or bench.OLLAMA
         d = run_dir(root, model)
+        ollama = lambda: bench.Ollama(url, keep_alive=WARM if a.warm else 0)                  # noqa: E731
         if a.command == "plan":
-            res = plan(model)
+            res = plan(model, warm=a.warm)
         elif a.command == "trial":
-            res = trial(model, bench.Ollama(url), log=log)
+            res = trial(model, ollama(), log=log)
             print(res.pop("summary"))
             for k, v in res.pop("compared").items():
                 print(f"\nagainst {k}:\n{v}")
+            if res["warm_check"]:
+                c = res["warm_check"]
+                print("\nkept loaded: " + ("every paragraph's facts identical to the fresh-start trial; "
+                                            "`extract --warm` may be used" if c["identical"] else
+                                            f"facts differ in paragraphs {c['differing']}; run extract without --warm"))
         elif a.command == "extract":
             try:
-                res = extract(model, bench.Ollama(url), root, only=a.book, limit=a.limit, log=log)
+                res = extract(model, ollama(), root, only=a.book, limit=a.limit, log=log)
             except KeyboardInterrupt:
                 print(f"\nstopped; every answer so far is kept in {d / 'outputs.jsonl'}. "
                       "Run extract again to carry on.", file=sys.stderr)
